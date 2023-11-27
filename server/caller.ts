@@ -1,55 +1,147 @@
 import { IncomingMessage } from "http";
 import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
+
 const CLIENT_ID = "SECRET";
 const CLIENT_SECRET = "SECRET";
+const TRACK_NUM_LIMIT = 2000; //Global hard limit on the number of tracks to pull from a playlist
 
-export let accessToken = null;
+//API Access Variables
+let accessToken: string;
+let isTokenValid = false;
+let invalidationTimeout: NodeJS.Timeout;
 let backoff = false;
 
-type APICallResult = | {res: IncomingMessage, responseData: string} | {error: Error}
+//Type definitions
+type APIResponse = { res: IncomingMessage, responseData: string }
+type FailedAPIResult = { error: Error, res?: IncomingMessage, responseData?: string }
+type RequestResult = APIResponse
+type APICallback = (result: APIResponse) => any
+type FailedAPICallback = (result: FailedAPIResult) => any
 
-async function callAPI(callback: (result: APICallResult) => any, requestOptions: RequestOptions, formData?: ParsedUrlQueryInput) {
-    //Set up callbacks and make request
-    const req = request(requestOptions, (res: IncomingMessage) => {
-        let responseData = "";
 
-        //Build response data string as data comes in
-        res.on("data", (chunk) => {
-            responseData += chunk;
-        });
-
-        //Handle response end
-        res.on("end", () => {
-            //Check for "retry-after" header, indicating limit exceeded
-            let retryAfter = parseInt(res.headers["retry-after"] ?? "0");
-            backoff = retryAfter > 0;
-            if (backoff) {
-                setTimeout(() => { 
-                    backoff = false; 
-                }, retryAfter * 1000);
-            }
-
-            //Propagate results to caller
-            callback({res: res, responseData: responseData});
-        });
-    });
-
-    //Propagate errors
-    req.on('error', (error) => {
-        callback({error: error});
-    });
-
-    //Add form data
-    if (formData) { 
-        req.write(querystring.stringify(formData)); 
+/**
+ * Effective lock implementation to allow for waiting until the API is ready to be called before proceeding with some function.
+ * Waits for both the access token to be valid and the backoff period to elapse.
+ * @param cb Function to be called when the API is ready.
+ * @param skipAccessToken Set to true if the access token is not needed for the API call. Should only be true if the API call is for updating the token.
+ */
+function whenAPIReady(cb: () => void, skipAccessToken = false) {
+    if ((isTokenValid || skipAccessToken) && !backoff) {
+        cb();
+    } else {
+        setTimeout(() => { whenAPIReady(cb) }, 100);
     }
-
-    //End request
-    req.end();
 }
 
-export function updateAccessToken() {
+
+/**
+ * Wrapper for making an HTTPS request. Propagates result using the provided callback.
+ * @param requestOptions Request options object to be used for the request.
+ * @param formData Optional dictionary containing form data to be included with the request.
+ * @returns A promise containing the result of the request in the form of a RequestResult typed object.
+ */
+async function makeRequest(requestOptions: RequestOptions, formData?: ParsedUrlQueryInput): Promise<RequestResult> {
+    return new Promise((resolve, reject) => {
+        //Set up callbacks and make request
+        const req = request(requestOptions, (res: IncomingMessage) => {
+            let responseData = "";
+
+            //Build response data string as data comes in
+            res.on("data", (chunk) => {
+                responseData += chunk;
+            });
+
+            //Handle response end
+            res.on("end", () => {
+                //Propagate results to caller
+                resolve({ res: res, responseData: responseData });
+            });
+        });
+
+        //Propagate errors
+        req.on('error', reject);
+
+        //Add form data
+        if (formData) {
+            req.write(querystring.stringify(formData));
+        }
+
+        //End request
+        req.end();
+    });
+}
+
+
+/**
+ * Calls the Spotify API using the provided request options and optional form data.
+ * @param requestOptions Request options object to be used for the request.
+ * @param formData Optional dictionary containing form data to be included with the request.
+ * @returns A promise containing the response in the form of an APIResponse typed object
+ */
+async function callAPI(requestOptions: RequestOptions, formData?: ParsedUrlQueryInput): Promise<APIResponse> {
+    return new Promise((resolve, reject) => {
+        //Wait for access token validity and backoff
+        requestOptions.headers = requestOptions.headers ?? {}
+        let skipAccessToken = "Authorization" in requestOptions.headers; //Skip access token checking if Authorization header is already provided
+        whenAPIReady(() => {
+            //Inject access token if necessary
+            if (!skipAccessToken) {
+                //Add authorization header with access token
+                requestOptions.headers = {
+                    ...requestOptions.headers,
+                    'Authorization': 'Bearer ' + accessToken
+                };
+            }
+
+            //Make the request
+            makeRequest(requestOptions, formData).then(result => {
+                //Check for "retry-after" header, indicating limit exceeded
+                let retryAfter = parseInt(result.res.headers["retry-after"] ?? "0");
+                backoff = retryAfter > 0;
+                if (backoff) {
+                    console.log("Retry-After header detected. Backing off.");
+                    setTimeout(() => {
+                        backoff = false;
+                        console.log("Backoff period has elapsed - proceeding with requests.");
+                    }, retryAfter * 1000);
+                }
+
+                //Check result status code
+                if (result.res.statusCode != 200) {
+                    reject({ ...result, error: new Error(`Bad status code: ${result.res.statusCode}. Message: ${result.res.statusMessage}`) });
+                } else {
+                    resolve(result);
+                }
+            }).catch((error) => {
+                reject({ error: error });
+            });
+        }, skipAccessToken);
+    });
+}
+
+
+/**
+ * Updates the value of the access token and sets up a timer to monitor its expiration
+ * @param token The updated token value
+ * @param expirationTime The time, in seconds, before this token expires
+ */
+function updateAccessToken(token: string, expirationTime: number) {
+    accessToken = token;
+    isTokenValid = true;
+    console.log("Access token updated.");
+
+    //Set new invalidation timer - If expiration time elapses, mark token as invalid
+    clearTimeout(invalidationTimeout);
+    invalidationTimeout = setTimeout(() => { isTokenValid = false }, expirationTime * 1000);
+}
+
+
+/**
+ * Ensures that the access token is always updated.
+ * Call this once to set up a recurring timer that updates the token whenever it is about to expire.
+ */
+export async function maintainAccessToken() {
     //Build request options object
     let requestOptions: RequestOptions = {
         hostname: "accounts.spotify.com",
@@ -64,34 +156,151 @@ export function updateAccessToken() {
     //Build form data
     let formData = { "grant_type": "client_credentials" };
 
-    //Make request
-    callAPI((result: APICallResult) => {
-        try {
-            if('error' in result){
-                throw result.error;
-            }
+    //Configure failure callback
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(`Failed to obtain access token. Result: ${JSON.stringify(result)}`)
+    }
 
-            if (result.res.statusCode == 200){
-                let body = JSON.parse(result.responseData);
+    //Configure success callback
+    let onSuccess: APICallback = (result: APIResponse) => {
+        let body = JSON.parse(result.responseData);
 
-                //Extract access token
-                if (body["access_token"]) {
-                    accessToken = body["access_token"];
-                    console.log("Access token updated.");
-    
-                    //Set up timeout for renewing the token 1 minute before it expires
-                    let expirationTime = body["expires_in"];
-                    setTimeout(updateAccessToken, (expirationTime - 60) * 1000);
-                } else {
-                    //Error if access token not found
-                    throw new Error(`Access token not present in response data. Response data: ${result.responseData}`);
-                }
-            } else {
-                //Error if request failed
-                throw new Error(`Bad status code: ${result.res.statusCode}. Message: ${result.res.statusMessage}`);
-            }
-        } catch (e) {
-            console.error("Failed to update token. ", e);
+        //Extract access token
+        let accessToken = body["access_token"]
+        if (accessToken) {
+            //Get expiration time for this token, in SECONDS
+            let expirationTime = body["expires_in"];
+
+            updateAccessToken(accessToken, expirationTime);
+
+            //Set timer to update token 1 minute before it expires
+            setTimeout(() => {
+                maintainAccessToken();
+            }, (expirationTime - 60) * 1000);
+        } else {
+            //Error if access token not found
+            onFailure({ ...result, error: Error(`Access token not present in response data.`) })
         }
-    }, requestOptions, formData);
+    }
+
+    //Make API call
+    callAPI(requestOptions, formData).then(onSuccess).catch(onFailure);
 }
+
+
+/**
+ * Uses the Spotify API to obtain information about a playlist (including information about its tracks)
+ * @param id ID of the playlist to query
+ * @returns Object containing the playlist data, including list of tracks
+ */
+export async function getPlaylistData(id: string): Promise<any> {
+    //First get the information about the playlist itself, including number of tracks, then get track data
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/playlists/${id}?limit=0&fields=name,id,description,uri,type,tracks(total)`,
+        method: "GET",
+    }
+
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+    }
+
+    //Make request to get playlist data
+    let result = await callAPI(requestOptions).catch(onFailure);
+    let body = JSON.parse(result.responseData);
+    let numTracks: number = body.tracks.total < TRACK_NUM_LIMIT ? body.tracks.total : TRACK_NUM_LIMIT;
+
+    //Get track data, 100 tracks at a time
+    let tracks: any[] = [];
+    for (let offset = 0; tracks.length < numTracks; offset += 100) {
+        let newTracks = await getPlaylistTracks(id, offset).catch(onFailure);
+        tracks = [...tracks, ...newTracks]; 
+    }
+    body.tracks.items = tracks
+    return body
+}
+
+
+/**
+ * Uses the Spotify API to get information about at most 100 tracks in a playlist
+ * @param playlistId ID of the playlist to query
+ * @param offset Index to start query at
+ * @returns List of tracks in the playlist starting at the specified offset
+ */
+export async function getPlaylistTracks(playlistId: string, offset: number): Promise<any[]> {
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/playlists/${playlistId}/tracks?fields=items(track(id,name,artists(name),album(name),uri))&offset=${offset}&limit=100`,
+        method: "GET"
+    }
+
+    //Configure callbacks
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+    }
+
+    //Make request
+    let result = await callAPI(requestOptions).catch(onFailure);
+
+    //Return resulting list of tracks
+    return JSON.parse(result.responseData).items;
+}
+
+
+
+
+
+// export async function getTrackData(id: string) {
+//     let requestOptions: RequestOptions = {
+//         hostname: "api.spotify.com",
+//         path: `/v1/tracks/${id}`,
+//         method: "GET",
+//     }
+
+//     //Configure callbacks
+//     let onSuccess: APICallback = (result: APIResponse) => {
+//         console.log(JSON.parse(result.responseData).preview_url)
+//     }
+//     let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+//         console.error(result.error)
+//     }
+
+//     //Make request
+//     callAPI(requestOptions).then(onSuccess).catch(onFailure);
+// }
+
+// export async function getPreviewURL(id: string) {
+//     let requestOptions: RequestOptions = {
+//         hostname: "embed.spotify.com",
+//         path: `/track/${id}}`,
+//         method: "GET",
+//         headers: {
+//             "User-Agent": "Someone else",
+//             "Authorization": "None"
+//         }
+//     }
+
+//     let onSuccess = (result: APIResponse) => {
+//         const data = JSON.parse(cheerio.load(result.responseData)("#__NEXT_DATA__").html() ?? "");
+//         console.log(data)
+//     }
+
+//     callAPI(requestOptions).then(onSuccess);
+// }
+
+// export async function getTrackEmbed(id: string) {
+//     let requestOptions: RequestOptions = {
+//         hostname: "open.spotify.com",
+//         path: `/embed/track/${id}}`,
+//         method: "GET",
+//         headers: {
+//             "User-Agent": "Someone"
+//         }
+//     }
+
+//     let onSuccess = (result: APIResponse) => {
+//         console.log(result.responseData);
+//     }
+
+//     callAPI(requestOptions).then(onSuccess);
+// }
