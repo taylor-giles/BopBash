@@ -1,6 +1,8 @@
 import { IncomingMessage } from "http";
 import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
+import { load as cheerio } from "cheerio";
+import { Playlist, playlistFields, Track, tracksFields } from "./types";
 
 const CLIENT_ID = "SECRET";
 const CLIENT_SECRET = "SECRET";
@@ -193,11 +195,11 @@ export async function maintainAccessToken() {
  * @param id ID of the playlist to query
  * @returns Object containing the playlist data, including list of tracks
  */
-export async function getPlaylistData(id: string): Promise<any> {
+export async function findPlaylistData(id: string): Promise<Playlist> {
     //First get the information about the playlist itself, including number of tracks, then get track data
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
-        path: `/v1/playlists/${id}?limit=0&fields=name,id,description,uri,type,tracks(total)`,
+        path: `/v1/playlists/${id}?limit=0&fields=${playlistFields}`,
         method: "GET",
     }
 
@@ -207,30 +209,39 @@ export async function getPlaylistData(id: string): Promise<any> {
 
     //Make request to get playlist data
     let result = await callAPI(requestOptions).catch(onFailure);
-    let body = JSON.parse(result.responseData);
-    let numTracks: number = body.tracks.total < TRACK_NUM_LIMIT ? body.tracks.total : TRACK_NUM_LIMIT;
+    if(!result){
+        throw new Error("Playlist not found");
+    }
+    
+    let data = JSON.parse(result?.responseData);
+    let numTracks: number = data.tracks.total < TRACK_NUM_LIMIT ? data.tracks.total : TRACK_NUM_LIMIT; //Enforce track num limit
 
     //Get track data, 100 tracks at a time
-    let tracks: any[] = [];
+    let tracks: Track[] = [];
     for (let offset = 0; tracks.length < numTracks; offset += 100) {
-        let newTracks = await getPlaylistTracks(id, offset).catch(onFailure);
+        let newTracks = await findPlaylistTracks(id, offset).catch(onFailure);
         tracks = [...tracks, ...newTracks]; 
     }
-    body.tracks.items = tracks
-    return body
+
+    //Store the tracks in the playlist object
+    data.tracks.items = tracks;
+    console.log(`Successfully obtained data for playlist: ${id} (${data.name})`);
+    return data;
 }
 
 
 /**
  * Uses the Spotify API to get information about at most 100 tracks in a playlist
+ * Note: This does NOT include preview URL for each track, to avoid excessive requests.
  * @param playlistId ID of the playlist to query
  * @param offset Index to start query at
+ * @param limit Max number of tracks to get in query. Max is 100.
  * @returns List of tracks in the playlist starting at the specified offset
  */
-export async function getPlaylistTracks(playlistId: string, offset: number): Promise<any[]> {
+export async function findPlaylistTracks(playlistId: string, offset: number, limit: number=100): Promise<Track[]> {
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
-        path: `/v1/playlists/${playlistId}/tracks?fields=items(track(id,name,artists(name),album(name),uri))&offset=${offset}&limit=100`,
+        path: `/v1/playlists/${playlistId}/tracks?fields=${tracksFields}&offset=${offset}&limit=${limit}`,
         method: "GET"
     }
 
@@ -247,7 +258,29 @@ export async function getPlaylistTracks(playlistId: string, offset: number): Pro
 }
 
 
+/**
+ * Uses the Spotify embed API to get the preview URL for the given track
+ * Note: This is necessary because the data returned by the normal API does not contain preview URL for around 50% of tracks
+ * @param id ID of the track
+ * @returns The playlist URL for the given track as a string, or null if not found
+ */
+export async function getTrackPreviewURL(id: string): Promise<string> {
+    let requestOptions: RequestOptions = {
+        hostname: "open.spotify.com",
+        path: `/embed/track/${id}`,
+        method: "GET",
+        headers: {
+            "User-Agent": "Node.js" //This can be anything, as long as the header is set
+        }
+    }
 
+    let onSuccess = (result: APIResponse) => {
+        const data = JSON.parse(cheerio(result.responseData)("#__NEXT_DATA__").html() ?? "");
+        return data.props.pageProps.state.data.entity.audioPreview.url;
+    }
+
+    return callAPI(requestOptions).then(onSuccess);
+}
 
 
 // export async function getTrackData(id: string) {
@@ -269,24 +302,7 @@ export async function getPlaylistTracks(playlistId: string, offset: number): Pro
 //     callAPI(requestOptions).then(onSuccess).catch(onFailure);
 // }
 
-// export async function getPreviewURL(id: string) {
-//     let requestOptions: RequestOptions = {
-//         hostname: "embed.spotify.com",
-//         path: `/track/${id}}`,
-//         method: "GET",
-//         headers: {
-//             "User-Agent": "Someone else",
-//             "Authorization": "None"
-//         }
-//     }
 
-//     let onSuccess = (result: APIResponse) => {
-//         const data = JSON.parse(cheerio.load(result.responseData)("#__NEXT_DATA__").html() ?? "");
-//         console.log(data)
-//     }
-
-//     callAPI(requestOptions).then(onSuccess);
-// }
 
 // export async function getTrackEmbed(id: string) {
 //     let requestOptions: RequestOptions = {
