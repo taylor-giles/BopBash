@@ -1,10 +1,13 @@
 import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import * as SpotifyAPI from "./caller";
-import { WebSocketRoute, routeWebsocketRequest, router } from './router';
+import { routeWebsocketRequest, router } from './router';
 import * as consoleStamp from 'console-stamp';
-import { generateNewPlayerId } from './gameDriver';
 import { PlayerConnection } from './types';
+import { IncomingMessage } from 'http';
+import { verifyToken } from './auth';
+import * as GameDriver from './GameManager';
+import { WebSocketRoute } from '../shared/ws-routes';
 
 const EXPRESS_PORT = 5000;
 const WS_PORT = 5001;
@@ -12,7 +15,7 @@ const WS_PING_INTERVAL = 20000;
 
 //Add timestamps to all logs
 consoleStamp.default(console, {
-  format: ':date(mm/dd/yy HH:MM:ss):label'
+    format: ':date(mm/dd/yy HH:MM:ss):label'
 });
 
 //Configure express server
@@ -25,12 +28,40 @@ app.use('/api', router);
 
 //Configure web socket server
 const wsServer = new WebSocketServer({ port: WS_PORT });
-wsServer.on('connection', (ws: PlayerConnection) => {
-    console.log("New connection:", ws);
-    
+wsServer.on('connection', (ws: PlayerConnection, req: IncomingMessage) => {
+    console.log("New WS connection received");
+
+    //Authenticate the user (verify the token)
+    try {
+        if (!req.url) {
+            throw new Error("Request URL not available.");
+        }
+
+        //Get ID and token
+        let url = new URL(req.url, `http://${req.headers.host}`);
+        let token = url.searchParams.get("token");
+        if (!token) {
+            throw new Error("Token not provided.");
+        }
+
+        //Verify (throws error on failure)
+        let playerId = verifyToken(token).toString();
+
+        //Attach player to WS
+        GameDriver.establishPlayerConnection(playerId, ws).catch((error) => {
+            ws.close();
+            console.error(`Unable to establish player connection for player ${playerId}:`, error.message);
+        });
+    } catch (error: any) {
+        //If authentication fails, close the connection and do not continue
+        console.error(`Unable to authenticate WS connection - closing connection.`, error.message);
+        ws.close();
+        return;
+    }
+
     //Set up heartbeat
     ws.on('pong', () => {
-        setInterval(() => {
+        setTimeout(() => {
             ws.ping();
         }, WS_PING_INTERVAL);
     });
@@ -41,15 +72,15 @@ wsServer.on('connection', (ws: PlayerConnection) => {
         let msg = event.data.toString();
         try {
             let data = JSON.parse(msg);
-            if(!('type' in data)){
+            if (!('type' in data)) {
                 throw new Error("All WebSocket messages must specify a type.");
             }
-            if(!(data.type in Object.values(WebSocketRoute))){
-                throw new Error("WebSocket message type must be a valid route.");
+            if (!(Object.values(WebSocketRoute).includes(data.type))) {
+                throw new Error(`Unrecognized type: ${data.type}`);
             }
             routeWebsocketRequest(ws, data);
         } catch (e) {
-            console.error(`Received badly formatted message on WebSocket: ${msg}`, e);
+            console.error(`Received badly formatted message on WebSocket: \n${msg}\n`, e);
         }
     });
 });
@@ -58,7 +89,7 @@ wsServer.on('listening', () => {
 });
 wsServer.on("close", () => {
     console.log("Websocket server stopped.")
-})
+});
 
 
 //Make sure access token is maintained (initialize API caller)

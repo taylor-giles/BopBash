@@ -1,20 +1,43 @@
 import { NextFunction, Request, Response } from "express";
 import * as SpotifyAPI from "./caller";
-import * as GameDriver from "./gameDriver";
-import { Player } from "./game";
-import WebSocket from "ws";
-import { PlayerConnection, WebSocketRequest } from "./types";
-import { WebSocketRoute } from "./router";
+import * as GameDriver from "./GameManager";
+import { PlayerConnection } from "./types";
+import { getToken, verifyToken } from "./auth";
+import { MAX_USERNAME_LENGTH } from "../shared/constants";
+
+type PlayerRequest = Request & { playerId?: string }
+
 
 /**
  * Middleware to ensure the request has an id param
  */
 export async function ensureId(req: Request, res: Response, next: NextFunction) {
-    if (!req || !req.params || !req.params.id) {
-        console.log(req)
-        res.status(400).send("Request must include an id param");
-        return;
+    if (!req?.params?.id) {
+        return res.status(400).json({ error: "Request must include an id param" });
     }
+    next();
+}
+
+
+/**
+ * Middleware to ensure user is authenticated.
+ * Adds playerId to the req object
+ */
+export async function authenticate(req: PlayerRequest, res: Response, next: NextFunction) {
+    const token = req?.headers?.authorization?.split(' ')[1];
+    if (!token || !req?.headers?.authorization?.startsWith("Bearer")) {
+        console.log(JSON.stringify(req.headers))
+        return res.status(401).json({ error: "Authentication failed: Token not provided" });
+    }
+
+    try {
+        let playerId = verifyToken(token).toString();
+        GameDriver.getPlayer(playerId);
+        req.playerId = playerId;
+    } catch (e: any) {
+        return res.status(401).json({ error: `Authentication failed: ${e.message}` });
+    }
+
     next();
 }
 
@@ -33,22 +56,22 @@ export async function ensureId(req: Request, res: Response, next: NextFunction) 
  *  - On Success:
  *      - Playlist object containing data for requested playlist
  *  - On Failure:
- *      - msg: string - String error message
- *      - error: Error - Error
+ *      - error: string - Error message
  */
 export async function getPlaylistData(req: Request, res: Response) {
     let id = req.params.id;
     console.log("Handling request for playlist data. ID: ", id);
 
     if (!id) {
-        res.status(400).send("Playlist ID must be provided");
+        return res.status(400).json({ error: "Playlist ID must be provided" });
     }
 
     //Find and return playlist data to client
     SpotifyAPI.findPlaylistData(id).then((result) => {
-        res.status(200).json(result);
+        return res.status(200).json(result);
     }).catch((error) => {
-        res.status(500).json({ msg: `Unable to get playlist data for playlist ${id}`, error: error })
+        console.error(`Unable to get playlist data for playlist ${id}`, error.message);
+        return res.status(500).json({ error: error.message });
     });
 }
 
@@ -70,28 +93,25 @@ export async function getPlaylistData(req: Request, res: Response) {
  *      - numRounds: number - The actual number of rounds in the new game
  *      - playlistId: string - The ID of the playlist for this game (same as playlistId in req)
  *  - On Failure:
- *      - msg: string - String error message
- *      - error: Error - Error
+ *      - error: string - Error message
  */
 export async function makeNewGame(req: Request, res: Response) {
     let playlistId = req?.body?.playlistId;
     let numRounds = req?.body?.numRounds;
 
     if (!playlistId || !numRounds) {
-        res.status(400).send("Both playlistId and numRounds must be specified in request body.");
-        return;
+        return res.status(400).json({ error: "Both playlistId and numRounds must be specified in request body." });
     }
 
     console.log("Handling request to create new game for playlist: ", playlistId);
 
     //Use API to get the playlist data
     let playlist = await SpotifyAPI.findPlaylistData(playlistId).catch((error) => {
-        console.error(`Unable to make new game.\n\tUnable to get playlist data for playlist ${playlistId}`, error);
+        console.error(`Unable to make new game.\n\tUnable to get playlist data for playlist ${playlistId}`, error.message);
         return;
     });
     if (!playlist) {
-        res.status(500).json({ msg: `Unable to make new game. Unable to get playlist data for playlist ${playlistId}` });
-        return;
+        return res.status(500).json({ error: `Unable to make new game. Unable to get playlist data for playlist ${playlistId}` });
     }
 
     //Create the game and register it with game driver
@@ -99,66 +119,194 @@ export async function makeNewGame(req: Request, res: Response) {
         //Respond to sender with game ID
         res.status(200).json({ id: game.id, numRounds: game.rounds.length, playlistId: playlistId });
     }).catch((error) => {
-        res.status(500).json({ msg: "Unable to create new game", error: error})
+        console.error("Unable to create new game", error.message);
+        res.status(500).json({ error: error.message });
     });
 }
 
 
 /**
  * POST /registerNewPlayer
- * Adds a player to the specified game
+ * Creates a new player with the given name
  * 
  * Request Params:
  *  - None.
  * 
  * Request Body:
- *  - playerName: The user-chosen name for the new player
+ *  - name: The user-chosen name for the new player
  * 
  * Response Body:
- *  - playerId: The ID of the new player
+ *  
+ *  - On Success:
+ *      - playerId: string - The ID of the new player
+ *      - token: string - JWT auth token for this player
+ *  - On Failure:
+ *      - error: string - Error message
  */
 export async function registerNewPlayer(req: Request, res: Response) {
-    let name = req?.body?.playerName;
+    let name = req?.body?.name;
 
     if (!name) {
-        res.status(400).send("Name must be specified in request body.");
-        return;
+        return res.status(400).json({ error: "Name must be specified in request body." });
     }
 
     console.log(`Handling request to create new player named ${name}`);
 
+    //Enforce username length limit
+    if (name.length > MAX_USERNAME_LENGTH) {
+        console.error(`Unable to create new player named ${name} - name too long.`);
+        return res.status(400).json({ error: `Max username length is ${MAX_USERNAME_LENGTH}` });
+    }
+
     //Create player object
     GameDriver.registerNewPlayer(name).then((player) => {
-        //Return the ID of the player
-        res.status(200).json({ playerId: player.id });
+        //Get the token for the player
+        let token = getToken(player.id);
+
+        //Return the token and ID
+        res.status(200).json({ playerId: player.id, token: token });
+    }).catch((error) => {
+        console.error(`Unable to create new player named ${name}`, error.message);
+        return res.status(500).json({ error: error.message })
     });
 }
 
 
-//HANDLER FUNCTIONS FOR ALL WEBSOCKET ROUTES
-export type WSHandler = (connection: PlayerConnection, data: any) => void;
-export const wsHandlers: {[key in WebSocketRoute]: WSHandler} = {
-    /**
-     * 
-     * @param connection WS object that made the request
-     * @param data 
-     *  - playerId: string - The ID of the player joining the game
-     *  - gameId: string - The ID of the game the player is joining
-     */
-    [WebSocketRoute.JOIN_GAME]:
-    async function joinGame(connection: PlayerConnection, data: any){
-        let playerId = data?.playerId;
-        let gameId = data?.gameId;
+/**
+ * POST /joinGame
+ * Adds the authenticated player to the requested game
+ * 
+ * PRECONDITIONS: 
+ *  - Requester is authenticated
+ * 
+ * Headers:
+ *  - Authentication: Bearer <token>
+ * 
+ * Request Params:
+ *  - id: The ID of the game to join
+ * 
+ * Request Body:
+ *  - None.
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - None.
+ *  - On Failure:
+ *      - msg: string - String error message
+ *      - error: Error - Error
+ */
+export async function joinGame(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId;
+    let gameId = req?.params?.id;
 
-        if(!playerId || !gameId){
-            console.error(`Unable to add player to game: Both player ID and game ID must be provided`);
-        }
-        GameDriver.addPlayerToGame(connection, playerId, gameId).catch(
+    if (!gameId || !playerId) {
+        //Middleware should ensure this never happens
+        return res.status(400).json({ error: `Malformed request` });
+    }
 
-        );
-    },
+    console.log(`Handling request to add player ${playerId} to game ${gameId}`);
+    GameDriver.addPlayerToGame(playerId, gameId).then(() => {
+        return res.status(200).send("Successfully added player to game");
+    }).catch((error) => {
+        console.error(`Unable to add player ${playerId} to game ${gameId}:`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
 
 
-    [WebSocketRoute.LEAVE_GAME]:
-    async function leaveGame(connection: PlayerConnection, data: any){}
+/**
+ * GET /getGames
+ * Returns a list of all joinable games
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - None.
+ * 
+ * Response Body:
+ *  - GameState[] List containing a state for each joinable game
+ */
+export async function getGames(req: PlayerRequest, res: Response) {
+    res.status(200).json(GameDriver.getGameStates());
+}
+
+
+// /**
+//  * WS JOIN_GAME
+//  * Adds the player that made the request to the requested game
+//  * 
+//  * Data: (string) The ID of the game to join
+//  */
+// export async function joinGameWS(connection: PlayerConnection, data: any) {
+//     let playerId = connection.playerId;
+//     let gameId = data;
+//     console.log(`Handling request to add player ${playerId} to game ${gameId}`);
+
+//     if (!playerId || !gameId) {
+//         console.error(`Unable to add player to game: Both player ID and game ID must be provided`);
+//         return;
+//     }
+//     GameDriver.addPlayerToGame(playerId, gameId).catch((error) => {
+//         console.error(`Unable to add player ${playerId} to game ${gameId}:`, error.message);
+//     });
+// }
+
+
+/**
+ * WS LEAVE_GAME
+ * Removes the player that made the request from their active game
+ * 
+ * Data: None.
+ */
+export async function leaveGame(connection: PlayerConnection, data: any) {
+    let playerId = connection?.playerId;
+    console.log("Handling request to leave game");
+
+    if (!playerId) {
+        console.error("Unable to leave game: Connection not linked to a player");
+        return;
+    }
+
+    GameDriver.removePlayerFromGame(playerId).catch((error) => {
+        console.error(`Unable to remove player ${playerId} from game.`, error.message);
+    });
+}
+
+
+/**
+ * WS READY
+ * Sets player status to "READY"
+ * 
+ * Data: None.
+ */
+export async function readyPlayer(connection: PlayerConnection, data: any) {
+    let playerId = connection?.playerId;
+    if (!playerId) {
+        console.error("Unable to ready player: Connection not linked to a player");
+        return;
+    }
+
+    GameDriver.readyPlayer(playerId).catch((error) => {
+        console.error(`Unable to ready player ${playerId}`, error.message);
+    });
+}
+
+
+/**
+ * WS UNREADY
+ * Sets player status to "NOT READY"
+ * 
+ * Data: None.
+ */
+export async function unreadyPlayer(connection: PlayerConnection, data: any) {
+    let playerId = connection?.playerId;
+    if (!playerId) {
+        console.error("Unable to unready player: Connection not linked to a player");
+        return;
+    }
+
+    GameDriver.unreadyPlayer(playerId).catch((error) => {
+        console.error(`Unable to unready player ${playerId}`, error.message);
+    });
 }

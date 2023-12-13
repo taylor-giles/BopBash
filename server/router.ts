@@ -1,8 +1,8 @@
 import * as express from 'express';
 import * as Controller from './controller';
-import { PlayerConnection, WebSocketRequest } from './types';
+import { PlayerConnection } from './types';
+import { WebSocketRequest, WebSocketRoute } from '../shared/ws-routes';
 const router = express.Router();
-
 
 /**
  * Routes for the REST API.
@@ -10,17 +10,32 @@ const router = express.Router();
  */
 router.get('/getPlaylistData/:id', Controller.ensureId, Controller.getPlaylistData);
 router.post('/newGame', Controller.makeNewGame);
-router.post('/newPlayer', Controller.registerNewPlayer);
+router.post('/registerNewPlayer', Controller.registerNewPlayer);
+router.post('/joinGame/:id', Controller.authenticate, Controller.joinGame);
 
 export { router };
 
+export function routeWebsocketRequest(clientConnection: PlayerConnection, req: WebSocketRequest) {
+  type WSHandler = (connection: PlayerConnection, data: any) => void;
+  let handler: WSHandler;
 
-//WebSocket "routes"
-export enum WebSocketRoute {
-  JOIN_GAME="Join Game",
-  LEAVE_GAME="Leave Game"
-}
-
-export function routeWebsocketRequest(clientConnection: PlayerConnection, req: WebSocketRequest){
-  Controller.wsHandlers[req.type](clientConnection, req.data)
+  //Determine which function to use based on the provided route
+  switch (req.type) {
+    // case WebSocketRoute.JOIN_GAME:
+    //   handler = Controller.joinGameWS;
+    //   break;
+    case WebSocketRoute.LEAVE_GAME:
+      handler = Controller.leaveGame;
+      break;
+    case WebSocketRoute.READY:
+      handler = Controller.readyPlayer;
+      break;
+    case WebSocketRoute.UNREADY:
+      handler = Controller.unreadyPlayer;
+      break;
+    default:
+      handler = () => console.error(`Unknown WS route ${req.type}`);
+      break;
+  }
+  handler(clientConnection, req.data);
 }
