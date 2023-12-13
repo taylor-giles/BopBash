@@ -1,24 +1,26 @@
-import { WebSocket } from 'ws';
-import { GameUpdate, GameUpdateType, PlayerConnection, Playlist, Track } from "./types";
+import { PlayerConnection } from "./types";
+import { Playlist, Track } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
+import ObservableMap from "../utils/ObservableMap";
+import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 
-export type Round = {
-    trackId: string,
-    previewURL: string
-}
-
+/**
+ * Class to represent the server-side view of a game
+ */
 export class Game {
     public id: string;
     playlist: Playlist;
-    players:  { [id: string]: Player }
+    players: ObservableMap<string, Player>;
     rounds: Round[];
+    status: GameStatus;
 
     private constructor(id: string, playlist: Playlist){
         this.id = id;
         this.playlist = playlist;
-        this.players = {};
+        this.players = new ObservableMap(()=>this.broadcastUpdate(), ()=>this.broadcastUpdate());
         this.rounds = [];
+        this.status = GameStatus.PENDING;
     }
 
 
@@ -67,6 +69,8 @@ export class Game {
 
         //Convert chosen tracks set to list
         this.rounds = Array.from(chosenTracks).map((track) => {return {trackId: track.id, previewURL: track.previewURL ?? ""};});
+    
+        this.broadcastUpdate();
     }
 
 
@@ -75,10 +79,30 @@ export class Game {
      * @param player The player to add to the game
      */
     public addPlayer(player: Player){
-        if(!(player.id in this.players)){
-            this.players[player.id] = player;
-        } else {
-            throw new Error(`Player ${player.id} (${player.name}) already in game ${this.id} (${this.playlist.name})`);
+        this.players.set(player.id, player);
+        this.broadcastUpdate();
+    }
+
+
+    /**
+     * Returns the number of active players in this game
+     * @returns The number of players in this game
+     */
+    public getNumPlayers(){
+        return this.players.size;
+    }
+
+
+    /**
+     * Starts this game if it is ready to start.
+     * A game is ready to start if it meets all the following criteria:
+     *  - At least 2 players
+     *  - All players ready
+     */
+    public startIfReady() {
+        let allPlayersReady = Array.from(this.players.values()).every((player) => player.isReady);
+        if(allPlayersReady && this.players.size > 1){
+            this.start();
         }
     }
 
@@ -87,10 +111,15 @@ export class Game {
      * Stops the game
      */
     public async stop() {
+        this.status = GameStatus.ENDED;
+        this.broadcastUpdate();
+
         //Force all players to leave this game
-        for(let playerId in this.players){
-            this.players[playerId].leaveGame();
-        }
+        this.players.forEach((player) => {
+            player.leaveGame();
+        });
+
+        console.log(`Stopped game ${this.id} (${this.playlist.name})`);
     }
 
 
@@ -98,13 +127,57 @@ export class Game {
      * Starts the game by communicating with players
      */
     public async start(){
-        for(let playerId in this.players){
-            this.players[playerId].sendUpdate({type: GameUpdateType.GAME_START, data: this.rounds.map((round) => round.previewURL)});
+        this.status = GameStatus.ACTIVE;
+        this.broadcastUpdate();
+    }
+
+
+    /**
+     * Returns the current state of this game
+     * Converts this game 
+     */
+    public getState(): GameState{
+        //Generate the dictionary of player states
+        let playerStates : Record<string, PlayerState> = {};
+        for(let [key, value] of this.players){
+            playerStates[key] = value.getState();
+        }
+
+        //Build and return the state object
+        return {
+            id: this.id,
+            status: this.status,
+            playlist: {
+                id: this.playlist.id,
+                name: this.playlist.name,
+                uri: this.playlist.uri,
+                description: this.playlist.description,
+                numTracks: this.playlist.tracks.total
+            },
+            players: playerStates,
+            audioURLs: this.rounds.map((round) => round.previewURL)
+        }
+    }
+
+
+    /**
+     * Broadcasts this game's state to all its players
+     */
+    public async broadcastUpdate(){
+        //Get the state to send to all players
+        let state = this.getState();
+
+        //Send the state
+        for(let player of this.players.values()){
+            player.sendUpdate(state);
         }
     }
 }
 
 
+/**
+ * Class to represent the server-side view of a player
+ */
 export class Player {
     id: string;
     name: string;
@@ -124,21 +197,13 @@ export class Player {
      * Sends a game update to this player
      * @param update The GameUpdate to send
      */
-    public sendUpdate(update: GameUpdate){
+    public async sendUpdate(update: GameState){
         if(this.connection){
-            this.connection?.send(Buffer.from(JSON.stringify(update)));
+            this.connection.send(JSON.stringify(update));
+            console.log(`Sent update to player ${this.id}`);
         } else {
             console.error(`Unable to send game update to player ${this.id} - no connection established.`);
         }
-    }
-
-
-    /**
-     * Connects this Player to a WebSocket connection with the client
-     * @param ws The WebSocket connection established with the client
-     */
-    public connect(ws: WebSocket){
-        this.connection = ws;
     }
 
 
@@ -147,9 +212,11 @@ export class Player {
      */
     public leaveGame(){
         if(this.activeGame){
-            this.sendUpdate({type: GameUpdateType.GAME_OVER});
+            //Remove this player from the game
+            this.activeGame.players.delete(this.id);
         }
         this.activeGame = undefined;
+        this.isReady = false;
     }
 
 
@@ -162,5 +229,17 @@ export class Player {
 
         //Close the connection
         this.connection?.close();
+
+        console.log(`Killing player ${this.id} (${this.name})`);
     }
+
+    public getState(): PlayerState {
+        return {
+            id: this.id,
+            name: this.name,
+            score: 0, //TODO: Implement scores
+            isReady: this.isReady
+        }
+    }
+
 }

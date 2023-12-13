@@ -2,7 +2,8 @@ import { IncomingMessage } from "http";
 import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
 import { load as cheerio } from "cheerio";
-import { Playlist, playlistFields, Track, tracksFields } from "./types";
+import { playlistFields, tracksFields } from "./types";
+import { Playlist, Track } from "../shared/types";
 
 const CLIENT_ID = "SECRET";
 const CLIENT_SECRET = "SECRET";
@@ -225,7 +226,7 @@ export async function findPlaylistData(id: string): Promise<Playlist> {
 
     //Store the tracks in the playlist object
     data.tracks.items = tracks;
-    console.log(`Successfully obtained data for playlist: ${id} (${data.name})`);
+    console.log(`Obtained data for playlist: ${id} (${data.name})`);
     return data;
 }
 
