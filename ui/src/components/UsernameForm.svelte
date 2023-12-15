@@ -76,7 +76,7 @@
     }
 
     #username-label {
-        font-size: 18pt;
+        font-size: 1.3rem;
         color: white;
         font-weight: 500;
     }
@@ -85,7 +85,7 @@
         height: 50px;
         background-color: var(--primary-light);
         color: var(--accent);
-        font-size: 20pt;
+        font-size: 1.5rem;
         font-weight: 700;
         width: 100%;
         border: none;
@@ -107,7 +107,7 @@
     }
 
     #submit-btn {
-        font-size: 15pt;
+        font-size: 1.1rem;
         margin-top: 20px;
         border-radius: 1px;
         width: 100%;

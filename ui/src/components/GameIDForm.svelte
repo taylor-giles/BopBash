@@ -82,7 +82,7 @@
     }
 
     #join-game-label {
-        font-size: 20pt;
+        font-size: 1.5rem;
         color: white;
         font-weight: 600;
     }
@@ -95,7 +95,7 @@
         height: 50px;
         background-color: var(--primary-light);
         color: var(--accent);
-        font-size: 18pt;
+        font-size: 1.3rem;
         font-weight: 700;
         width: 100%;
         border: none;
@@ -115,7 +115,7 @@
     }
 
     #submit-btn {
-        font-size: 13pt;
+        font-size: 0.96rem;
         margin-top: 5px;
         border-radius: 1px;
         width: 100%;

@@ -39,8 +39,8 @@ export class Game {
 
     /**
      * Shuffles the tracks in the playlist and looks for preview URLs.
-     * Attempts to find numRounds preview URLs. 
-     * Adds AT MOST numRounds tracks to this.rounds.
+     * Attempts to find desiredNumRounds preview URLs. 
+     * Adds AT MOST desiredNumRounds tracks to this.rounds.
      * 
      * @param desiredNumRounds The desired number of rounds for this game.
      * @returns The list of generated rounds
@@ -58,7 +58,7 @@ export class Game {
         for (let trackNum = 0; chosenTracks.size < desiredNumRounds && trackNum < viableTracks.length; trackNum++) {
             let chosenTrack = viableTracks[trackNum];
             chosenTrack.previewURL = await SpotifyAPI.getTrackPreviewURL(chosenTrack.id).catch((error) => {
-                console.error(`Unable to get preview URL for track ${chosenTrack.id}: `, error);
+                console.error(`Unable to get preview URL for track ${chosenTrack.id}: `, error.message);
                 return undefined;
             });
 
@@ -79,6 +79,9 @@ export class Game {
      * @param player The player to add to the game
      */
     public addPlayer(player: Player){
+        if(this.status !== GameStatus.PENDING){
+            throw new Error("Game not pending");
+        }
         this.players.set(player.id, player);
         this.broadcastUpdate();
     }
@@ -155,7 +158,7 @@ export class Game {
                 numTracks: this.playlist.tracks.total
             },
             players: playerStates,
-            audioURLs: this.rounds.map((round) => round.previewURL)
+            rounds: this.rounds.map((round) => round.previewURL)
         }
     }
 

@@ -1,12 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import * as SpotifyAPI from "./caller";
-import * as GameDriver from "./GameManager";
+import * as GameManager from "./GameManager";
 import { PlayerConnection } from "./types";
 import { getToken, verifyToken } from "./auth";
 import { MAX_USERNAME_LENGTH } from "../shared/constants";
 
 type PlayerRequest = Request & { playerId?: string }
-
 
 /**
  * Middleware to ensure the request has an id param
@@ -32,7 +31,7 @@ export async function authenticate(req: PlayerRequest, res: Response, next: Next
 
     try {
         let playerId = verifyToken(token).toString();
-        GameDriver.getPlayer(playerId);
+        GameManager.getPlayer(playerId);
         req.playerId = playerId;
     } catch (e: any) {
         return res.status(401).json({ error: `Authentication failed: ${e.message}` });
@@ -115,7 +114,7 @@ export async function makeNewGame(req: Request, res: Response) {
     }
 
     //Create the game and register it with game driver
-    GameDriver.generateNewGame(playlist, numRounds).then((game) => {
+    GameManager.generateNewGame(playlist, numRounds).then((game) => {
         //Respond to sender with game ID
         res.status(200).json({ id: game.id, numRounds: game.rounds.length, playlistId: playlistId });
     }).catch((error) => {
@@ -159,7 +158,7 @@ export async function registerNewPlayer(req: Request, res: Response) {
     }
 
     //Create player object
-    GameDriver.registerNewPlayer(name).then((player) => {
+    GameManager.registerNewPlayer(name).then((player) => {
         //Get the token for the player
         let token = getToken(player.id);
 
@@ -205,7 +204,7 @@ export async function joinGame(req: PlayerRequest, res: Response) {
     }
 
     console.log(`Handling request to add player ${playerId} to game ${gameId}`);
-    GameDriver.addPlayerToGame(playerId, gameId).then(() => {
+    GameManager.addPlayerToGame(playerId, gameId).then(() => {
         return res.status(200).send("Successfully added player to game");
     }).catch((error) => {
         console.error(`Unable to add player ${playerId} to game ${gameId}:`, error.message);
@@ -228,29 +227,8 @@ export async function joinGame(req: PlayerRequest, res: Response) {
  *  - GameState[] List containing a state for each joinable game
  */
 export async function getGames(req: PlayerRequest, res: Response) {
-    res.status(200).json(GameDriver.getGameStates());
+    res.status(200).json(GameManager.getGameStates());
 }
-
-
-// /**
-//  * WS JOIN_GAME
-//  * Adds the player that made the request to the requested game
-//  * 
-//  * Data: (string) The ID of the game to join
-//  */
-// export async function joinGameWS(connection: PlayerConnection, data: any) {
-//     let playerId = connection.playerId;
-//     let gameId = data;
-//     console.log(`Handling request to add player ${playerId} to game ${gameId}`);
-
-//     if (!playerId || !gameId) {
-//         console.error(`Unable to add player to game: Both player ID and game ID must be provided`);
-//         return;
-//     }
-//     GameDriver.addPlayerToGame(playerId, gameId).catch((error) => {
-//         console.error(`Unable to add player ${playerId} to game ${gameId}:`, error.message);
-//     });
-// }
 
 
 /**
@@ -268,7 +246,7 @@ export async function leaveGame(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameDriver.removePlayerFromGame(playerId).catch((error) => {
+    GameManager.removePlayerFromGame(playerId).catch((error) => {
         console.error(`Unable to remove player ${playerId} from game.`, error.message);
     });
 }
@@ -287,7 +265,7 @@ export async function readyPlayer(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameDriver.readyPlayer(playerId).catch((error) => {
+    GameManager.readyPlayer(playerId).catch((error) => {
         console.error(`Unable to ready player ${playerId}`, error.message);
     });
 }
@@ -306,7 +284,7 @@ export async function unreadyPlayer(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameDriver.unreadyPlayer(playerId).catch((error) => {
+    GameManager.unreadyPlayer(playerId).catch((error) => {
         console.error(`Unable to unready player ${playerId}`, error.message);
     });
 }
