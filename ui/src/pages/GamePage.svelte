@@ -111,7 +111,7 @@
     }
 
     #playlist-label {
-        font-size: 14pt;
+        font-size: 1rem;
         color: white;
         font-weight: 200;
         margin-bottom: -5px;
@@ -119,12 +119,12 @@
 
     .section-label {
         color: white;
-        font-size: 18pt;
+        font-size: 1.3rem;
         font-weight: 400;
     }
 
     #playlist-title {
-        font-size: 26pt;
+        font-size: 1.9rem;
         color: white;
         font-weight: 700;
         margin-bottom: 5px;
@@ -167,7 +167,7 @@
         background-image: radial-gradient(circle at top left, #888, #ccc, #aaa);
         background-size: cover;
         font-weight: 700;
-        font-size: 26pt;
+        font-size: 1.9rem;
         color: white;
         padding: 5px;
         padding-inline: 50px;
@@ -197,7 +197,7 @@
 
     #id-view-label {
         font-weight: 500;
-        font-size: 12pt;
+        font-size: 0.9rem;
         margin-bottom: -5px;
     }
 
@@ -211,7 +211,7 @@
         bottom: 0px;
         left: 50%;
         transform: translate(-50%);
-        font-size: 32pt;
+        font-size: 2.4rem;
         padding: 20px;
         padding-inline: 30px;
         font-weight: 800;

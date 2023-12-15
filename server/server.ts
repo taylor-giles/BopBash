@@ -8,6 +8,7 @@ import { IncomingMessage } from 'http';
 import { verifyToken } from './auth';
 import * as GameDriver from './GameManager';
 import { WebSocketRoute } from '../shared/ws-routes';
+import cors from 'cors';
 
 const EXPRESS_PORT = 5000;
 const WS_PORT = 5001;
@@ -20,6 +21,12 @@ consoleStamp.default(console, {
 
 //Configure express server
 const app = express();
+// Enable CORS for all routes or specific routes as needed
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
 app.use(express.json());
 app.listen(EXPRESS_PORT, () => {
     console.log(`Express server listening on port ${EXPRESS_PORT}.`);

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
+import type { GameState } from '../../shared/types';
 
 const apiCaller = axios.create({
     baseURL: API_ADDRESS,
@@ -29,7 +30,7 @@ export async function getPlaylistData(id: string): Promise<any>{
  */
 export async function registerPlayer(name: string): Promise<{playerId: string, token: string} | undefined>{
     return apiCaller.post('/registerNewPlayer', {name: name}).then((res) => {
-        if(res.data.error){
+        if(res?.data?.error){
             console.error("Failed to register new player: ", res?.data?.error);
             return;
         }
@@ -37,5 +38,20 @@ export async function registerPlayer(name: string): Promise<{playerId: string, t
     }).catch((error) => {
         console.error("Failed to register new player: ", error);
         return;
+    });
+}
+
+
+
+export async function getGames(): Promise<GameState[]>{
+    return apiCaller.get('/getGames').then((res) => {
+        if(res?.data?.error){
+            console.error("Failed to obtain list of games: ", res?.data?.error);
+            return [];
+        }
+        return res?.data;
+    }).catch((error) => {
+        console.error("Failed to obtain list of games: ", error);
+        return [];
     });
 }

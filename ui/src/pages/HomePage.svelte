@@ -1,21 +1,23 @@
 <script lang="ts">
+    import { CurrentPage, Page } from "../../pageStore";
     import GameIdForm from "../components/GameIDForm.svelte";
     import SelectionButton from "../components/SelectionButton.svelte";
 </script>
 
 <main>
     <div id="selection-buttons-container">
-        <div style="flex:1; width:0px;">
+        <div style="flex:1; width:0px; box-sizing:border-box;">
             <SelectionButton
-                title="Find Games"
+                title="Find Game"
                 description="Find and join public games made by other players"
                 instruction="Get Started"
+                on:click={() => CurrentPage.set(Page.FIND)}
             />
         </div>
 
-        <div style="flex:1; width:0px;">
+        <div style="flex:1; width:0px; box-sizing:border-box;">
             <SelectionButton
-                title="Create New Game"
+                title="Create Game"
                 description="Start a new game from a playlist of your choice"
                 instruction="Get Started"
             />
@@ -27,6 +29,7 @@
 
 <style>
     main {
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -36,19 +39,14 @@
     }
 
     #selection-buttons-container {
+        box-sizing: border-box;
         width: 100%;
         max-width: 700px;
-        min-width: 430px;
+        min-width: 440px;
         display: flex;
         flex-direction: row;
         justify-content: center;
         align-items: stretch;
         gap: 25px;
-    }
-
-    #filler {
-        flex: 1;
-        height: 100%;
-        width: 100%;
     }
 </style>

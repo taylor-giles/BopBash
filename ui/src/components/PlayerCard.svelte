@@ -29,7 +29,7 @@
         padding: 20px;
         justify-content: center;
         align-items: center;
-        font-size: 18pt;
+        font-size: 1.3rem;
     }
     main.highlighted {
         background-color: rgba(255, 255, 255, 0.7);

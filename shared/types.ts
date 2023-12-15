@@ -27,7 +27,7 @@ export type GameState = {
         numTracks: number
     },
     status: GameStatus,
-    audioURLs: string[]
+    rounds: string[]
 }
 
 // export enum GameUpdateType {
