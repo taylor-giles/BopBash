@@ -3,14 +3,11 @@
     import CheckOutlineIcon from "svelte-material-icons/CheckCircleOutline.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
     import { IFrameAPI } from "../../IFrameAPI";
-    import {
-        GameStore,
-        GameConnection,
-        PlayerConnection,
-    } from "../../gameStore";
-    import SpotifyMetadataView from "../components/SpotifyMetadataView.svelte";
+    import { GameStore, GameConnection } from "../../gameStore";
     import GameAPI from "../../api/api";
     import PlayerCard from "../components/PlayerCard.svelte";
+    import { CurrentPage, Page } from "../../pageStore";
+    import ConfirmationModal from "../components/ConfirmationModal.svelte";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -36,8 +33,7 @@
         };
         const callback = (EmbedController: any) => {
             EmbedController.addListener("ready", () => {
-                console.log(EmbedController);
-                EmbedController.sendMessageToEmbed("hi");
+                console.log("Embed controller is ready");
             });
         };
         embedAPI.createController(element, options, callback);
@@ -53,6 +49,12 @@
         }, 0);
     }
 
+    //Modal opens iff this is true
+    let isModalOpen = false;
+
+    /**
+     * Toggle player's ready state
+     */
     function toggleReady() {
         console.log(myPlayerState);
         if (myPlayerState.isReady) {
@@ -61,12 +63,23 @@
             GameAPI.readyPlayer();
         }
     }
+
+    /**
+     * Removes this player from this game and leaves this page
+     */
+    function leave() {
+        GameAPI.leaveGame();
+        CurrentPage.set(Page.HOME);
+    }
 </script>
 
 <div id="id-view" class="header-text">
     <div id="id-view-label" class="header-text">GAME ID:</div>
     {gameState.id}
 </div>
+<button id="back-btn" on:click={() => (isModalOpen = true)}
+    >&lt Leave Game</button
+>
 <main>
     <div id="embed-section">
         <div id="playlist-label" class="body-text">Game Playlist:</div>
@@ -85,7 +98,7 @@
         </div>
         <div id="players-container">
             {#each playerList as player}
-                <PlayerCard {player} highlight={player === myPlayerState}/>
+                <PlayerCard {player} highlight={player === myPlayerState} />
             {/each}
         </div>
     </div>
@@ -97,6 +110,15 @@
         <CheckOutlineIcon /> READY
     {/if}
 </button>
+
+<!-- Confirmation modal for leaving game -->
+{#if isModalOpen}
+    <ConfirmationModal
+        on:no={() => (isModalOpen = false)}
+        on:yes={leave}
+        bodyText="Are you sure you want to leave this game?"
+    />
+{/if}
 
 <style>
     main {
@@ -216,5 +238,16 @@
         padding-inline: 30px;
         font-weight: 800;
         margin-bottom: 50px;
+    }
+
+    #back-btn {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        background-color: transparent;
+        border: none;
+        color: white;
+        padding: 0px;
+        margin: 32px;
     }
 </style>

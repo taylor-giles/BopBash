@@ -53,6 +53,7 @@ export async function joinGame(gameId: string): Promise<string> {
     });
 }
 
+
 /**
  * Informs the server that this player is READY
  */
@@ -66,4 +67,12 @@ export async function readyPlayer() {
  */
 export async function unreadyPlayer() {
     sendWSRequest(WebSocketRoute.UNREADY);
+}
+
+
+/**
+ * Removes this player from their active game
+ */
+export async function leaveGame() {
+    sendWSRequest(WebSocketRoute.LEAVE_GAME);
 }

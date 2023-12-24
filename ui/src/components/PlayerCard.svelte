@@ -32,7 +32,7 @@
         font-size: 1.3rem;
     }
     main.highlighted {
-        background-color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(235, 235, 235, 0.7);
         color: black;
     }
 </style>

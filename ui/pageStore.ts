@@ -3,11 +3,12 @@ import { writable } from 'svelte/store';
 
 
 export enum Page {
-    LOGIN = "Login",
-    HOME = "Home",
-    GAME = "Game",
-    FIND = "Find",
-  }
+  LOGIN = "Login",
+  HOME = "Home",
+  LOBBY = "Lobby",
+  GAME = "Game",
+  FIND = "Find",
+}
 
 /**
  * A Svelte store that provides access to the currently active UI page

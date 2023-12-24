@@ -2,8 +2,10 @@
     import type { GameState } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import { joinGame } from "../../api/player-api";
+    import { CurrentPage, Page } from "../../pageStore";
     import GameCard from "../components/GameCard.svelte";
 
+    //"Refreshing" indicator is shown iff this is true
     let isRefreshing = false;
 
     //Initialize games list by performing a refresh
@@ -20,9 +22,17 @@
         games = await GameAPI.getGames();
         isRefreshing = false;
     }
+
+    /**
+     * Return to home page
+     */
+    function handleBackClick(){
+        CurrentPage.set(Page.HOME);
+    }
 </script>
 
 <main>
+    <button id="back-btn" on:click={handleBackClick}>&lt Back</button>
     <div id="content">
         {#if !isRefreshing}
             <div id="games-container">
@@ -37,7 +47,7 @@
             Refreshing...
         {/if}
     </div>
-    <button on:click={refresh}>refresh</button>
+    <button on:click={refresh}>Refresh</button>
 </main>
 
 <style>
@@ -53,6 +63,9 @@
     #content {
         width: 100%;
         flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     #games-container {
@@ -73,5 +86,12 @@
         width: 400px;
         max-width: 100%;
         height: 270px;
+    }
+
+    #back-btn {
+        background-color: transparent;
+        border: none;
+        color: white;
+        padding: 0px;
     }
 </style>
