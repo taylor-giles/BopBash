@@ -37,7 +37,7 @@
 
     <form on:submit={handleSubmit}>
         <input id="username-input" class="header-text" type="text" placeholder="Username" bind:value={username}/>
-        <div id="fail-text" class="body-text" style={`visibility: ${failed ? "visible" : "collapse"}`}>
+        <div id="fail-text" class="body-text" style={`display: ${failed ? "flex" : "none"}`}>
             {failText}
         </div>
     

@@ -131,6 +131,7 @@ export class Game {
      */
     public async start(){
         this.status = GameStatus.ACTIVE;
+        console.log(`Started game ${this.id} (${this.playlist.name})`);
         this.broadcastUpdate();
     }
 
