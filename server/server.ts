@@ -21,12 +21,16 @@ consoleStamp.default(console, {
 
 //Configure express server
 const app = express();
+
 // Enable CORS for all routes or specific routes as needed
+//TODO: REMOVE THIS!! It is only here to allow for dev over SSH.
 app.use(cors({
     origin: 'http://localhost:5173',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
+}));
+
+
 app.use(express.json());
 app.listen(EXPRESS_PORT, () => {
     console.log(`Express server listening on port ${EXPRESS_PORT}.`);

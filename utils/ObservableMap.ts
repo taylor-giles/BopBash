@@ -1,7 +1,7 @@
 export type MapChangeCallback<K, V> = (key: K, value: V) => void
 
 /**
- * A wrapper for Map which calls predefined callbacks whenever an element is set or deleted.
+ * A wrapper for Map which calls predefined custom callbacks whenever an element is set or deleted.
  */
 export default class ObservableMap<K, V> extends Map<K, V>{
     private onSet?: MapChangeCallback<K, V>;
