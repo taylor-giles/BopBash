@@ -11,6 +11,7 @@ type PlayerRequest = Request & { playerId?: string }
  * Middleware to ensure the request has an id param
  */
 export async function ensureId(req: Request, res: Response, next: NextFunction) {
+    //Verify id is present
     if (!req?.params?.id) {
         return res.status(400).json({ error: "Request must include an id param" });
     }
@@ -24,11 +25,14 @@ export async function ensureId(req: Request, res: Response, next: NextFunction) 
  */
 export async function authenticate(req: PlayerRequest, res: Response, next: NextFunction) {
     const token = req?.headers?.authorization?.split(' ')[1];
+
+    //Ensure token is present
     if (!token || !req?.headers?.authorization?.startsWith("Bearer")) {
         console.log(JSON.stringify(req.headers))
         return res.status(401).json({ error: "Authentication failed: Token not provided" });
     }
 
+    //Verify the player
     try {
         let playerId = verifyToken(token).toString();
         GameManager.getPlayer(playerId);
@@ -61,6 +65,7 @@ export async function getPlaylistData(req: Request, res: Response) {
     let id = req.params.id;
     console.log("Handling request for playlist data. ID: ", id);
 
+    //Ensure ID is provided
     if (!id) {
         return res.status(400).json({ error: "Playlist ID must be provided" });
     }
@@ -98,6 +103,7 @@ export async function makeNewGame(req: Request, res: Response) {
     let playlistId = req?.body?.playlistId;
     let numRounds = req?.body?.numRounds;
 
+    //Ensure all needed information is provided
     if (!playlistId || !numRounds) {
         return res.status(400).json({ error: "Both playlistId and numRounds must be specified in request body." });
     }
@@ -145,6 +151,7 @@ export async function makeNewGame(req: Request, res: Response) {
 export async function registerNewPlayer(req: Request, res: Response) {
     let name = req?.body?.name;
 
+    //Ensure name is provided
     if (!name) {
         return res.status(400).json({ error: "Name must be specified in request body." });
     }
@@ -198,8 +205,9 @@ export async function joinGame(req: PlayerRequest, res: Response) {
     let playerId = req.playerId;
     let gameId = req?.params?.id;
 
+    //Ensure player ID and game ID are provided
+    //(Middleware should ensure this never happens, but just in case)
     if (!gameId || !playerId) {
-        //Middleware should ensure this never happens
         return res.status(400).json({ error: `Malformed request` });
     }
 
