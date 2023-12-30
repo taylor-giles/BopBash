@@ -6,7 +6,7 @@ import * as consoleStamp from 'console-stamp';
 import { PlayerConnection } from './types';
 import { IncomingMessage } from 'http';
 import { verifyToken } from './auth';
-import * as GameDriver from './GameManager';
+import * as GameManager from './GameManager';
 import { WebSocketRoute } from '../shared/ws-routes';
 import cors from 'cors';
 
@@ -59,7 +59,7 @@ wsServer.on('connection', (ws: PlayerConnection, req: IncomingMessage) => {
         let playerId = verifyToken(token).toString();
 
         //Attach player to WS
-        GameDriver.establishPlayerConnection(playerId, ws).catch((error) => {
+        GameManager.establishPlayerConnection(playerId, ws).catch((error) => {
             ws.close();
             console.error(`Unable to establish player connection for player ${playerId}:`, error.message);
         });
@@ -106,10 +106,6 @@ wsServer.on("close", () => {
 //Make sure access token is maintained (initialize API caller)
 console.log("Initializing Spotify API.");
 SpotifyAPI.maintainAccessToken();
-
-// for(let i = 0; i < 50; i++){
-//     console.log(generateNewPlayerId());
-// }
 
 
 // getTrackPreviewURL("02MiyVckOBtygUOEDnV7Pd")

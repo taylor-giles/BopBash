@@ -22,9 +22,6 @@ export function routeWebsocketRequest(clientConnection: PlayerConnection, req: W
 
   //Determine which function to use based on the provided route
   switch (req.type) {
-    // case WebSocketRoute.JOIN_GAME:
-    //   handler = Controller.joinGameWS;
-    //   break;
     case WebSocketRoute.LEAVE_GAME:
       handler = Controller.leaveGame;
       break;
