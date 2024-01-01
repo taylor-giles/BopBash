@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import WebSocket, { WebSocketServer } from 'ws';
 import * as SpotifyAPI from "./caller";
@@ -9,8 +11,7 @@ import { verifyToken } from './auth';
 import * as GameManager from './GameManager';
 import { WebSocketRoute } from '../shared/ws-routes';
 import cors from 'cors';
-import * as dotenv from 'dotenv';
-dotenv.config();
+
 
 const EXPRESS_PORT = parseInt(process.env.EXPRESS_PORT ?? "5000");
 const WS_PORT = parseInt(process.env.WS_PORT ?? "5001");
