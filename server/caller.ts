@@ -5,8 +5,8 @@ import { load as cheerio } from "cheerio";
 import { playlistFields, tracksFields } from "./types";
 import { Playlist, Track } from "../shared/types";
 
-const CLIENT_ID = "SECRET";
-const CLIENT_SECRET = "SECRET";
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const TRACK_NUM_LIMIT = 2000; //Global hard limit on the number of tracks to pull from a playlist
 
 //API Access Variables
@@ -39,7 +39,7 @@ function whenAPIReady(cb: () => void, skipAccessToken = false) {
 
 
 /**
- * Wrapper for making an HTTPS request. Propagates result using the provided callback.
+ * Wrapper for making an HTTPS request.
  * @param requestOptions Request options object to be used for the request.
  * @param formData Optional dictionary containing form data to be included with the request.
  * @returns A promise containing the result of the request in the form of a RequestResult typed object.

@@ -9,9 +9,11 @@ import { verifyToken } from './auth';
 import * as GameManager from './GameManager';
 import { WebSocketRoute } from '../shared/ws-routes';
 import cors from 'cors';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-const EXPRESS_PORT = 5000;
-const WS_PORT = 5001;
+const EXPRESS_PORT = parseInt(process.env.EXPRESS_PORT ?? "5000");
+const WS_PORT = parseInt(process.env.WS_PORT ?? "5001");
 const WS_PING_INTERVAL = 20000;
 
 //Add timestamps to all logs
@@ -22,7 +24,7 @@ consoleStamp.default(console, {
 //Configure express server
 const app = express();
 
-// Enable CORS for all routes or specific routes as needed
+// Enable CORS
 //TODO: REMOVE THIS!! It is only here to allow for dev over SSH.
 app.use(cors({
     origin: 'http://localhost:5173',

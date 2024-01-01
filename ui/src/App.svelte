@@ -32,9 +32,11 @@
     gameState = value;
   });
 
-  //Switch to lobby page when game status is pending
+  //Change active page based on game status
   $: if (gameState?.status == GameStatus.PENDING) {
     CurrentPage.set(Page.LOBBY);
+  } else if (gameState?.status == GameStatus.ACTIVE) {
+    CurrentPage.set(Page.GAME);
   }
 </script>
 

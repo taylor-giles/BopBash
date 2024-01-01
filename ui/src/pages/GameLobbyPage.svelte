@@ -16,7 +16,6 @@
     });
 
     //Maintain a reference to the current state of this player
-    let myPlayerState: PlayerState;
     $: myPlayerState = gameState.players[$GameConnection.playerId];
 
     //Show the playlist in an embedded iframe once everything is loaded
