@@ -22,7 +22,7 @@
 
     <div class="container">
         <div class="property-display body-text">
-            Rounds: {game.rounds.length}
+            Rounds: {game.numRounds}
         </div>
         <div class="property-display body-text">
             Players: {Object.values(game.players ?? {}).length}

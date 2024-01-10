@@ -120,7 +120,8 @@ export async function generateNewGame(playlist: Playlist, numRounds: number): Pr
 
     //Set up timeout to end this game if it is active for too long
     setTimeout(() => {
-        stopGame(newGame.id).then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to being active for too long`); }).catch((error) => {
+        console.log(`Stopping game ${newGame.id} (${playlist.name}) due to being active for too long`);
+        stopGame(newGame.id).catch((error) => {
             console.error(`Failed to stop game ${newGame.id} (${newGame.playlist.name}) due to being active for too long:`, error.message);
         });
     }, MAX_GAME_LIFETIME);
@@ -205,6 +206,17 @@ export async function unreadyPlayer(playerId: string) {
     player.activeGame?.broadcastUpdate();
 
     console.log(`Unreadied player ${player.id} (${player.name})`);
+}
+
+
+/**
+ * Starts the indicated round for the indicated player
+ * @param playerId The ID of the player starting this round
+ * @param roundNum The index of the round to start
+ */
+export async function startRoundForPlayer(playerId: string, roundNum: number): Promise<string | undefined>{
+    let player = getPlayer(playerId);
+    return player.startRound(roundNum);
 }
 
 

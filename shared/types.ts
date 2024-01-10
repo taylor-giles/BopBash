@@ -4,9 +4,16 @@ export enum GameStatus {
     ENDED="Ended"
 }
 
-export type Round = {
-    trackId: string,
-    previewURL: string
+export class Round {
+    trackId: string;
+    previewURL: string;
+    startTimes: Record<string, number>;
+
+    public constructor(trackId: string, previewURL: string){
+        this.trackId = trackId,
+        this.previewURL = previewURL;
+        this.startTimes = {};
+    }
 }
 
 export type PlayerState = {
@@ -27,7 +34,7 @@ export type GameState = {
         numTracks: number
     },
     status: GameStatus,
-    rounds: string[]
+    numRounds: number,
 }
 
 // export enum GameUpdateType {
