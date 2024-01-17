@@ -15,12 +15,17 @@ export class Game {
     rounds: Round[];
     status: GameStatus;
 
+    //A table (scores[playerId][roundNum]) to store scores for each player for each round
+    scores: Record<string, Array<number | null>>
+
+    //Constructor
     private constructor(id: string, playlist: Playlist) {
         this.id = id;
         this.playlist = playlist;
         this.players = new ObservableMap(() => this.broadcastUpdate(), () => this.broadcastUpdate());
         this.rounds = [];
         this.status = GameStatus.PENDING;
+        this.scores = {};
     }
 
 
@@ -29,6 +34,7 @@ export class Game {
      * (Async replacement for a constructor)
      * @param id The ID of the new game
      * @param playlist The playlist that this game will be played on
+     * @param desiredNumRounds The desired number of rounds for this game
      */
     public static async newInstance(id: string, playlist: Playlist, desiredNumRounds: number): Promise<Game> {
         let newGame = new Game(id, playlist);
@@ -84,6 +90,44 @@ export class Game {
             throw new Error("Game not pending");
         }
         this.players.set(player.id, player);
+
+        //Add a row in the points table for this player - one cell for each round, where every value is null
+        this.scores[player.id] = Array.from(this.rounds, ()=>null);
+
+        //Broadcast update to all players
+        this.broadcastUpdate();
+    }
+
+
+    /**
+     * Updates the game state to reflect the specified player making the specified guess
+     * @param playerId The ID of the player making the guess
+     * @param roundNum The index of the round being played
+     * @param trackId The ID of the track being guessed
+     */
+    public submitPlayerGuess(playerId: string, roundNum: number, trackId: string){
+        //Ensure this player is part of this game
+        if(!this.players.has(playerId)){
+            throw new Error(`Player ${playerId} is not part of game ${this.id} (${this.playlist.name})`);
+        }
+
+        //Get the round
+        let round = this.rounds?.[roundNum];
+        if(!round){
+            throw new Error(`Round ${roundNum} does not exist in game ${this.id} (${this.playlist.name})`);
+        }
+
+        //Determine the number of points for this guess
+        let isCorrect = trackId === round.trackId;
+        let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTimes?.[playerId] ?? 0;
+        let numPoints = (30*1000) - timeElapsed;
+
+        //Update this player's point count for this round
+        if(isCorrect){
+            this.scores[playerId][roundNum] = numPoints
+        }
+
+        //Update all players
         this.broadcastUpdate();
     }
 
@@ -235,6 +279,20 @@ export class Player {
 
 
     /**
+     * Submits the specified guess to the specified round of the active game
+     * @param roundNum The index of the round being played
+     * @param trackId The ID of the track being guessed
+     */
+    public submitGuess(roundNum: number, trackId: string){
+        if(this.activeGame){
+            this.activeGame.submitPlayerGuess(this.id, roundNum, trackId);
+        } else {
+            throw new Error(`Player not currently in a game`);
+        }
+    }
+
+
+    /**
      * Ensures that this player has no active game
      */
     public leaveGame() {
@@ -264,9 +322,8 @@ export class Player {
         return {
             id: this.id,
             name: this.name,
-            score: 0, //TODO: Implement scores
+            scores: this.activeGame?.scores?.[this.id] ?? [],
             isReady: this.isReady
         }
     }
-
 }

@@ -284,6 +284,51 @@ export async function startRound(req: PlayerRequest, res: Response) {
 
 
 /**
+ * POST /submitGuess
+ * Registers the specified track as the player's guess for the specified round
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - roundNum: number - The index of the round to start
+ *  - trackId: string - The ID of the guessed track
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - None.
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function submitGuess(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId; //Guaranteed by middleware
+    let roundNum = req.body?.roundNum;
+    let trackId = req.body?.trackId;
+
+    //Ensure playerId is provided
+    if (!playerId) {
+        //Middleware should guarantee that this never happens
+        return res.status(400).json({ error: "playerId must be provided" })
+    }
+
+    //Ensure round number and track ID are provided
+    if (roundNum === undefined || trackId === undefined) {
+        return res.status(400).json({ error: "roundNum and trackId must be specified" });
+    }
+
+    console.log(`Handling request to submit guess ${trackId} for round ${roundNum} for player ${playerId}`);
+
+    //Submit the guess
+    GameManager.submitGuessForPlayer(playerId, roundNum, trackId).then(() => {
+        res.status(200).send();
+    }).catch(error => {
+        console.error(`Unable to submit guess ${trackId} for round ${roundNum} for player ${playerId}.`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
+
+
+/**
  * WS LEAVE_GAME
  * Removes the player that made the request from their active game
  * 

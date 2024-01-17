@@ -15,6 +15,13 @@ const MAX_EMPTY_GAME_LIFETIME = 5 * 60 * 1000; //5 minutes
 let activeGames = new ObservableMap<string, Game>();
 let activePlayers = new ObservableMap<string, Player>();
 
+
+/**
+ * Checks if the requested playerId is present in activePlayers
+ * @param playerId The ID of the player
+ * @returns The requested Player object
+ * @throws Error when the requested player does not exist
+ */
 export function getPlayer(playerId: string): Player {
     let player = activePlayers.get(playerId);
     if (!player) {
@@ -23,6 +30,13 @@ export function getPlayer(playerId: string): Player {
     return player;
 }
 
+
+/**
+ * Checks if the requested gameId is present in activeGames
+ * @param gameId The ID of the game
+ * @returns The requested Game object
+ * @throws Error when the requested game does not exist
+ */
 export function getGame(gameId: string): Game {
     let game = activeGames.get(gameId);
     if (!game) {
@@ -215,8 +229,20 @@ export async function unreadyPlayer(playerId: string) {
  * @param roundNum The index of the round to start
  */
 export async function startRoundForPlayer(playerId: string, roundNum: number): Promise<string | undefined>{
-    let player = getPlayer(playerId);
-    return player.startRound(roundNum);
+    //Make sure the player exists and start the round for them
+    return getPlayer(playerId).startRound(roundNum);
+}
+
+
+/**
+ * Submits the specified player's guess for the specified round
+ * @param playerId The player submitting the guess
+ * @param roundNum The index of the round being played
+ * @param trackId The ID of the track being guessed
+ */
+export async function submitGuessForPlayer(playerId: string, roundNum: number, trackId: string){
+    //Make sure the player exists and submit the guess for them
+    return getPlayer(playerId).submitGuess(roundNum, trackId);
 }
 
 

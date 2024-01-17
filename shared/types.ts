@@ -7,7 +7,7 @@ export enum GameStatus {
 export class Round {
     trackId: string;
     previewURL: string;
-    startTimes: Record<string, number>;
+    startTimes: Record<string, number>; //Maps player ID to the time that player started this round
 
     public constructor(trackId: string, previewURL: string){
         this.trackId = trackId,
@@ -19,7 +19,7 @@ export class Round {
 export type PlayerState = {
     id: string,
     name: string,
-    score: number,
+    scores: Array<number | null>,
     isReady: boolean
 }
 
