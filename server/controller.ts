@@ -1,3 +1,9 @@
+/**
+ * The Controller is responsible for handling/forwarding user requests.
+ * Some requests get forwarded to the GameManager, while others
+ * are forwarded to particular game instances, obtained from the GameManager.
+ */
+
 import { NextFunction, Request, Response } from "express";
 import * as SpotifyAPI from "./caller";
 import * as GameManager from "./GameManager";
@@ -236,7 +242,7 @@ export async function joinGame(req: PlayerRequest, res: Response) {
  *  - GameState[] List containing a state for each joinable game
  */
 export async function getGames(req: PlayerRequest, res: Response) {
-    res.status(200).json(GameManager.getGameStates());
+    return res.status(200).json(GameManager.getGameStates());
 }
 
 
@@ -273,13 +279,12 @@ export async function startRound(req: PlayerRequest, res: Response) {
 
     console.log(`Handling request to start round ${roundNum} for player ${playerId}`);
 
-    //Start the round
-    GameManager.startRoundForPlayer(playerId, roundNum).then((audioURL) => {
-        res.status(200).send(audioURL);
-    }).catch(error => {
-        console.error(`Unable to start round ${roundNum} for player ${playerId}.`, error.message);
-        return res.status(500).json({ error: error.message });
-    });
+    try {
+        let game = GameManager.getPlayerActiveGame(playerId);
+    } catch(error) {
+        console.error(`Unable to start round ${roundNum} for player ${playerId}: `, error.message);
+        return res.status(500).json({error: error.message});
+    }
 }
 
 
@@ -317,14 +322,14 @@ export async function submitGuess(req: PlayerRequest, res: Response) {
     }
 
     console.log(`Handling request to submit guess ${trackId} for round ${roundNum} for player ${playerId}`);
-
-    //Submit the guess
-    GameManager.submitGuessForPlayer(playerId, roundNum, trackId).then(() => {
-        res.status(200).send();
-    }).catch(error => {
+    try {
+        let game = GameManager.getPlayerActiveGame(playerId);
+        game.submitPlayerGuess(playerId, roundNum, trackId);
+        return res.status(200).send();
+    } catch(error) {
         console.error(`Unable to submit guess ${trackId} for round ${roundNum} for player ${playerId}.`, error.message);
         return res.status(500).json({ error: error.message });
-    });
+    }
 }
 
 
@@ -362,9 +367,15 @@ export async function readyPlayer(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameManager.readyPlayer(playerId).catch((error) => {
+    try {
+        //Get the game for this player
+        let game = GameManager.getPlayerActiveGame(playerId);
+
+        //Ready the player
+        game.readyPlayer(playerId);
+    } catch(error) {
         console.error(`Unable to ready player ${playerId}`, error.message);
-    });
+    }
 }
 
 
@@ -381,9 +392,15 @@ export async function unreadyPlayer(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameManager.unreadyPlayer(playerId).catch((error) => {
+    try {
+        //Get the game for this player
+        let game = GameManager.getPlayerActiveGame(playerId);
+
+        //Unready the player
+        game.unreadyPlayer(playerId);
+    } catch(error) {
         console.error(`Unable to unready player ${playerId}`, error.message);
-    });
+    }
 }
 
 

@@ -1,3 +1,11 @@
+/**
+ * The GameManager is responsible for maintaining information about active games and players,
+ * and facilitating actions that happen outside of a particular game, such as:
+ *  - Creating & destroying games & players
+ *  - Adding & removing players to/from games
+ *  - Keeping track of and serving game & player instances
+ */
+
 import ObservableMap from '../utils/ObservableMap';
 import { Game, Player } from './Game';
 import { PlayerConnection } from './types';
@@ -14,6 +22,9 @@ const MAX_EMPTY_GAME_LIFETIME = 5 * 60 * 1000; //5 minutes
 // Maps for storing currently active games/players by ID
 let activeGames = new ObservableMap<string, Game>();
 let activePlayers = new ObservableMap<string, Player>();
+
+//Maps player ID to the ID of the player's active game
+let playerGames = new ObservableMap<string, string>();
 
 
 /**
@@ -47,6 +58,21 @@ export function getGame(gameId: string): Game {
 
 
 /**
+ * Returns the Game object for the specified player's current active game
+ * @param playerId The ID of the player to query on
+ * @returns The Game object for the player's active game
+ * @throws Error if the player is not in an active game
+ */
+export function getPlayerActiveGame(playerId: string): Game {
+    let gameId = playerGames.get(playerId);
+    if(!gameId){
+        throw new Error(`Unable to find active game for player ${playerId}`);
+    }
+    return getGame(gameId);
+}
+
+
+/**
  * Returns a list of GameStates for all joinable games
  * @returns A list containing a GameState for each active pending game
  */
@@ -54,6 +80,7 @@ export function getGameStates(): GameState[] {
     let games = Array.from(activeGames.values()).filter((game) => game.status == GameStatus.PENDING);
     return games.map((game) => game.getState());
 }
+
 
 /**
  * Generates a unique game ID
@@ -107,11 +134,11 @@ export async function establishPlayerConnection(playerId: string, connection: Pl
     connection.playerId = player.id;
     player.connection = connection;
 
-    //Configure behavior for broken connection
+    //Kill player when connection breaks
     connection.on("close", () => {
         console.log(`Connection broken for player ${player.id} (${player.name})`);
-        removePlayerFromGame(player.id).catch((error) => {
-            console.error(`Unable to remove player ${player.id} from game:`, error.message);
+        killPlayer(player.id).catch((error) => {
+            console.error(`Unable to kill player ${player.id}:`, error.message);
         });
     });
 
@@ -156,13 +183,13 @@ export async function addPlayerToGame(playerId: string, gameId: string) {
     let game = getGame(gameId.toUpperCase());
 
     //Remove player from current game
-    player.leaveGame();
+    removePlayerFromGame(playerId);
 
     //Add the player to the game
     game.addPlayer(player);
 
-    //Set the game as the player's active game
-    player.activeGame = game;
+    //Add an entry to the map
+    playerGames.set(playerId, game.id);
 
     console.log(`Added player ${player.id} (${player.name}) to game ${game.id} (${game.playlist.name})`);
 }
@@ -174,75 +201,21 @@ export async function addPlayerToGame(playerId: string, gameId: string) {
  */
 export async function removePlayerFromGame(playerId: string) {
     let player = getPlayer(playerId);
-    let game = player.activeGame;
-    if (!game) {
-        return;
+
+    //Check if the player is in a game
+    if(player?.activeGameInfo?.gameId){
+        let game = getGame(player.activeGameInfo.gameId);
+
+        //Remove the player from the game
+        game.removePlayer(playerId);
+
+        //Remove the map entry
+        playerGames.delete(playerId);
+
+        console.log(`Removed player ${player.id} (${player.name}) from game ${game.id} (${game.playlist.name})`);
     }
-    player.leaveGame();
-    console.log(`Removed player ${player.id} (${player.name}) from game ${game.id} (${game.playlist.name})`);
-}
-
-
-/**
- * Sets the status of the given player to READY
- * @param playerId The ID of the player to ready
- */
-export async function readyPlayer(playerId: string) {
-    let player = getPlayer(playerId);
-
-    //Set player status to ready
-    player.isReady = true;
-
-    let playerGame = player.activeGame
-    if (playerGame) {
-        //Update all players of this player's active game
-        playerGame.broadcastUpdate();
-
-        //Start game if game is ready to start
-        playerGame.startIfReady();
-    }
-
-    console.log(`Readied player ${player.id} (${player.name})`);
-}
-
-
-/**
- * Sets the status of the given player to NOT READY
- * @param playerId The ID of the player to unready
- */
-export async function unreadyPlayer(playerId: string) {
-    let player = getPlayer(playerId);
-
-    //Set player status to ready
-    player.isReady = false;
-
-    //Update all players of this player's active game
-    player.activeGame?.broadcastUpdate();
-
-    console.log(`Unreadied player ${player.id} (${player.name})`);
-}
-
-
-/**
- * Starts the indicated round for the indicated player
- * @param playerId The ID of the player starting this round
- * @param roundNum The index of the round to start
- */
-export async function startRoundForPlayer(playerId: string, roundNum: number): Promise<string | undefined>{
-    //Make sure the player exists and start the round for them
-    return getPlayer(playerId).startRound(roundNum);
-}
-
-
-/**
- * Submits the specified player's guess for the specified round
- * @param playerId The player submitting the guess
- * @param roundNum The index of the round being played
- * @param trackId The ID of the track being guessed
- */
-export async function submitGuessForPlayer(playerId: string, roundNum: number, trackId: string){
-    //Make sure the player exists and submit the guess for them
-    return getPlayer(playerId).submitGuess(roundNum, trackId);
+    player.activeGameInfo = null;
+   
 }
 
 
@@ -251,8 +224,12 @@ export async function submitGuessForPlayer(playerId: string, roundNum: number, t
  * @param gameId The ID of the game to stop
  */
 export async function stopGame(gameId: string) {
+    //Stop the game
     getGame(gameId).stop();
+
+    //Remove this game from the activeGames list
     activeGames.delete(gameId);
+
     console.log(`Removed game ${gameId}`)
 }
 
@@ -262,7 +239,13 @@ export async function stopGame(gameId: string) {
  * @param playerId The ID of the player to delete
  */
 export async function killPlayer(playerId: string) {
+    //Remove the player from their active game
+    removePlayerFromGame(playerId);
+
+    //Prep player for deletion
     getPlayer(playerId).kill();
+
+    //Delete the player
     activePlayers.delete(playerId);
     console.log(`Killed player ${playerId}`);
 }

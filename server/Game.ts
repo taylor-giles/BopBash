@@ -82,6 +82,21 @@ export class Game {
 
 
     /**
+     * Returns the requested player of this game
+     * @param playerId The ID of the player to check for
+     * @returns The requested player of this game
+     * @throws Error if the requested player is not in this game
+     */
+    public getPlayer(playerId: string): Player{
+        let player = this.players.get(playerId);
+        if(!player || player.activeGameInfo?.gameId !== this.id){
+            throw new Error(`Player ${playerId} is not in game ${this.id} (${this.playlist.name})`);
+        }
+        return player
+    }
+
+
+    /**
      * Adds the given player to this game
      * @param player The player to add to the game
      */
@@ -91,11 +106,70 @@ export class Game {
         }
         this.players.set(player.id, player);
 
-        //Add a row in the points table for this player - one cell for each round, where every value is null
-        this.scores[player.id] = Array.from(this.rounds, ()=>null);
+        //Set the player's activeGameInfo
+        player.activeGameInfo = {
+            gameId: this.id,
+            isReady: false,
+            scores: Array.from(this.rounds, ()=>null)
+        }
 
         //Broadcast update to all players
         this.broadcastUpdate();
+    }
+
+
+    /**
+     * Removes the specified player from this game
+     * @param playerId The ID of the player to remove
+     * @throws Error if the player is not in this game
+     */
+    public removePlayer(playerId: string) {
+        let player = this.getPlayer(playerId);
+
+        //Clear the player's activeGameInfo
+        player.activeGameInfo = null;
+
+        //Remove this player from the players map
+        this.players.delete(playerId);
+    }
+
+
+    /**
+     * Sets the given player's isReady status to 'true'
+     * @param playerId The ID of the player to ready up
+     * @throws Error if the player is not in this game
+     */
+    public readyPlayer(playerId: string){
+        let player = this.getPlayer(playerId);
+
+        //Set player status to ready
+        player.activeGameInfo!.isReady = true;
+
+        //Inform other players
+        this.broadcastUpdate();
+
+        console.log(`Readied player ${player.id} (${player.name})`);
+
+        //Start the game if all players are ready
+        this.startIfReady();
+    }
+
+
+    /**
+     * Sets the given player's isReady status to 'false'
+     * @param playerId The ID of the player to unready
+     * @throws Error if the player is not in this game
+     */
+    public unreadyPlayer(playerId: string) {
+        let player = this.getPlayer(playerId)
+
+        //Set player status to not ready
+        player.activeGameInfo!.isReady = false;
+
+        //Update all players
+        this.broadcastUpdate();
+
+        console.log(`Unreadied player ${player.id} (${player.name})`);
     }
 
 
@@ -105,25 +179,23 @@ export class Game {
      * @param roundNum The index of the round being played
      * @param trackId The ID of the track being guessed
      */
-    public submitPlayerGuess(playerId: string, roundNum: number, trackId: string){
-        //Ensure this player is part of this game
-        if(!this.players.has(playerId)){
-            throw new Error(`Player ${playerId} is not part of game ${this.id} (${this.playlist.name})`);
-        }
+    public submitPlayerGuess(playerId: string, roundNum: number, trackId: string) {
+        //Get the player
+        let player = this.getPlayer(playerId);
 
         //Get the round
         let round = this.rounds?.[roundNum];
-        if(!round){
+        if (!round) {
             throw new Error(`Round ${roundNum} does not exist in game ${this.id} (${this.playlist.name})`);
         }
 
         //Determine the number of points for this guess
         let isCorrect = trackId === round.trackId;
         let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTimes?.[playerId] ?? 0;
-        let numPoints = (30*1000) - timeElapsed;
+        let numPoints = (30 * 1000) - timeElapsed;
 
         //Update this player's point count for this round
-        if(isCorrect){
+        if (isCorrect) {
             this.scores[playerId][roundNum] = numPoints
         }
 
@@ -148,7 +220,7 @@ export class Game {
      *  - All players ready
      */
     public startIfReady() {
-        let allPlayersReady = Array.from(this.players.values()).every((player) => player.isReady);
+        let allPlayersReady = Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady);
 
         //TODO: Replace 0 with 1
         if (allPlayersReady && this.players.size > 0) {
@@ -161,12 +233,13 @@ export class Game {
      * Stops the game
      */
     public async stop() {
+        //Inform all players that the game has ended
         this.status = GameStatus.ENDED;
         this.broadcastUpdate();
 
-        //Force all players to leave this game
+        //Remove all players from this game
         this.players.forEach((player) => {
-            player.leaveGame();
+            this.removePlayer(player.id);
         });
 
         console.log(`Stopped game ${this.id} (${this.playlist.name})`);
@@ -233,14 +306,20 @@ export class Player {
     id: string;
     name: string;
     connection?: PlayerConnection;
-    isReady: boolean = false;
-    activeGame?: Game;
 
+    //Player-specific information, managed by the player's active game
+    //If this is null, the player is not in a game
+    activeGameInfo: null | {
+        gameId: string,
+        isReady: boolean,
+        scores: (number | null)[]
+    };
+
+    //Constructor
     public constructor(id: string, name: string) {
         this.id = id;
         this.name = name;
-        this.isReady = false;
-        this.activeGame = undefined;
+        this.activeGameInfo = null;
     }
 
 
@@ -259,71 +338,26 @@ export class Player {
 
 
     /**
-     * Marks this player as starting the indicated round of the active game
-     * @param roundNum The index of the round to start
-     * @returns The audio URL for the specified round
-     */
-    public startRound(roundNum: number): string {
-        //Make sure the game and round exist
-        if (this.activeGame && this.activeGame.rounds.length > roundNum) {
-            //Set this player's start time for this round to right now
-            this.activeGame.rounds[roundNum].startTimes[this.id] = new Date().getTime();
-            console.log(`Started round ${roundNum} of game ${this.activeGame.id} (${this.activeGame.playlist.name}) for player ${this.id} (${this.name})`);
-
-            //Return the audio URL for the round
-            return this.activeGame.rounds[roundNum].previewURL;
-        } else {
-            throw new Error(`Round ${roundNum} does not exist in game ${this.activeGame?.id}`);
-        }
-    }
-
-
-    /**
-     * Submits the specified guess to the specified round of the active game
-     * @param roundNum The index of the round being played
-     * @param trackId The ID of the track being guessed
-     */
-    public submitGuess(roundNum: number, trackId: string){
-        if(this.activeGame){
-            this.activeGame.submitPlayerGuess(this.id, roundNum, trackId);
-        } else {
-            throw new Error(`Player not currently in a game`);
-        }
-    }
-
-
-    /**
-     * Ensures that this player has no active game
-     */
-    public leaveGame() {
-        if (this.activeGame) {
-            //Remove this player from the game
-            this.activeGame.players.delete(this.id);
-        }
-        this.activeGame = undefined;
-        this.isReady = false;
-    }
-
-
-    /**
      * Prepare this player for deletion
      */
     public kill() {
-        //Leave active game (if it exists)
-        this.leaveGame();
-
         //Close the connection
         this.connection?.close();
 
         console.log(`Killing player ${this.id} (${this.name})`);
     }
 
+
+    /**
+     * Gets the current PlayerState for this player
+     * @returns This player's current state
+     */
     public getState(): PlayerState {
         return {
             id: this.id,
             name: this.name,
-            scores: this.activeGame?.scores?.[this.id] ?? [],
-            isReady: this.isReady
+            isReady: this.activeGameInfo?.isReady ?? false,
+            scores: this.activeGameInfo?.scores ?? []
         }
     }
 }
