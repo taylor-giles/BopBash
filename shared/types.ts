@@ -7,12 +7,14 @@ export enum GameStatus {
 export class Round {
     trackId: string;
     previewURL: string;
-    startTimes: Record<string, number>; //Maps player ID to the time that player started this round
+    maxDuration: number;   //Maximum duration of this round, in milliseconds
+    startTime: number; //Maps player ID to the time that player started this round
 
-    public constructor(trackId: string, previewURL: string){
-        this.trackId = trackId,
+    public constructor(trackId: string, previewURL: string, maxDuration: number){
+        this.trackId = trackId;
         this.previewURL = previewURL;
-        this.startTimes = {};
+        this.maxDuration = maxDuration;
+        this.startTime = 0;
     }
 }
 
@@ -33,6 +35,10 @@ export type GameState = {
         description: string,
         numTracks: number
     },
+    currentRound?: {
+        index: number,
+        audioURL: string
+    }
     status: GameStatus,
     numRounds: number,
 }

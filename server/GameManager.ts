@@ -5,7 +5,6 @@
  *  - Adding & removing players to/from games
  *  - Keeping track of and serving game & player instances
  */
-
 import ObservableMap from '../utils/ObservableMap';
 import { Game, Player } from './Game';
 import { PlayerConnection } from './types';
@@ -224,13 +223,20 @@ export async function removePlayerFromGame(playerId: string) {
  * @param gameId The ID of the game to stop
  */
 export async function stopGame(gameId: string) {
+    let game = getGame(gameId);
+
+    //Remove all players from the game
+    for(let playerId of game.players.keys()){
+        removePlayerFromGame(playerId);
+    }
+
     //Stop the game
-    getGame(gameId).stop();
+    game.end();
 
     //Remove this game from the activeGames list
     activeGames.delete(gameId);
 
-    console.log(`Removed game ${gameId}`)
+    console.log(`Removed game ${gameId}`);
 }
 
 
@@ -242,8 +248,8 @@ export async function killPlayer(playerId: string) {
     //Remove the player from their active game
     removePlayerFromGame(playerId);
 
-    //Prep player for deletion
-    getPlayer(playerId).kill();
+    //Disconnect player
+    getPlayer(playerId).disconnect();
 
     //Delete the player
     activePlayers.delete(playerId);

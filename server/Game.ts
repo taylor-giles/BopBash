@@ -9,23 +9,26 @@ import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
  * Class to represent the server-side view of a game
  */
 export class Game {
-    public id: string;
+    id: string;
     playlist: Playlist;
     players: ObservableMap<string, Player>;
     rounds: Round[];
     status: GameStatus;
+    currentRound?: {
+        index: number,
+        audioURL: string
+    }
 
-    //A table (scores[playerId][roundNum]) to store scores for each player for each round
-    scores: Record<string, Array<number | null>>
+    //Function to end the current round - resolves the promise returned by startRound
+    private endCurrentRound: (value: void | PromiseLike<void>) => void = ()=>{};
 
     //Constructor
     private constructor(id: string, playlist: Playlist) {
         this.id = id;
         this.playlist = playlist;
-        this.players = new ObservableMap(() => this.broadcastUpdate(), () => this.broadcastUpdate());
+        this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
-        this.scores = {};
     }
 
 
@@ -73,16 +76,14 @@ export class Game {
             }
         }
 
-        //Convert chosen tracks set to list
-        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? ""));
-
-        //Broadcast update
-        this.broadcastUpdate();
+        //Convert chosen tracks set to list of Rounds
+        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 40000));
     }
 
 
     /**
-     * Returns the requested player of this game
+     * Returns the requested player of this game, if the player is in the game.
+     * Ensures existence of player and player's activeGameInfo
      * @param playerId The ID of the player to check for
      * @returns The requested player of this game
      * @throws Error if the requested player is not in this game
@@ -92,7 +93,7 @@ export class Game {
         if(!player || player.activeGameInfo?.gameId !== this.id){
             throw new Error(`Player ${playerId} is not in game ${this.id} (${this.playlist.name})`);
         }
-        return player
+        return player;
     }
 
 
@@ -145,13 +146,21 @@ export class Game {
         //Set player status to ready
         player.activeGameInfo!.isReady = true;
 
-        //Inform other players
-        this.broadcastUpdate();
-
         console.log(`Readied player ${player.id} (${player.name})`);
 
-        //Start the game if all players are ready
-        this.startIfReady();
+        //Update all players
+        this.broadcastUpdate();
+
+        //Check if all players are ready
+        if(Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)){
+            if(this.status === GameStatus.PENDING){
+                //If all players are ready during pending stage, the game is ready to start
+                this.start();
+            } else if(this.status === GameStatus.ACTIVE){
+                //If all players are "ready" during the game, they have all voted to skip to next round
+                this.endCurrentRound();
+            }
+        }
     }
 
 
@@ -180,6 +189,7 @@ export class Game {
      * @param trackId The ID of the track being guessed
      */
     public submitPlayerGuess(playerId: string, roundNum: number, trackId: string) {
+        //TODO: Reject guess if roundNum does not match current round index
         //Get the player
         let player = this.getPlayer(playerId);
 
@@ -191,12 +201,12 @@ export class Game {
 
         //Determine the number of points for this guess
         let isCorrect = trackId === round.trackId;
-        let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTimes?.[playerId] ?? 0;
+        let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTime;
         let numPoints = (30 * 1000) - timeElapsed;
 
         //Update this player's point count for this round
         if (isCorrect) {
-            this.scores[playerId][roundNum] = numPoints
+            player.activeGameInfo!.scores[roundNum] = numPoints
         }
 
         //Update all players
@@ -214,45 +224,65 @@ export class Game {
 
 
     /**
-     * Starts this game if it is ready to start.
-     * A game is ready to start if it meets all the following criteria:
-     *  - At least 2 players
-     *  - All players ready
+     * Ends the game
      */
-    public startIfReady() {
-        let allPlayersReady = Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady);
-
-        //TODO: Replace 0 with 1
-        if (allPlayersReady && this.players.size > 0) {
-            this.start();
-        }
-    }
-
-
-    /**
-     * Stops the game
-     */
-    public async stop() {
+    public async end() {
         //Inform all players that the game has ended
         this.status = GameStatus.ENDED;
         this.broadcastUpdate();
-
-        //Remove all players from this game
-        this.players.forEach((player) => {
-            this.removePlayer(player.id);
-        });
-
         console.log(`Stopped game ${this.id} (${this.playlist.name})`);
     }
 
 
     /**
-     * Starts the game by communicating with players
+     * Runs the game by starting each round in sequence, then ending the game
      */
     public async start() {
+        //Set status to active
         this.status = GameStatus.ACTIVE;
-        console.log(`Started game ${this.id} (${this.playlist.name})`);
+
+        //Unready all players
+        this.players.forEach((player) => player.activeGameInfo!.isReady = false);
+        
+        //Inform all players
         this.broadcastUpdate();
+        console.log(`Started game ${this.id} (${this.playlist.name})`);
+
+        //Run each round, in sequence
+        //The promise returned by startRound will resolve when the round is over
+        for(let i=0; i<this.rounds.length; i++){
+            await this.startRound(i);
+        }
+
+        //End the game
+        this.end();
+    }
+
+
+    /**
+     * Starts the given round
+     * @returns A promise that resolves when the max round duration is over
+     */
+    private async startRound(index: number): Promise<void>{
+        //Set the currentRound variable
+        this.currentRound = {
+            index: index,
+            audioURL: this.rounds[index].previewURL
+        };
+
+        //Inform players
+        this.broadcastUpdate();
+        console.log(`Started round ${index} of game ${this.id} (${this.playlist.name})`);
+
+        //Set the startTime for the round
+        this.rounds[index].startTime = new Date().getTime();
+
+        //Return promise that resolves when round is over.
+        //Will resolve after max duration expires, or earlier by calling this.endCurrentRound
+        return new Promise((resolve) => {
+            this.endCurrentRound = resolve;
+            setTimeout(resolve, this.rounds[index].maxDuration);
+        });
     }
 
 
@@ -279,7 +309,8 @@ export class Game {
                 numTracks: this.playlist.tracks.total
             },
             players: playerStates,
-            numRounds: this.rounds.length
+            numRounds: this.rounds.length,
+            currentRound: this.currentRound
         }
     }
 
@@ -311,7 +342,7 @@ export class Player {
     //If this is null, the player is not in a game
     activeGameInfo: null | {
         gameId: string,
-        isReady: boolean,
+        isReady: boolean, //Indicates "ready to progress" - either ready to start game or ready for next round
         scores: (number | null)[]
     };
 
@@ -330,7 +361,6 @@ export class Player {
     public async sendUpdate(update: GameState) {
         if (this.connection) {
             this.connection.send(JSON.stringify(update));
-            console.log(`Sent update to player ${this.id}`);
         } else {
             console.error(`Unable to send game update to player ${this.id} - no connection established.`);
         }
@@ -338,13 +368,14 @@ export class Player {
 
 
     /**
-     * Prepare this player for deletion
+     * Disconnect this player's WebSocket connection
      */
-    public kill() {
+    public disconnect() {
         //Close the connection
-        this.connection?.close();
-
-        console.log(`Killing player ${this.id} (${this.name})`);
+        if(this.connection){
+            this.connection?.close();
+            console.log(`Disconnected player ${this.id} (${this.name})`);
+        }
     }
 
 
