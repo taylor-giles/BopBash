@@ -9,16 +9,24 @@ import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
  * Class to represent the server-side view of a game
  */
 export class Game {
-    public id: string;
+    id: string;
     playlist: Playlist;
     players: ObservableMap<string, Player>;
     rounds: Round[];
     status: GameStatus;
+    currentRound?: {
+        index: number,
+        audioURL: string
+    }
 
-    private constructor(id: string, playlist: Playlist){
+    //Function to end the current round - resolves the promise returned by startRound
+    private endCurrentRound: (value: void | PromiseLike<void>) => void = ()=>{};
+
+    //Constructor
+    private constructor(id: string, playlist: Playlist) {
         this.id = id;
         this.playlist = playlist;
-        this.players = new ObservableMap(()=>this.broadcastUpdate(), ()=>this.broadcastUpdate());
+        this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
     }
@@ -29,8 +37,9 @@ export class Game {
      * (Async replacement for a constructor)
      * @param id The ID of the new game
      * @param playlist The playlist that this game will be played on
+     * @param desiredNumRounds The desired number of rounds for this game
      */
-    public static async newInstance(id: string, playlist: Playlist, desiredNumRounds: number): Promise<Game>{
+    public static async newInstance(id: string, playlist: Playlist, desiredNumRounds: number): Promise<Game> {
         let newGame = new Game(id, playlist);
         await newGame.generateRounds(desiredNumRounds);
         return newGame;
@@ -67,10 +76,24 @@ export class Game {
             }
         }
 
-        //Convert chosen tracks set to list
-        this.rounds = Array.from(chosenTracks).map((track) => {return {trackId: track.id, previewURL: track.previewURL ?? ""};});
-    
-        this.broadcastUpdate();
+        //Convert chosen tracks set to list of Rounds
+        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 40000));
+    }
+
+
+    /**
+     * Returns the requested player of this game, if the player is in the game.
+     * Ensures existence of player and player's activeGameInfo
+     * @param playerId The ID of the player to check for
+     * @returns The requested player of this game
+     * @throws Error if the requested player is not in this game
+     */
+    public getPlayer(playerId: string): Player{
+        let player = this.players.get(playerId);
+        if(!player || player.activeGameInfo?.gameId !== this.id){
+            throw new Error(`Player ${playerId} is not in game ${this.id} (${this.playlist.name})`);
+        }
+        return player;
     }
 
 
@@ -78,11 +101,115 @@ export class Game {
      * Adds the given player to this game
      * @param player The player to add to the game
      */
-    public addPlayer(player: Player){
-        if(this.status !== GameStatus.PENDING){
+    public addPlayer(player: Player) {
+        if (this.status !== GameStatus.PENDING) {
             throw new Error("Game not pending");
         }
         this.players.set(player.id, player);
+
+        //Set the player's activeGameInfo
+        player.activeGameInfo = {
+            gameId: this.id,
+            isReady: false,
+            scores: Array.from(this.rounds, ()=>null)
+        }
+
+        //Broadcast update to all players
+        this.broadcastUpdate();
+    }
+
+
+    /**
+     * Removes the specified player from this game
+     * @param playerId The ID of the player to remove
+     * @throws Error if the player is not in this game
+     */
+    public removePlayer(playerId: string) {
+        let player = this.getPlayer(playerId);
+
+        //Clear the player's activeGameInfo
+        player.activeGameInfo = null;
+
+        //Remove this player from the players map
+        this.players.delete(playerId);
+    }
+
+
+    /**
+     * Sets the given player's isReady status to 'true'
+     * @param playerId The ID of the player to ready up
+     * @throws Error if the player is not in this game
+     */
+    public readyPlayer(playerId: string){
+        let player = this.getPlayer(playerId);
+
+        //Set player status to ready
+        player.activeGameInfo!.isReady = true;
+
+        console.log(`Readied player ${player.id} (${player.name})`);
+
+        //Update all players
+        this.broadcastUpdate();
+
+        //Check if all players are ready
+        if(Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)){
+            if(this.status === GameStatus.PENDING){
+                //If all players are ready during pending stage, the game is ready to start
+                this.start();
+            } else if(this.status === GameStatus.ACTIVE){
+                //If all players are "ready" during the game, they have all voted to skip to next round
+                this.endCurrentRound();
+            }
+        }
+    }
+
+
+    /**
+     * Sets the given player's isReady status to 'false'
+     * @param playerId The ID of the player to unready
+     * @throws Error if the player is not in this game
+     */
+    public unreadyPlayer(playerId: string) {
+        let player = this.getPlayer(playerId)
+
+        //Set player status to not ready
+        player.activeGameInfo!.isReady = false;
+
+        //Update all players
+        this.broadcastUpdate();
+
+        console.log(`Unreadied player ${player.id} (${player.name})`);
+    }
+
+
+    /**
+     * Updates the game state to reflect the specified player making the specified guess
+     * @param playerId The ID of the player making the guess
+     * @param roundNum The index of the round being played
+     * @param trackId The ID of the track being guessed
+     */
+    public submitPlayerGuess(playerId: string, roundNum: number, trackId: string) {
+        //TODO: Reject guess if roundNum does not match current round index
+        //Get the player
+        let player = this.getPlayer(playerId);
+
+        //Get the round
+        let round = this.rounds?.[roundNum];
+        if (!round) {
+            throw new Error(`Round ${roundNum} does not exist in game ${this.id} (${this.playlist.name})`);
+        }
+
+        //Determine the number of points for this guess
+        let isCorrect = trackId === round.trackId;
+        let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTime;
+        let numPoints = (30 * 1000) - timeElapsed;
+
+        //Update this player's point count for this round
+        if (isCorrect) {
+            player.activeGameInfo!.scores[roundNum] = numPoints
+        }
+
+        //Update all players
         this.broadcastUpdate();
     }
 
@@ -91,48 +218,71 @@ export class Game {
      * Returns the number of active players in this game
      * @returns The number of players in this game
      */
-    public getNumPlayers(){
+    public getNumPlayers() {
         return this.players.size;
     }
 
 
     /**
-     * Starts this game if it is ready to start.
-     * A game is ready to start if it meets all the following criteria:
-     *  - At least 2 players
-     *  - All players ready
+     * Ends the game
      */
-    public startIfReady() {
-        let allPlayersReady = Array.from(this.players.values()).every((player) => player.isReady);
-        if(allPlayersReady && this.players.size > 1){
-            this.start();
-        }
-    }
-
-
-    /**
-     * Stops the game
-     */
-    public async stop() {
+    public async end() {
+        //Inform all players that the game has ended
         this.status = GameStatus.ENDED;
         this.broadcastUpdate();
-
-        //Force all players to leave this game
-        this.players.forEach((player) => {
-            player.leaveGame();
-        });
-
         console.log(`Stopped game ${this.id} (${this.playlist.name})`);
     }
 
 
     /**
-     * Starts the game by communicating with players
+     * Runs the game by starting each round in sequence, then ending the game
      */
-    public async start(){
+    public async start() {
+        //Set status to active
         this.status = GameStatus.ACTIVE;
-        console.log(`Started game ${this.id} (${this.playlist.name})`);
+
+        //Unready all players
+        this.players.forEach((player) => player.activeGameInfo!.isReady = false);
+        
+        //Inform all players
         this.broadcastUpdate();
+        console.log(`Started game ${this.id} (${this.playlist.name})`);
+
+        //Run each round, in sequence
+        //The promise returned by startRound will resolve when the round is over
+        for(let i=0; i<this.rounds.length; i++){
+            await this.startRound(i);
+        }
+
+        //End the game
+        this.end();
+    }
+
+
+    /**
+     * Starts the given round
+     * @returns A promise that resolves when the max round duration is over
+     */
+    private async startRound(index: number): Promise<void>{
+        //Set the currentRound variable
+        this.currentRound = {
+            index: index,
+            audioURL: this.rounds[index].previewURL
+        };
+
+        //Inform players
+        this.broadcastUpdate();
+        console.log(`Started round ${index} of game ${this.id} (${this.playlist.name})`);
+
+        //Set the startTime for the round
+        this.rounds[index].startTime = new Date().getTime();
+
+        //Return promise that resolves when round is over.
+        //Will resolve after max duration expires, or earlier by calling this.endCurrentRound
+        return new Promise((resolve) => {
+            this.endCurrentRound = resolve;
+            setTimeout(resolve, this.rounds[index].maxDuration);
+        });
     }
 
 
@@ -140,10 +290,10 @@ export class Game {
      * Returns the current state of this game
      * Converts this game 
      */
-    public getState(): GameState{
+    public getState(): GameState {
         //Generate the dictionary of player states
-        let playerStates : Record<string, PlayerState> = {};
-        for(let [key, value] of this.players){
+        let playerStates: Record<string, PlayerState> = {};
+        for (let [key, value] of this.players) {
             playerStates[key] = value.getState();
         }
 
@@ -159,7 +309,8 @@ export class Game {
                 numTracks: this.playlist.tracks.total
             },
             players: playerStates,
-            rounds: this.rounds.map((round) => round.previewURL)
+            numRounds: this.rounds.length,
+            currentRound: this.currentRound
         }
     }
 
@@ -167,12 +318,12 @@ export class Game {
     /**
      * Broadcasts this game's state to all its players
      */
-    public async broadcastUpdate(){
+    public async broadcastUpdate() {
         //Get the state to send to all players
         let state = this.getState();
 
         //Send the state
-        for(let player of this.players.values()){
+        for (let player of this.players.values()) {
             player.sendUpdate(state);
         }
     }
@@ -186,14 +337,20 @@ export class Player {
     id: string;
     name: string;
     connection?: PlayerConnection;
-    isReady: boolean = false;
-    activeGame?: Game;
 
+    //Player-specific information, managed by the player's active game
+    //If this is null, the player is not in a game
+    activeGameInfo: null | {
+        gameId: string,
+        isReady: boolean, //Indicates "ready to progress" - either ready to start game or ready for next round
+        scores: (number | null)[]
+    };
+
+    //Constructor
     public constructor(id: string, name: string) {
         this.id = id;
         this.name = name;
-        this.isReady = false;
-        this.activeGame = undefined;
+        this.activeGameInfo = null;
     }
 
 
@@ -201,10 +358,9 @@ export class Player {
      * Sends a game update to this player
      * @param update The GameUpdate to send
      */
-    public async sendUpdate(update: GameState){
-        if(this.connection){
+    public async sendUpdate(update: GameState) {
+        if (this.connection) {
             this.connection.send(JSON.stringify(update));
-            console.log(`Sent update to player ${this.id}`);
         } else {
             console.error(`Unable to send game update to player ${this.id} - no connection established.`);
         }
@@ -212,38 +368,27 @@ export class Player {
 
 
     /**
-     * Ensures that this player has no active game
+     * Disconnect this player's WebSocket connection
      */
-    public leaveGame(){
-        if(this.activeGame){
-            //Remove this player from the game
-            this.activeGame.players.delete(this.id);
+    public disconnect() {
+        //Close the connection
+        if(this.connection){
+            this.connection?.close();
+            console.log(`Disconnected player ${this.id} (${this.name})`);
         }
-        this.activeGame = undefined;
-        this.isReady = false;
     }
 
 
     /**
-     * Prepare this player for deletion
+     * Gets the current PlayerState for this player
+     * @returns This player's current state
      */
-    public kill(){
-        //Leave active game (if it exists)
-        this.leaveGame();
-
-        //Close the connection
-        this.connection?.close();
-
-        console.log(`Killing player ${this.id} (${this.name})`);
-    }
-
     public getState(): PlayerState {
         return {
             id: this.id,
             name: this.name,
-            score: 0, //TODO: Implement scores
-            isReady: this.isReady
+            isReady: this.activeGameInfo?.isReady ?? false,
+            scores: this.activeGameInfo?.scores ?? []
         }
     }
-
 }
