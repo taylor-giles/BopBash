@@ -247,48 +247,6 @@ export async function getGames(req: PlayerRequest, res: Response) {
 
 
 /**
- * POST /startRound
- * Starts the specified round of the active game for the authenticated player
- * 
- * Request Params:
- *  - None.
- * 
- * Request Body:
- *  - roundNum: number - The index of the round to start
- * 
- * Response Body:
- *  - On Success:
- *      - Audio URL for this round
- *  - On Failure:
- *      - error: string - Error message
- */
-export async function startRound(req: PlayerRequest, res: Response) {
-    let playerId = req.playerId; //Guaranteed by middleware
-    let roundNum = req.body?.roundNum;
-
-    //Ensure playerId is provided
-    if (!playerId) {
-        //Middleware should guarantee that this never happens
-        return res.status(400).json({ error: "playerId must be provided" })
-    }
-
-    //Ensure round number is provided
-    if (roundNum === undefined) {
-        return res.status(400).json({ error: "roundNum must be specified" });
-    }
-
-    console.log(`Handling request to start round ${roundNum} for player ${playerId}`);
-
-    try {
-        let game = GameManager.getPlayerActiveGame(playerId);
-    } catch(error: any) {
-        console.error(`Unable to start round ${roundNum} for player ${playerId}: `, error.message);
-        return res.status(500).json({error: error.message});
-    }
-}
-
-
-/**
  * POST /submitGuess
  * Registers the specified track as the player's guess for the specified round
  * 
