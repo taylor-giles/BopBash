@@ -13,7 +13,6 @@ router.get('/getGames', Controller.getGames);
 router.post('/newGame', Controller.makeNewGame);
 router.post('/registerNewPlayer', Controller.registerNewPlayer);
 router.post('/joinGame/:id', Controller.authenticate, Controller.ensureId, Controller.joinGame);
-router.post('/startRound', Controller.authenticate, Controller.startRound);
 
 export { router };
 

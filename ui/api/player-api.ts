@@ -55,25 +55,6 @@ export async function joinGame(gameId: string): Promise<string> {
 
 
 /**
- * Starts the specified round of the active game
- * @param roundNum The index of the round to start
- * @returns A promise for the error message if the request fails
- */
-export async function startRound(roundNum: number): Promise<string> {
-    return apiCaller.post(`/startRound`, { roundNum: roundNum }).then((res) => {
-        if (res.data.error) {
-            console.error("Failed to start round: ", res?.data?.error);
-            return null;
-        }
-        return res.data;
-    }).catch((error) => {
-        console.error("Failed to start round: ", error?.response?.data?.error);
-        return null;
-    });
-}
-
-
-/**
  * Informs the server that this player is READY
  */
 export async function readyPlayer() {
