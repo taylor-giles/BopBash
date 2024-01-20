@@ -12,7 +12,6 @@ import * as GameManager from './GameManager';
 import { WebSocketRoute } from '../shared/ws-routes';
 import cors from 'cors';
 
-
 const EXPRESS_PORT = parseInt(process.env.EXPRESS_PORT ?? "5000");
 const WS_PORT = parseInt(process.env.WS_PORT ?? "5001");
 const WS_PING_INTERVAL = 20000;

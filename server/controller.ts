@@ -1,3 +1,9 @@
+/**
+ * The Controller is responsible for handling/forwarding user requests.
+ * Some requests get forwarded to the GameManager, while others
+ * are forwarded to particular game instances, obtained from the GameManager.
+ */
+
 import { NextFunction, Request, Response } from "express";
 import * as SpotifyAPI from "./caller";
 import * as GameManager from "./GameManager";
@@ -198,11 +204,10 @@ export async function registerNewPlayer(req: Request, res: Response) {
  *  - On Success:
  *      - None.
  *  - On Failure:
- *      - msg: string - String error message
- *      - error: Error - Error
+ *      - error: string - Error message
  */
 export async function joinGame(req: PlayerRequest, res: Response) {
-    let playerId = req.playerId;
+    let playerId = req.playerId; //Guaranteed by middleware
     let gameId = req?.params?.id;
 
     //Ensure player ID and game ID are provided
@@ -212,6 +217,8 @@ export async function joinGame(req: PlayerRequest, res: Response) {
     }
 
     console.log(`Handling request to add player ${playerId} to game ${gameId}`);
+
+    //Add the player to the game
     GameManager.addPlayerToGame(playerId, gameId).then(() => {
         return res.status(200).send("Successfully added player to game");
     }).catch((error) => {
@@ -235,7 +242,94 @@ export async function joinGame(req: PlayerRequest, res: Response) {
  *  - GameState[] List containing a state for each joinable game
  */
 export async function getGames(req: PlayerRequest, res: Response) {
-    res.status(200).json(GameManager.getGameStates());
+    return res.status(200).json(GameManager.getGameStates());
+}
+
+
+/**
+ * POST /startRound
+ * Starts the specified round of the active game for the authenticated player
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - roundNum: number - The index of the round to start
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - Audio URL for this round
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function startRound(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId; //Guaranteed by middleware
+    let roundNum = req.body?.roundNum;
+
+    //Ensure playerId is provided
+    if (!playerId) {
+        //Middleware should guarantee that this never happens
+        return res.status(400).json({ error: "playerId must be provided" })
+    }
+
+    //Ensure round number is provided
+    if (roundNum === undefined) {
+        return res.status(400).json({ error: "roundNum must be specified" });
+    }
+
+    console.log(`Handling request to start round ${roundNum} for player ${playerId}`);
+
+    try {
+        let game = GameManager.getPlayerActiveGame(playerId);
+    } catch(error: any) {
+        console.error(`Unable to start round ${roundNum} for player ${playerId}: `, error.message);
+        return res.status(500).json({error: error.message});
+    }
+}
+
+
+/**
+ * POST /submitGuess
+ * Registers the specified track as the player's guess for the specified round
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - roundNum: number - The index of the round to start
+ *  - trackId: string - The ID of the guessed track
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - None.
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function submitGuess(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId; //Guaranteed by middleware
+    let roundNum = req.body?.roundNum;
+    let trackId = req.body?.trackId;
+
+    //Ensure playerId is provided
+    if (!playerId) {
+        //Middleware should guarantee that this never happens
+        return res.status(400).json({ error: "playerId must be provided" })
+    }
+
+    //Ensure round number and track ID are provided
+    if (roundNum === undefined || trackId === undefined) {
+        return res.status(400).json({ error: "roundNum and trackId must be specified" });
+    }
+
+    console.log(`Handling request to submit guess ${trackId} for round ${roundNum} for player ${playerId}`);
+    try {
+        let game = GameManager.getPlayerActiveGame(playerId);
+        game.submitPlayerGuess(playerId, roundNum, trackId);
+        return res.status(200).send();
+    } catch(error: any) {
+        console.error(`Unable to submit guess ${trackId} for round ${roundNum} for player ${playerId}.`, error.message);
+        return res.status(500).json({ error: error.message });
+    }
 }
 
 
@@ -273,9 +367,15 @@ export async function readyPlayer(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameManager.readyPlayer(playerId).catch((error) => {
+    try {
+        //Get the game for this player
+        let game = GameManager.getPlayerActiveGame(playerId);
+
+        //Ready the player
+        game.readyPlayer(playerId);
+    } catch(error: any) {
         console.error(`Unable to ready player ${playerId}`, error.message);
-    });
+    }
 }
 
 
@@ -292,7 +392,15 @@ export async function unreadyPlayer(connection: PlayerConnection, data: any) {
         return;
     }
 
-    GameManager.unreadyPlayer(playerId).catch((error) => {
+    try {
+        //Get the game for this player
+        let game = GameManager.getPlayerActiveGame(playerId);
+
+        //Unready the player
+        game.unreadyPlayer(playerId);
+    } catch(error: any) {
         console.error(`Unable to unready player ${playerId}`, error.message);
-    });
+    }
 }
+
+

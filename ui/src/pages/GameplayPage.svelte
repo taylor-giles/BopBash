@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { onMount, tick } from "svelte";
+    import GameAPI from "../../api/api";
     import { GameStore } from "../../gameStore";
-    import { tick } from "svelte";
-    import PlayerCard from "../components/PlayerCard.svelte";
+    import AudioMotionAnalyzer from "audiomotion-analyzer";
+    import { GameStatus } from "../../../shared/types";
 
     enum RoundPhase {
         COUNTDOWN,
@@ -13,33 +15,69 @@
     );
 
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
-    let currentRound = 2;
-    let canPlay: boolean = false;
-
-    //Get the audio URL for this round
-    $: audioURL = $GameStore.rounds[currentRound];
+    let currentRound = 0;
+    let audioLoaded: boolean = false;
+    let audioAnalyzer: AudioMotionAnalyzer;
+    let countdownTime = "";
 
     let audioElement: HTMLAudioElement;
     let countdownView: HTMLDivElement;
+    let visualizerView: HTMLDivElement;
 
+    $: audioURL = $GameStore.currentRound?.audioURL;
+    $: isGameDone = $GameStore.status === GameStatus.ENDED;
+
+    /**
+     * Every time the audio URL changes, start the next round
+     */
+    $: if (audioURL && audioElement) {
+        loadRound();
+    }
+
+    //Keep track of how much time has passed in the audio
     let timestamp = -1;
     $: if (audioElement) {
         timestamp = audioElement.currentTime;
     }
-    $: console.log(timestamp);
 
-    $: if (canPlay) {
+    //When ready, start playing
+    $: if (audioLoaded) {
         doCountdown().then(startPlayingPhase);
     }
 
+    /**
+     * Votes to skip the rest of this round
+     */
+    async function voteSkip() {
+        GameAPI.readyPlayer();
+    }
+
+    /**
+     * Prepares the next round by loading the audio
+     */
+    async function loadRound() {
+        //Destroy audio analyzer
+        if (audioAnalyzer) audioAnalyzer.destroy();
+
+        //Start re-loading of audio element
+        audioLoaded = false;
+        audioElement.load();
+    }
+
+    /**
+     * Display a pre-round-start countdown
+     */
     async function doCountdown(): Promise<void> {
+        //Set phase
+        currentPhase = RoundPhase.COUNTDOWN;
+
         //Wait for all stage changes to complete
         await tick();
 
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             //Set up timeouts to perform the countdown
             for (let i = 3; i >= 0; i--) {
-                setTimeout(
+                await setTimeout(
                     () => {
                         countdownView.innerHTML = `${i}`;
                         beep.play();
@@ -54,28 +92,91 @@
         });
     }
 
-    console.log("t");
+    console.log("todp");
 
+    $: console.log(audioURL);
+
+    /**
+     * Begins the playing phase
+     */
     function startPlayingPhase() {
+        countdownView.innerHTML = "";
         currentPhase = RoundPhase.PLAYING;
         audioElement.play();
+        audioAnalyzer = new AudioMotionAnalyzer(visualizerView, {
+            //Set source
+            source: audioElement,
+
+            //Set options
+            showScaleX: false,
+            roundBars: true,
+            overlay: true,
+            showBgColor: true,
+            bgAlpha: 0,
+            showPeaks: false,
+            mode: 8,
+            barSpace: 0.1,
+            height: 200,
+            width: 200,
+            maxFreq: 20000,
+            smoothing: 0.95,
+            // mirror: -0.5,
+            reflexAlpha: 1,
+            reflexRatio: 0.5,
+            colorMode: "bar-level",
+            weightingFilter: "B",
+            alphaBars: true,
+            // minDecibels: -80
+        });
+        audioAnalyzer.registerGradient("spotify-accent", {
+            bgColor: "transparent",
+            dir: "h",
+            colorStops: [
+                { color: "#1db954", level: 1 },
+                { color: "#1bb468", level: 0.9 },
+                { color: "#18ae7b", level: 0.85 },
+                { color: "#16a98e", level: 0.8 },
+                { color: "#14a39f", level: 0.75 },
+                { color: "#128d9e", level: 0.7 },
+                { color: "#107398", level: 0.65 },
+                { color: "#0f5a92", level: 0.6 },
+                { color: "#0d428c", level: 0.55 },
+                { color: "#0b2c86", level: 0.5 },
+                { color: "#1d0773", level: 0.45 },
+                { color: "#2a066d", level: 0.4 },
+                { color: "#360566", level: 0.3 },
+            ],
+        });
+        audioAnalyzer.gradient = "spotify-accent";
     }
 </script>
 
 <main>
-    <!-- I think this approach is better than using Audio() because this element gets destroyed when window closes -->
-    <audio
-        bind:this={audioElement}
-        on:canplaythrough={() => (canPlay = true)}
-        on:timeupdate={(event) => {
-            timestamp = event.currentTarget.currentTime;
-        }}
-    >
-        <source src={audioURL} type="audio/mpeg" />
-    </audio>
+    {#if isGameDone}
+        <div id="done-screen">Done!</div>
+    {:else}
+        <!-- Audio element (to play audio) -->
+        <audio
+            bind:this={audioElement}
+            on:canplay={() => (audioLoaded = true)}
+            on:timeupdate={(event) => {
+                timestamp = event.currentTarget.currentTime;
+            }}
+            crossorigin="anonymous"
+        >
+            <source src={audioURL} type="audio/mpeg" />
+        </audio>
 
-    <div id="countdown" bind:this={countdownView}></div>
+        <!-- Container for countdown display -->
+        <div id="countdown" bind:this={countdownView}></div>
+
+        <!-- Container for audio visualization -->
+        <div id="visualizer-container">
+            <div bind:this={visualizerView}></div>
+        </div>
+    {/if}
     <div style="flex: 1;"></div>
+    <button on:click={voteSkip}>Next round</button>
 </main>
 
 <style>
@@ -85,6 +186,23 @@
     }
 
     #countdown {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 300px;
+    }
+
+    #visualizer-container {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        height: 200px;
+        width: 200px;
+    }
+
+    #done-screen {
         position: fixed;
         left: 50%;
         top: 50%;
