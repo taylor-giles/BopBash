@@ -250,7 +250,7 @@ export class Game {
         console.log(`Started game ${this.id} (${this.playlist.name})`);
 
         //Run each round, in sequence
-        //The promise returned by startRound will resolve when the round is over
+        //The promise returned by startRound will resolve when the round ends
         for(let i=0; i<this.rounds.length; i++){
             await this.startRound(i);
         }
@@ -265,6 +265,9 @@ export class Game {
      * @returns A promise that resolves when the max round duration is over
      */
     private async startRound(index: number): Promise<void>{
+        //Unready all players
+        this.players.forEach((player) => player.activeGameInfo!.isReady = false);
+
         //Set the currentRound variable
         this.currentRound = {
             index: index,
