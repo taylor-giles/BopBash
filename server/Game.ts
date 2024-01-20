@@ -4,6 +4,7 @@ import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
+import { WebSocket } from "ws";
 
 /**
  * Class to represent the server-side view of a game
@@ -146,7 +147,7 @@ export class Game {
         //Set player status to ready
         player.activeGameInfo!.isReady = true;
 
-        console.log(`Readied player ${player.id} (${player.name})`);
+        console.log(`Readied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
 
         //Update all players
         this.broadcastUpdate();
@@ -178,7 +179,7 @@ export class Game {
         //Update all players
         this.broadcastUpdate();
 
-        console.log(`Unreadied player ${player.id} (${player.name})`);
+        console.log(`Unreadied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
     }
 
 
@@ -359,7 +360,8 @@ export class Player {
      * @param update The GameUpdate to send
      */
     public async sendUpdate(update: GameState) {
-        if (this.connection) {
+        //Send the update if the connection is open
+        if (this.connection && this.connection.readyState === WebSocket.OPEN) {
             this.connection.send(JSON.stringify(update));
         } else {
             console.error(`Unable to send game update to player ${this.id} - no connection established.`);
@@ -371,8 +373,8 @@ export class Player {
      * Disconnect this player's WebSocket connection
      */
     public disconnect() {
-        //Close the connection
-        if(this.connection){
+        //Close the connection if it is open
+        if(this.connection && this.connection.readyState === WebSocket.OPEN){
             this.connection?.close();
             console.log(`Disconnected player ${this.id} (${this.name})`);
         }
