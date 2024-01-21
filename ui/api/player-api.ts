@@ -29,8 +29,7 @@ apiCaller.interceptors.request.use((config) => {
     if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log(config)
-    return config;
+        return config;
 }, (error) => {
     console.error(error);
 });
