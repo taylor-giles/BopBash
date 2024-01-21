@@ -1,9 +1,6 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
     import { GAME_ID_REGEX } from "../../../shared/constants";
     import GameAPI from "../../api/api";
-    import { GameStore } from "../../gameStore";
 
     let gameId = "";
     let failed = false;

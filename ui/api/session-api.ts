@@ -42,7 +42,10 @@ export async function registerPlayer(name: string): Promise<{playerId: string, t
 }
 
 
-
+/**
+ * Obtains a list of all available games
+ * @returns The list of GameStates for available games
+ */
 export async function getGames(): Promise<GameState[]>{
     return apiCaller.get('/getGames').then((res) => {
         if(res?.data?.error){
