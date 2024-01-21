@@ -29,6 +29,7 @@ apiCaller.interceptors.request.use((config) => {
     if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
+    console.log(config)
     return config;
 }, (error) => {
     console.error(error);
@@ -40,16 +41,34 @@ apiCaller.interceptors.request.use((config) => {
  * @param name The name of the player to register
  * @returns A promise for the error message if the request fails
  */
-export async function joinGame(gameId: string): Promise<string> {
+export async function joinGame(gameId: string): Promise<string | void> {
     return apiCaller.post(`/joinGame/${gameId}`).then((res) => {
         if (res.data.error) {
             console.error("Failed to join game: ", res?.data?.error);
             return res?.data?.error;
         }
-        return "";
+        return;
     }).catch((error) => {
-        console.error("Failed to join game: ", error?.response?.data?.error);
+        console.error("Failed to join game: ", error);
         return error.message;
+    });
+}
+
+
+/**
+ * Submits the player's guess for the specified round
+ * @param roundNum The index of the round being played
+ * @param trackId The ID of the track being guessed
+ */
+export async function submitGuess(roundNum: number, trackId: string): Promise<{isCorrect: boolean, score: number} | void> {
+    return apiCaller.post(`/submitGuess`, {roundNum: roundNum, trackId: trackId}).then((res) => {
+        if(res.data.error){
+            console.error("Failed to submit guess: ", res.data?.error);
+        } else {
+            return res.data;
+        }
+    }).catch((error) => {
+        console.error("Failed to submit guess: ", error);
     });
 }
 

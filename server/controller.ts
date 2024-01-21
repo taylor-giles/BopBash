@@ -34,7 +34,6 @@ export async function authenticate(req: PlayerRequest, res: Response, next: Next
 
     //Ensure token is present
     if (!token || !req?.headers?.authorization?.startsWith("Bearer")) {
-        console.log(JSON.stringify(req.headers))
         return res.status(401).json({ error: "Authentication failed: Token not provided" });
     }
 
@@ -259,7 +258,8 @@ export async function getGames(req: PlayerRequest, res: Response) {
  * 
  * Response Body:
  *  - On Success:
- *      - None.
+ *      - isCorrect: boolean - True iff the guess was correct
+ *      - score: number - The number of points earned for this guess
  *  - On Failure:
  *      - error: string - Error message
  */
@@ -280,11 +280,14 @@ export async function submitGuess(req: PlayerRequest, res: Response) {
     }
 
     console.log(`Handling request to submit guess ${trackId} for round ${roundNum} for player ${playerId}`);
+
+    //Get the active game and submit the guess
     try {
         let game = GameManager.getPlayerActiveGame(playerId);
-        game.submitPlayerGuess(playerId, roundNum, trackId);
-        return res.status(200).send();
-    } catch(error: any) {
+        let result = await game.submitPlayerGuess(playerId, roundNum, trackId);
+        console.log(`Submitted guess "${trackId}" for game ${game.id} (${game.playlist.name}) round ${roundNum} for player ${playerId}. Result: ${result}`);
+        return res.status(200).json(result);
+    } catch (error: any) {
         console.error(`Unable to submit guess ${trackId} for round ${roundNum} for player ${playerId}.`, error.message);
         return res.status(500).json({ error: error.message });
     }
@@ -331,7 +334,7 @@ export async function readyPlayer(connection: PlayerConnection, data: any) {
 
         //Ready the player
         game.readyPlayer(playerId);
-    } catch(error: any) {
+    } catch (error: any) {
         console.error(`Unable to ready player ${playerId}`, error.message);
     }
 }
@@ -356,7 +359,7 @@ export async function unreadyPlayer(connection: PlayerConnection, data: any) {
 
         //Unready the player
         game.unreadyPlayer(playerId);
-    } catch(error: any) {
+    } catch (error: any) {
         console.error(`Unable to unready player ${playerId}`, error.message);
     }
 }

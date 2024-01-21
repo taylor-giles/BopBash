@@ -15,15 +15,15 @@
     );
 
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
-    let currentRound = 0;
     let audioLoaded: boolean = false;
-    let audioAnalyzer: AudioMotionAnalyzer;
-    let countdownTime = "";
+    let guessTrackId: string = "";
 
+    let audioAnalyzer: AudioMotionAnalyzer;
     let audioElement: HTMLAudioElement;
     let countdownView: HTMLDivElement;
     let visualizerView: HTMLDivElement;
 
+    $: currentRoundNum = $GameStore.currentRound?.index ?? -1;
     $: audioURL = $GameStore.currentRound?.audioURL;
     $: isGameDone = $GameStore.status === GameStatus.ENDED;
 
@@ -40,7 +40,9 @@
         timestamp = audioElement.currentTime;
     }
 
-    //When ready, start playing
+    /**
+     * When audio is ready, start playing
+     */
     $: if (audioLoaded) {
         doCountdown().then(startPlayingPhase);
     }
@@ -57,7 +59,9 @@
      */
     async function loadRound() {
         //Destroy audio analyzer
-        if (audioAnalyzer) audioAnalyzer.destroy();
+        if (audioAnalyzer) {
+            audioAnalyzer.destroy();
+        }
 
         //Start re-loading of audio element
         audioLoaded = false;
@@ -77,13 +81,15 @@
         return new Promise(async (resolve) => {
             //Set up timeouts to perform the countdown
             for (let i = 3; i >= 0; i--) {
-                await setTimeout(
+                setTimeout(
                     () => {
-                        countdownView.innerHTML = `${i}`;
-                        beep.play();
+                        if (currentPhase === RoundPhase.COUNTDOWN) {
+                            countdownView.innerHTML = `${i}`;
+                            beep.play();
 
-                        if (i == 0) {
-                            resolve();
+                            if (i == 0) {
+                                resolve();
+                            }
                         }
                     },
                     (3 - i) * 500,
@@ -92,62 +98,82 @@
         });
     }
 
-    console.log("todp");
-
-    $: console.log(audioURL);
-
     /**
      * Begins the playing phase
      */
     function startPlayingPhase() {
-        countdownView.innerHTML = "";
-        currentPhase = RoundPhase.PLAYING;
-        audioElement.play();
-        audioAnalyzer = new AudioMotionAnalyzer(visualizerView, {
-            //Set source
-            source: audioElement,
+        if (!audioAnalyzer || audioAnalyzer.isDestroyed) {
+            //Clear the countdown view
+            countdownView.innerHTML = "";
 
-            //Set options
-            showScaleX: false,
-            roundBars: true,
-            overlay: true,
-            showBgColor: true,
-            bgAlpha: 0,
-            showPeaks: false,
-            mode: 8,
-            barSpace: 0.1,
-            height: 200,
-            width: 200,
-            maxFreq: 20000,
-            smoothing: 0.95,
-            // mirror: -0.5,
-            reflexAlpha: 1,
-            reflexRatio: 0.5,
-            colorMode: "bar-level",
-            weightingFilter: "B",
-            alphaBars: true,
-            // minDecibels: -80
-        });
-        audioAnalyzer.registerGradient("spotify-accent", {
-            bgColor: "transparent",
-            dir: "h",
-            colorStops: [
-                { color: "#1db954", level: 1 },
-                { color: "#1bb468", level: 0.9 },
-                { color: "#18ae7b", level: 0.85 },
-                { color: "#16a98e", level: 0.8 },
-                { color: "#14a39f", level: 0.75 },
-                { color: "#128d9e", level: 0.7 },
-                { color: "#107398", level: 0.65 },
-                { color: "#0f5a92", level: 0.6 },
-                { color: "#0d428c", level: 0.55 },
-                { color: "#0b2c86", level: 0.5 },
-                { color: "#1d0773", level: 0.45 },
-                { color: "#2a066d", level: 0.4 },
-                { color: "#360566", level: 0.3 },
-            ],
-        });
-        audioAnalyzer.gradient = "spotify-accent";
+            //Set phase
+            currentPhase = RoundPhase.PLAYING;
+
+            //Play the audio
+            audioElement.play();
+
+            //Generate an audio visualizer
+            audioAnalyzer = new AudioMotionAnalyzer(visualizerView, {
+                //Set source
+                source: audioElement,
+
+                //Set options
+                showScaleX: false,
+                roundBars: true,
+                overlay: true,
+                showBgColor: true,
+                bgAlpha: 0,
+                showPeaks: false,
+                mode: 8,
+                barSpace: 0.1,
+                height: 200,
+                width: 200,
+                maxFreq: 20000,
+                smoothing: 0.95,
+                // mirror: -0.5,
+                reflexAlpha: 1,
+                reflexRatio: 0.5,
+                colorMode: "bar-level",
+                weightingFilter: "B",
+                alphaBars: true,
+                // minDecibels: -80
+            });
+
+            //Make and use audio visualizer gradient
+            audioAnalyzer.registerGradient("spotify-accent", {
+                bgColor: "transparent",
+                dir: "h",
+                colorStops: [
+                    { color: "#1db954", level: 1 },
+                    { color: "#1bb468", level: 0.9 },
+                    { color: "#18ae7b", level: 0.85 },
+                    { color: "#16a98e", level: 0.8 },
+                    { color: "#14a39f", level: 0.75 },
+                    { color: "#128d9e", level: 0.7 },
+                    { color: "#107398", level: 0.65 },
+                    { color: "#0f5a92", level: 0.6 },
+                    { color: "#0d428c", level: 0.55 },
+                    { color: "#0b2c86", level: 0.5 },
+                    { color: "#1d0773", level: 0.45 },
+                    { color: "#2a066d", level: 0.4 },
+                    { color: "#360566", level: 0.3 },
+                ],
+            });
+            audioAnalyzer.gradient = "spotify-accent";
+        }
+    }
+
+    /**
+     * Submit the guess
+     */
+    async function handleSubmit(e: Event) {
+        e.preventDefault();
+        let { isCorrect, score } = (await GameAPI.submitGuess(
+            currentRoundNum,
+            guessTrackId,
+        )) as { isCorrect: boolean; score: number };
+        guessTrackId = "";
+        console.log("Correct:", isCorrect, "\tScore", score);
     }
 </script>
 
@@ -157,6 +183,7 @@
     {:else}
         <!-- Audio element (to play audio) -->
         <audio
+            loop
             bind:this={audioElement}
             on:canplay={() => (audioLoaded = true)}
             on:timeupdate={(event) => {
@@ -174,15 +201,37 @@
         <div id="visualizer-container">
             <div bind:this={visualizerView}></div>
         </div>
+
+        <div id="title">
+            Round {currentRoundNum + 1}
+        </div>
+
+        <div style="flex: 1;"></div>
+
+        <div id="submission-panel">
+            <form on:submit={handleSubmit}>
+                <input
+                    id="guess-input"
+                    class="header-text"
+                    type="text"
+                    placeholder="Start entering your guess here"
+                    bind:value={guessTrackId}
+                />
+
+                <button type="submit" id="submit-btn"> Submit </button>
+                <button type="button" id="skip-btn" on:click={voteSkip}>
+                    Skip
+                </button>
+            </form>
+        </div>
     {/if}
-    <div style="flex: 1;"></div>
-    <button on:click={voteSkip}>Next round</button>
 </main>
 
 <style>
     main {
         display: flex;
         flex-direction: column;
+        height: 100%;
     }
 
     #countdown {
@@ -202,11 +251,33 @@
         width: 200px;
     }
 
+    #submission-panel {
+        box-sizing: border-box;
+        width: 100%;
+        height: max-content;
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    #guess-input {
+        flex: 1;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: 1px;
+        padding-inline: 10px;
+        box-sizing: border-box;
+    }
+
     #done-screen {
         position: fixed;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
         font-size: 300px;
+    }
+
+    form {
+        display: contents;
     }
 </style>
