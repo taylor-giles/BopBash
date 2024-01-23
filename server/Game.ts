@@ -188,9 +188,12 @@ export class Game {
      * @param playerId The ID of the player making the guess
      * @param roundNum The index of the round being played
      * @param trackId The ID of the track being guessed
-     * @returns An object dictating whether or not the guess was correct and the score earned for it
+     * @returns An object containing:
+     *      - isCorrect: boolean - True iff the guess was correct
+     *      - score: number - The number of points earned for this guess
+     *      - trackId: string - The ID of the correct track for this round
      */
-    public async submitPlayerGuess(playerId: string, roundNum: number, trackId: string): Promise<{isCorrect: boolean, score: number}> {
+    public async submitPlayerGuess(playerId: string, roundNum: number, trackId: string): Promise<{isCorrect: boolean, score: number, trackId: string}> {
         //TODO: Reject guess if roundNum does not match current round index
         //Get the player
         let player = this.getPlayer(playerId);
@@ -204,17 +207,18 @@ export class Game {
         //Determine the number of points for this guess
         let isCorrect = trackId === round.trackId;
         let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTime;
-        let numPoints = isCorrect ? (30 * 1000) - timeElapsed : 0;
+        let numPoints = isCorrect ? round.maxDuration - timeElapsed : 0;
 
         //Update this player's point count for this round
-        if (isCorrect) {
-            player.activeGameInfo!.scores[roundNum] = numPoints
-        }
+        player.activeGameInfo!.scores[roundNum] = numPoints
+
+        //Ready this player
+        this.readyPlayer(playerId);
 
         //Update all players
         this.broadcastUpdate();
 
-        return {isCorrect: isCorrect, score: numPoints};
+        return {isCorrect: isCorrect, score: numPoints, trackId: round.trackId};
     }
 
 

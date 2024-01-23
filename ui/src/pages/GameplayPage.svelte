@@ -4,6 +4,8 @@
     import { GameStore } from "../../gameStore";
     import AudioMotionAnalyzer from "audiomotion-analyzer";
     import { GameStatus } from "../../../shared/types";
+    import Scoreboard from "../components/Scoreboard.svelte";
+    import { arraySum } from "../utils/utils";
 
     enum RoundPhase {
         COUNTDOWN,
@@ -92,7 +94,7 @@
                             }
                         }
                     },
-                    (3 - i) * 500,
+                    (3 - i) * 750,
                 );
             }
         });
@@ -103,9 +105,6 @@
      */
     function startPlayingPhase() {
         if (!audioAnalyzer || audioAnalyzer.isDestroyed) {
-            //Clear the countdown view
-            countdownView.innerHTML = "";
-
             //Set phase
             currentPhase = RoundPhase.PLAYING;
 
@@ -128,7 +127,7 @@
                 barSpace: 0.1,
                 height: 200,
                 width: 200,
-                maxFreq: 20000,
+                maxFreq: 15000,
                 smoothing: 0.95,
                 // mirror: -0.5,
                 reflexAlpha: 1,
@@ -181,48 +180,55 @@
     {#if isGameDone}
         <div id="done-screen">Done!</div>
     {:else}
-        <!-- Audio element (to play audio) -->
-        <audio
-            loop
-            bind:this={audioElement}
-            on:canplay={() => (audioLoaded = true)}
-            on:timeupdate={(event) => {
-                timestamp = event.currentTarget.currentTime;
-            }}
-            crossorigin="anonymous"
-        >
-            <source src={audioURL} type="audio/mpeg" />
-        </audio>
+        <div id="gameplay-content">
+            <!-- Audio element (to play audio) -->
+            <audio
+                loop
+                bind:this={audioElement}
+                on:canplay={() => (audioLoaded = true)}
+                on:timeupdate={(event) => {
+                    timestamp = event.currentTarget.currentTime;
+                }}
+                crossorigin="anonymous"
+            >
+                <source src={audioURL} type="audio/mpeg" />
+            </audio>
 
-        <!-- Container for countdown display -->
-        <div id="countdown" bind:this={countdownView}></div>
+            <div id="title">
+                Round {currentRoundNum + 1}
+            </div>
 
-        <!-- Container for audio visualization -->
-        <div id="visualizer-container">
-            <div bind:this={visualizerView}></div>
+            <div id="center-display">
+                {#if currentPhase === RoundPhase.COUNTDOWN}
+                    <!-- Container for countdown display -->
+                    <div id="countdown" bind:this={countdownView}></div>
+                {/if}
+
+                <!-- Container for audio visualization -->
+                <!-- {#if currentPhase === RoundPhase.PLAYING} -->
+                <div bind:this={visualizerView}></div>
+                <!-- {/if} -->
+            </div>
+
+            <div id="submission-panel">
+                <form on:submit={handleSubmit}>
+                    <input
+                        id="guess-input"
+                        class="header-text"
+                        type="text"
+                        placeholder="Start entering your guess here"
+                        bind:value={guessTrackId}
+                    />
+
+                    <button type="submit" id="submit-btn"> Submit </button>
+                    <button type="button" id="skip-btn" on:click={voteSkip}>
+                        Skip
+                    </button>
+                </form>
+            </div>
         </div>
-
-        <div id="title">
-            Round {currentRoundNum + 1}
-        </div>
-
-        <div style="flex: 1;"></div>
-
-        <div id="submission-panel">
-            <form on:submit={handleSubmit}>
-                <input
-                    id="guess-input"
-                    class="header-text"
-                    type="text"
-                    placeholder="Start entering your guess here"
-                    bind:value={guessTrackId}
-                />
-
-                <button type="submit" id="submit-btn"> Submit </button>
-                <button type="button" id="skip-btn" on:click={voteSkip}>
-                    Skip
-                </button>
-            </form>
+        <div id="scoreboard-container">
+            <Scoreboard players={Object.values($GameStore.players).toSorted((a, b) => arraySum(b.scores) - arraySum(a.scores))} />
         </div>
     {/if}
 </main>
@@ -230,25 +236,49 @@
 <style>
     main {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         height: 100%;
     }
 
+    #gameplay-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+    }
+
+    #center-display {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #scoreboard-container {
+        box-sizing: border-box;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 2px solid var(--primary-light);
+        border-radius: 5px;
+        margin-left: 50px;
+        margin-bottom: 2px;
+    }
+
     #countdown {
-        position: fixed;
+        /* position: fixed;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%); */
         font-size: 300px;
     }
 
     #visualizer-container {
-        position: fixed;
+        /* position: fixed;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
-        height: 200px;
-        width: 200px;
+        transform: translate(-50%, -50%); */
+        /* height: 200px;
+        width: 200px; */
     }
 
     #submission-panel {
