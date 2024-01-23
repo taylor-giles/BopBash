@@ -260,6 +260,7 @@ export async function getGames(req: PlayerRequest, res: Response) {
  *  - On Success:
  *      - isCorrect: boolean - True iff the guess was correct
  *      - score: number - The number of points earned for this guess
+ *      - trackId: string - The ID of the correct track for this round
  *  - On Failure:
  *      - error: string - Error message
  */
@@ -285,7 +286,7 @@ export async function submitGuess(req: PlayerRequest, res: Response) {
     try {
         let game = GameManager.getPlayerActiveGame(playerId);
         let result = await game.submitPlayerGuess(playerId, roundNum, trackId);
-        console.log(`Submitted guess "${trackId}" for game ${game.id} (${game.playlist.name}) round ${roundNum} for player ${playerId}. Result: ${result}`);
+        console.log(`Submitted guess "${trackId}" for game ${game.id} (${game.playlist.name}) round ${roundNum} for player ${playerId}. Result: ${JSON.stringify(result)}`);
         return res.status(200).json(result);
     } catch (error: any) {
         console.error(`Unable to submit guess ${trackId} for round ${roundNum} for player ${playerId}.`, error.message);
