@@ -2,7 +2,6 @@
     import { IFrameAPI } from "../../IFrameAPI";
 
     let iframe: HTMLIFrameElement;
-
     IFrameAPI.subscribe((api: any) => {
         if (api !== null) {
             console.log(`IFrameAPI:`, api);
