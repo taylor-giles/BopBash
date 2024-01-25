@@ -8,7 +8,7 @@
     export let noText = "No";
 </script>
 
-<main>
+<main class="modal">
     <div id="content">
         <div id="header" class="header-text">
             {headerText}
@@ -29,20 +29,6 @@
 </main>
 
 <style>
-    main {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-
     #content {
         width: max-content;
         height: max-content;

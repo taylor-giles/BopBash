@@ -1,10 +1,12 @@
 import { PlayerConnection } from "./types";
-import { Playlist, Track } from "../shared/types";
+import { GuessResult, Playlist, Track } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
+
+const POST_ROUND_WAIT_TIME = 10000;
 
 /**
  * Class to represent the server-side view of a game
@@ -18,10 +20,11 @@ export class Game {
     currentRound?: {
         index: number,
         audioURL: string
+        trackId?: string
     }
 
     //Function to end the current round - resolves the promise returned by startRound
-    private endCurrentRound: (value: void | PromiseLike<void>) => void = ()=>{};
+    private endCurrentRound: (value: void | PromiseLike<void>) => void = () => { };
 
     //Constructor
     private constructor(id: string, playlist: Playlist) {
@@ -78,7 +81,7 @@ export class Game {
         }
 
         //Convert chosen tracks set to list of Rounds
-        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 40000));
+        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 30000));
     }
 
 
@@ -89,9 +92,9 @@ export class Game {
      * @returns The requested player of this game
      * @throws Error if the requested player is not in this game
      */
-    public getPlayer(playerId: string): Player{
+    public getPlayer(playerId: string): Player {
         let player = this.players.get(playerId);
-        if(!player || player.activeGameInfo?.gameId !== this.id){
+        if (!player || player.activeGameInfo?.gameId !== this.id) {
             throw new Error(`Player ${playerId} is not in game ${this.id} (${this.playlist.name})`);
         }
         return player;
@@ -112,7 +115,7 @@ export class Game {
         player.activeGameInfo = {
             gameId: this.id,
             isReady: false,
-            scores: Array.from(this.rounds, ()=>null)
+            scores: Array.from(this.rounds, () => null)
         }
 
         //Broadcast update to all players
@@ -141,7 +144,7 @@ export class Game {
      * @param playerId The ID of the player to ready up
      * @throws Error if the player is not in this game
      */
-    public readyPlayer(playerId: string){
+    public readyPlayer(playerId: string) {
         let player = this.getPlayer(playerId);
 
         //Set player status to ready
@@ -153,11 +156,11 @@ export class Game {
         this.broadcastUpdate();
 
         //Check if all players are ready
-        if(Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)){
-            if(this.status === GameStatus.PENDING){
+        if (Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)) {
+            if (this.status === GameStatus.PENDING) {
                 //If all players are ready during pending stage, the game is ready to start
                 this.start();
-            } else if(this.status === GameStatus.ACTIVE){
+            } else if (this.status === GameStatus.ACTIVE) {
                 //If all players are "ready" during the game, they have all voted to skip to next round
                 this.endCurrentRound();
             }
@@ -188,12 +191,18 @@ export class Game {
      * @param playerId The ID of the player making the guess
      * @param roundNum The index of the round being played
      * @param trackId The ID of the track being guessed
-     * @returns An object dictating whether or not the guess was correct and the score earned for it
+     * @returns A GuessResult object indicating the result of the guess
+     * @throws Error if player or round does not exist, or if player is already ready for round end
      */
-    public async submitPlayerGuess(playerId: string, roundNum: number, trackId: string): Promise<{isCorrect: boolean, score: number}> {
+    public async submitPlayerGuess(playerId: string, roundNum: number, trackId: string): Promise<GuessResult> {
         //TODO: Reject guess if roundNum does not match current round index
         //Get the player
         let player = this.getPlayer(playerId);
+
+        //Do not accept the guess if the player is already ready for round to end
+        if(player.activeGameInfo!.isReady){
+            throw new Error("Player is already ready for round end.");
+        }
 
         //Get the round
         let round = this.rounds?.[roundNum];
@@ -204,17 +213,18 @@ export class Game {
         //Determine the number of points for this guess
         let isCorrect = trackId === round.trackId;
         let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTime;
-        let numPoints = isCorrect ? (30 * 1000) - timeElapsed : 0;
+        let numPoints = isCorrect ? round.maxDuration - timeElapsed : 0;
 
         //Update this player's point count for this round
-        if (isCorrect) {
-            player.activeGameInfo!.scores[roundNum] = numPoints
-        }
+        player.activeGameInfo!.scores[roundNum] = numPoints
+
+        //Ready this player
+        this.readyPlayer(playerId);
 
         //Update all players
         this.broadcastUpdate();
 
-        return {isCorrect: isCorrect, score: numPoints};
+        return { isCorrect: isCorrect, score: numPoints, correctTrackId: round.trackId };
     }
 
 
@@ -247,17 +257,30 @@ export class Game {
 
         //Unready all players
         this.players.forEach((player) => player.activeGameInfo!.isReady = false);
-        
+
         //Inform all players
         this.broadcastUpdate();
         console.log(`Started game ${this.id} (${this.playlist.name})`);
 
         //Run each round, in sequence
         //The promise returned by startRound will resolve when the round ends
-        for(let i=0; i<this.rounds.length; i++){
-            await this.startRound(i);
-        }
+        for (let i = 0; i < this.rounds.length; i++) {
+            if (this.status === GameStatus.ACTIVE) {
+                //Start round and wait for it to finish
+                await this.startRound(i);
 
+                //End the round by readying all players and sending the correct track ID
+                this.currentRound!.trackId = this.rounds[i].trackId; 
+                for (let player of this.players.values()) {
+                    player.activeGameInfo!.isReady = true;
+                }
+                this.broadcastUpdate();
+
+                //Wait before starting next round to give clients time to view scoreboard
+                await new Promise((resolve) => setTimeout(resolve, POST_ROUND_WAIT_TIME));
+            }
+        }
+        
         //End the game
         this.end();
     }
@@ -267,7 +290,7 @@ export class Game {
      * Starts the given round
      * @returns A promise that resolves when the max round duration is over
      */
-    private async startRound(index: number): Promise<void>{
+    private async startRound(index: number): Promise<void> {
         //Unready all players
         this.players.forEach((player) => player.activeGameInfo!.isReady = false);
 
@@ -380,7 +403,7 @@ export class Player {
      */
     public disconnect() {
         //Close the connection if it is open
-        if(this.connection && this.connection.readyState === WebSocket.OPEN){
+        if (this.connection && this.connection.readyState === WebSocket.OPEN) {
             this.connection?.close();
             console.log(`Disconnected player ${this.id} (${this.name})`);
         }
