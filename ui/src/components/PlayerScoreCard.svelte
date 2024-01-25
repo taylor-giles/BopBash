@@ -3,6 +3,7 @@
     import WaitingIcon from "svelte-material-icons/ProgressClock.svelte";
     import type { PlayerState } from "../../../shared/types";
     import { GameStore } from "../../gameStore";
+    import { arraySum } from "../../../shared/utils";
 
     export let player: PlayerState;
     export let highlight: boolean = false;
@@ -35,15 +36,15 @@
     <td id="score-cell">
         <div id="score-container">
             <div id="score-display">
-                {player.scores.reduce((a, b) => {
-                    return (a ?? 0) + (b ?? 0);
-                }, 0)}
+                {arraySum(player.scores)}
             </div>
-            {#if currentRoundScore !== undefined && currentRoundScore !== null}
-                <div id="score-change-display">
+            <div id="score-change-display">
+                {#if currentRoundScore !== undefined && currentRoundScore !== null}
                     ({currentRoundScore < 0 ? "" : "+"}{currentRoundScore})
-                </div>
-            {/if}
+                {:else}
+                    (No Answer)
+                {/if}
+            </div>
         </div>
     </td>
 </tr>
@@ -72,14 +73,14 @@
     }
 
     #name-display {
-        font-size: 1rem;
+        font-size: 1em;
     }
 
     #score-display {
-        font-size: 1rem;
+        font-size: 1em;
     }
 
     #score-change-display {
-        font-size: 0.7rem;
+        font-size: 0.7em;
     }
 </style>

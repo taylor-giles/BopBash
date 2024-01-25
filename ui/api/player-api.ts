@@ -2,6 +2,7 @@ import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
 import { GameConnection, type PlayerConnection } from '../gameStore';
 import { WebSocketRoute, type WebSocketRequest } from "../../shared/ws-routes"
+import type { GuessResult } from '../../shared/types';
 
 const apiCaller = axios.create({
     baseURL: API_ADDRESS,
@@ -58,8 +59,9 @@ export async function joinGame(gameId: string): Promise<string | void> {
  * Submits the player's guess for the specified round
  * @param roundNum The index of the round being played
  * @param trackId The ID of the track being guessed
+ * @returns The result of the guess as a GuessResult object
  */
-export async function submitGuess(roundNum: number, trackId: string): Promise<{isCorrect: boolean, score: number} | void> {
+export async function submitGuess(roundNum: number, trackId: string): Promise<GuessResult | void> {
     return apiCaller.post(`/submitGuess`, {roundNum: roundNum, trackId: trackId}).then((res) => {
         if(res.data.error){
             console.error("Failed to submit guess: ", res.data?.error);
