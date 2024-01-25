@@ -258,9 +258,7 @@ export async function getGames(req: PlayerRequest, res: Response) {
  * 
  * Response Body:
  *  - On Success:
- *      - isCorrect: boolean - True iff the guess was correct
- *      - score: number - The number of points earned for this guess
- *      - trackId: string - The ID of the correct track for this round
+ *      - GuessResult object indicating the result of the guess
  *  - On Failure:
  *      - error: string - Error message
  */

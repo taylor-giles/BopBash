@@ -1,9 +1,7 @@
 <script lang="ts">
   import type { PlayerState } from "../../../shared/types";
   import { GameConnection, GameStore } from "../../gameStore";
-    import { arraySum } from "../utils/utils";
   import PlayerScoreCard from "./PlayerScoreCard.svelte";
-
   
   export let players: PlayerState[];
 </script>
@@ -34,5 +32,6 @@
 
   th {
     text-align: start;
+    font-size: 1.1em;
   }
 </style>
