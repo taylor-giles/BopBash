@@ -6,6 +6,10 @@
 
 <main>
     <div id="content">
+        <div style="flex: 1;">
+            <GameIdForm />
+        </div>
+        <div style="text-align: center;">-OR-</div>
         <div id="selection-buttons-container">
             <div style="width: 100%; box-sizing:border-box;">
                 <SelectionButton
@@ -21,10 +25,6 @@
                     on:click={() => CurrentPage.set(Page.FIND)}
                 />
             </div>
-        </div>
-        <div style="text-align: center;">-OR-</div>
-        <div style="flex: 1;">
-            <GameIdForm />
         </div>
     </div>
 </main>

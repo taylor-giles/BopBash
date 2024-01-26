@@ -58,11 +58,13 @@
     height: 100%;
   }
   #page-content {
+    position: relative;
     box-sizing: border-box;
     padding: 2rem;
     flex: 1;
     width: 100%;
     height: 100%;
+    overflow-y: auto;
   }
   #appbar {
     display: flex;
