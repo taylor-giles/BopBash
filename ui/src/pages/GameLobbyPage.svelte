@@ -28,7 +28,7 @@
         const element = embed;
         const options = {
             uri: `spotify:playlist:${gameState.playlist.id}`,
-            height: "200px",
+            height: "152px",
         };
         const callback = (EmbedController: any) => {
             EmbedController.addListener("ready", () => {
@@ -72,37 +72,50 @@
     }
 </script>
 
+<main>
+    <div id="content">
+        <div id="header">
+            <button id="back-btn" on:click={() => (isModalOpen = true)}>
+                &lt Leave Game
+            </button>
+        </div>
+        <div id="embed-section">
+            <div id="playlist-label" class="body-text">Game Playlist:</div>
+            <div id="playlist-title" class="header-text">
+                {gameState?.playlist?.name}
+            </div>
+            <iframe
+                title="Spotify-provided embedded playlist"
+                sandbox="allow-scripts"
+                bind:this={embed}
+            ></iframe>
+        </div>
+        <div id="players-section">
+            <div class="section-label body-text">
+                Players ({numReadyPlayers}/{playerList.length} Ready)
+            </div>
+            <div id="players-container">
+                {#each playerList as player}
+                    <PlayerCard {player} highlight={player === myPlayerState} />
+                {/each}
+
+                <!-- Spacer for scrolling -->
+                <div style="height: 200px; width: 100%;" />
+
+                <!-- Ready button -->
+                <!-- <div id="ready-btn-container"> -->
+
+                <!-- </div> -->
+            </div>
+        </div>
+    </div>
+</main>
+
 <div id="id-view" class="header-text">
     <div id="id-view-label" class="header-text">GAME ID:</div>
     {gameState.id}
 </div>
-<button id="back-btn" on:click={() => (isModalOpen = true)}
-    >&lt Leave Game</button
->
-<main>
 
-    <div id="embed-section">
-        <div id="playlist-label" class="body-text">Game Playlist:</div>
-        <div id="playlist-title" class="header-text">
-            {gameState?.playlist?.name}
-        </div>
-        <iframe
-            title="Spotify-provided embedded playlist"
-            sandbox="allow-scripts"
-            bind:this={embed}
-        ></iframe>
-    </div>
-    <div id="players-section">
-        <div class="section-label body-text">
-            Players ({numReadyPlayers}/{playerList.length} Ready)
-        </div>
-        <div id="players-container">
-            {#each playerList as player}
-                <PlayerCard {player} highlight={player === myPlayerState} />
-            {/each}
-        </div>
-    </div>
-</main>
 <button id="ready-btn" on:click={toggleReady}>
     {#if myPlayerState?.isReady}
         <CheckIcon /> UNREADY
@@ -122,15 +135,30 @@
 
 <style>
     main {
-        position: relative;
         height: 100%;
         width: 100%;
-        display: flex;
+        position: relative;
         box-sizing: border-box;
+        display: flex;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
-        padding-top: 70px;
+        gap: 20px;
+    }
+
+    #header {
+        width: 100%;
+        max-width: 900px;
+        height: 48px;
+    }
+
+    #content {
+        max-width: 1200px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        overflow-y: auto;
     }
 
     #playlist-label {
@@ -153,15 +181,24 @@
         margin-bottom: 5px;
     }
 
+    iframe {
+        height: 100%;
+    }
+
     #embed-section {
+        box-sizing: border-box;
         display: flex;
-        width: 100%;
+        flex: 1;
+        min-width: 300px;
         height: max-content;
         flex-direction: column;
     }
 
     #players-section {
-        height: 100%;
+        box-sizing: border-box;
+        position: relative;
+        height: max-content;
+        min-width: 300px;
         width: 100%;
     }
 
@@ -171,11 +208,10 @@
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 10px;
         padding-inline: 0px;
         gap: 20px;
-        margin-bottom: 200px;
     }
 
     #id-view {
@@ -214,7 +250,7 @@
         background: radial-gradient(
             ellipse at center top,
             var(--accent),
-            black 210%
+            var(--accent-dark) 120%
         );
     }
 
@@ -241,17 +277,17 @@
         margin-bottom: 50px;
     }
 
+    #ready-btn:hover {
+        box-shadow: 0px 0px 200px -10px var(--accent-light);
+    }
+
     #back-btn {
-        position: absolute;
-        left: 0px;
-        top: 0px;
         background-color: transparent;
         border: none;
         color: white;
         padding: 0px;
-        margin: 32px;
     }
-    #back-btn:hover{
+    #back-btn:hover {
         color: var(--spotify-green);
         background-color: transparent;
     }
