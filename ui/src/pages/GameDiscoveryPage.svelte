@@ -71,7 +71,7 @@
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
-        overflow-y: scroll;
+        overflow-y: auto;
     }
 
     #games-container {
@@ -98,7 +98,7 @@
 
     .card-wrapper {
         flex: 1;
-        max-width: 875px;
+        max-width: 600px;
         min-width: 21.5rem; 
         height: 19rem;
     }
@@ -108,9 +108,11 @@
         border: none;
         color: white;
         padding: 0px;
+        outline: none;
     }
     .header-btn:hover {
         background-color: transparent;
         color: var(--spotify-green);
+        border: 0px;
     }
 </style>
