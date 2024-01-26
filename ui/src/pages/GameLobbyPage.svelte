@@ -21,6 +21,8 @@
 
     //Show the playlist in an embedded iframe once everything is loaded
     let embed: HTMLIFrameElement;
+    let embedSection: HTMLDivElement;
+    let embedController: any;
 
     //Maintain a list of players and count of ready players
     let playerList: PlayerState[];
@@ -61,21 +63,24 @@
     async function renderEmbed() {
         console.log("Rendering");
         await tick();
-        const element = embed;
-        const options = {
+
+        //Render new embed with IFrameAPI
+        let contentWidth = window.innerWidth;
+        let contentHeight = embed.getBoundingClientRect().height;
+        console.log(contentWidth, contentHeight);
+        let options = {
             uri: `spotify:playlist:${gameState.playlist.id}`,
-            height: `${Math.max(152, embed.getBoundingClientRect().height)}px`,
+            height: `100%`,
         };
-        const callback = (EmbedController: any) => {
+        let callback = (EmbedController: any) => {
             EmbedController.addListener("ready", () => {
                 console.log("Embed controller is ready");
             });
         };
-        $IFrameAPI.createController(element, options, callback);
+        $IFrameAPI.createController(embed, options, callback);
     }
 
     onMount(renderEmbed);
-    window.onresize = renderEmbed;
 </script>
 
 <main>
@@ -92,11 +97,12 @@
                     {gameState?.playlist?.name}
                 </div>
             </div>
-            <iframe
-                title="Spotify-provided embedded playlist"
-                sandbox="allow-scripts"
-                bind:this={embed}
-            ></iframe>
+            <div id="embed-container" bind:this={embedSection}>
+                <iframe
+                    bind:this={embed}
+                    title="Spotify-provided embedded playlist"
+                />
+            </div>
         </div>
         <div id="players-section">
             <div class="section-title header-text">
@@ -113,7 +119,11 @@
         </div>
     </div>
     <div id="ready-btn-container">
-        <button id="ready-btn" on:click={toggleReady}>
+        <button
+            id="ready-btn"
+            class={myPlayerState?.isReady ? "activated" : ""}
+            on:click={toggleReady}
+        >
             {#if myPlayerState?.isReady}
                 <CheckIcon /> UNREADY
             {:else}
@@ -163,37 +173,36 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: stretch;
-        align-items: stretch;
         gap: 30px;
         overflow-y: auto;
     }
 
     .label {
-        font-size: 1rem;
+        font-size: 0.9rem;
         color: white;
         font-weight: 200;
-        margin-bottom: -5px;
+        margin-bottom: -6px;
     }
 
     .section-title {
         color: white;
         font-size: 1.3rem;
         font-weight: 600;
-        margin-bottom: 5px;
-        height: 80px;
+        padding-bottom: 5px;
+        height: 3.34rem;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
     }
 
     .title {
-        font-size: 1.9rem;
+        font-size: 1.5rem;
         color: white;
         font-weight: 700;
         margin-bottom: 5px;
     }
 
-    iframe {
+    #embed-container {
         flex: 1;
     }
 
@@ -201,16 +210,16 @@
         box-sizing: border-box;
         display: flex;
         flex: 1;
-        min-width: 300px;
+        min-width: 260px;
         flex-direction: column;
     }
 
     #players-section {
+        box-sizing: border-box;
         flex: 1;
         height: 100%;
-        box-sizing: border-box;
         position: relative;
-        min-width: 300px;
+        min-width: 260px;
         display: flex;
         flex-direction: column;
     }
@@ -218,10 +227,12 @@
     #players-container {
         box-sizing: border-box;
         border: 1px solid gray;
+        background-color: var(--accent-dark);
         padding: 20px;
-        border-radius: 5px;
+        border-radius: 0.75rem;
         flex: 1;
         width: 100%;
+        height: max-content;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -245,7 +256,7 @@
         font-size: 1.9rem;
         color: white;
         padding: 5px;
-        padding-inline: 50px;
+        padding-inline: 2.7rem;
 
         /* Border stuff */
         border: solid 4px transparent;
@@ -254,6 +265,7 @@
         overflow: hidden; /* Ensure inner content doesn't overflow */
     }
 
+    /* ID View background as pseudo-element */
     #id-view:before {
         content: "";
         position: absolute;
@@ -268,6 +280,16 @@
             var(--accent),
             var(--accent-dark) 120%
         );
+    }
+
+    /* Change position of ID view on smaller screens */
+    @media (max-width: 550px) {
+        #id-view {
+            right: 0px;
+            transform: translate(0, 0);
+            border-radius: 0px 0px 0px 40px;
+            border-right: none;
+        }
     }
 
     #id-view-label {
@@ -290,15 +312,46 @@
         justify-content: center;
         align-items: center;
         gap: 10px;
+        position: relative;
         /* position: fixed;
         bottom: 0px;
         left: 50%;
-        transform: translate(-50%); */
-        /* margin-bottom: 50px; */
+        transform: translate(-50%);
+        margin-bottom: 50px; */
         font-size: 2.4rem;
         padding: 20px;
         padding-inline: 30px;
         font-weight: 800;
+    }
+    #ready-btn.activated {
+        background-color: var(--spotify-green);
+    }
+
+    /* Button glow handled by psuedo-element */
+    #ready-btn::after {
+        position: absolute;
+        left: 0;
+        content: "";
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        box-shadow: 0px 0px 50px 0.1px var(--accent-light);
+        animation: pulse-glow 8s ease-in infinite;
+    }
+    #ready-btn.activated::after {
+        opacity: 0;
+        animation: none;
+    }
+    @keyframes pulse-glow {
+        0% {
+            opacity: 0.1;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0.1;
+        }
     }
 
     #back-btn {

@@ -9,7 +9,7 @@
 
 <main class:highlighted={highlight}>
     {#if player?.isReady}
-        <CheckIcon color={highlight ? "black" : "white"}/>
+        <CheckIcon color={highlight ? "white" : "white"}/>
     {:else}
         <WaitingIcon color={highlight ? "gray" : "gray"}/>
     {/if}
@@ -32,7 +32,8 @@
         font-size: 1.3rem;
     }
     main.highlighted {
-        background-color: rgba(235, 235, 235, 0.7);
-        color: black;
+        /* background-color: rgba(235, 235, 235, 0.7);
+        color: black; */
+        color: var(--spotify-green);
     }
 </style>
