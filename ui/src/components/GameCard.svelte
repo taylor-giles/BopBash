@@ -4,7 +4,7 @@
     export let game: GameState;
 </script>
 
-<button id="main" on:click>
+<main>
     <div id="title" class="header-text">
         {game.playlist.name}
     </div>
@@ -29,19 +29,23 @@
         </div>
     </div>
 
-    <div id="game-id" class="header-text">
-        {game.id}
+    <div id="footer" >
+        <div id="game-id" class="header-text">
+            {game.id}
+        </div>
+        <button on:click> Join Game </button>
     </div>
-</button>
+
+</main>
 
 <style>
-    #main {
+    main {
         width: 100%;
         height: 100%;
-        background-color: rgba(50, 50, 50, 0.75);
+        background-color: rgba(50, 50, 50, 0.5);
         border-radius: 5px;
         padding: 20px;
-        color: white;
+        color: var(--primary-light);
         font-size: 1rem;
         font-weight: 300;
         display: flex;
@@ -84,13 +88,21 @@
         font-weight: 400;
     }
 
+    #footer {
+        display: flex;
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
     #game-id {
         display: flex;
         flex-direction: row;
         width: max-content;
         gap: 5px;
         font-weight: 400;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
     #game-id::before {
         content: "Game ID:";

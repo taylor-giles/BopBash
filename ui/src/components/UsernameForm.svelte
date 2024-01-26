@@ -55,7 +55,7 @@
 
 <style>
     main {
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(50, 50, 50, 0.5);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -65,6 +65,7 @@
         padding: 40px;
         padding-inline: 40px;
         border-radius: 10px;
+        border: 1px solid gray;
         box-sizing: border-box;
         width: 100%;
         max-width: 900px;

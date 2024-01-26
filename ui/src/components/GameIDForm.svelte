@@ -32,9 +32,9 @@
 </script>
 
 <main>
-    <div id="join-game-label" class="header-text">Join Game</div>
+    <div id="title" class="header-text">Join Game</div>
     <div id="description" class="body-text">
-        Join a friend's game by entering the game ID below
+        Join any game by entering its ID here
     </div>
     <div
         id="fail-text"
@@ -59,28 +59,29 @@
 
 <style>
     main {
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(50, 50, 50, 0.5);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         gap: 5px;
         flex-shrink: 0;
-        padding: 30px;
+        padding: 1.5rem;
         border-radius: 10px;
+        border: 1px solid gray;
         box-sizing: border-box;
-        width: max-content;
-        max-width: 900px;
-        margin: 20px;
+        width: 100%;
+        min-width: 21.5rem;
+        height: 100%;
     }
 
     form {
         display: contents;
     }
 
-    #join-game-label {
+    #title {
         font-size: 1.5rem;
-        color: white;
+        color: var(--primary-light);
         font-weight: 600;
     }
 
@@ -89,7 +90,7 @@
     }
 
     #gameid-input {
-        height: 50px;
+        height: 2.8rem;
         background-color: var(--primary-light);
         color: var(--accent);
         font-size: 1.3rem;
@@ -98,7 +99,7 @@
         border: none;
         border-radius: 1px;
         padding: 5px;
-        padding-inline: 10px;
+        padding-inline: 0px;
         box-sizing: border-box;
         text-align: center;
         margin-top: 5px;
@@ -112,7 +113,7 @@
     }
 
     #submit-btn {
-        font-size: 0.96rem;
+        font-size: 1rem;
         margin-top: 5px;
         border-radius: 1px;
         width: 100%;
