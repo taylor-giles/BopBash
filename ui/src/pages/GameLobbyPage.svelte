@@ -8,6 +8,7 @@
     import PlayerCard from "../components/PlayerCard.svelte";
     import { CurrentPage, Page } from "../../pageStore";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
+    import { onMount, tick } from "svelte";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -20,23 +21,6 @@
 
     //Show the playlist in an embedded iframe once everything is loaded
     let embed: HTMLIFrameElement;
-    let embedAPI: any;
-    IFrameAPI.subscribe((api: any) => {
-        embedAPI = api;
-    });
-    $: if (embedAPI && embed && gameState) {
-        const element = embed;
-        const options = {
-            uri: `spotify:playlist:${gameState.playlist.id}`,
-            height: "152px",
-        };
-        const callback = (EmbedController: any) => {
-            EmbedController.addListener("ready", () => {
-                console.log("Embed controller is ready");
-            });
-        };
-        embedAPI.createController(element, options, callback);
-    }
 
     //Maintain a list of players and count of ready players
     let playerList: PlayerState[];
@@ -70,19 +54,43 @@
         GameAPI.leaveGame();
         CurrentPage.set(Page.HOME);
     }
+
+    /**
+     * Render the embedded playlist using the Spotify IFrameAPI
+     */
+    async function renderEmbed() {
+        console.log("Rendering");
+        await tick();
+        const element = embed;
+        const options = {
+            uri: `spotify:playlist:${gameState.playlist.id}`,
+            height: `${Math.max(152, embed.getBoundingClientRect().height)}px`,
+        };
+        const callback = (EmbedController: any) => {
+            EmbedController.addListener("ready", () => {
+                console.log("Embed controller is ready");
+            });
+        };
+        $IFrameAPI.createController(element, options, callback);
+    }
+
+    onMount(renderEmbed);
+    window.onresize = renderEmbed;
 </script>
 
 <main>
+    <div id="header">
+        <button id="back-btn" on:click={() => (isModalOpen = true)}>
+            &lt Leave Game
+        </button>
+    </div>
     <div id="content">
-        <div id="header">
-            <button id="back-btn" on:click={() => (isModalOpen = true)}>
-                &lt Leave Game
-            </button>
-        </div>
         <div id="embed-section">
-            <div id="playlist-label" class="body-text">Game Playlist:</div>
-            <div id="playlist-title" class="header-text">
-                {gameState?.playlist?.name}
+            <div class="section-title">
+                <div class="label body-text">Game Playlist:</div>
+                <div class="title header-text">
+                    {gameState?.playlist?.name}
+                </div>
             </div>
             <iframe
                 title="Spotify-provided embedded playlist"
@@ -91,7 +99,7 @@
             ></iframe>
         </div>
         <div id="players-section">
-            <div class="section-label body-text">
+            <div class="section-title header-text">
                 Players ({numReadyPlayers}/{playerList.length} Ready)
             </div>
             <div id="players-container">
@@ -100,14 +108,18 @@
                 {/each}
 
                 <!-- Spacer for scrolling -->
-                <div style="height: 200px; width: 100%;" />
-
-                <!-- Ready button -->
-                <!-- <div id="ready-btn-container"> -->
-
-                <!-- </div> -->
+                <!-- <div style="height: 200px; width: 100%;" /> -->
             </div>
         </div>
+    </div>
+    <div id="ready-btn-container">
+        <button id="ready-btn" on:click={toggleReady}>
+            {#if myPlayerState?.isReady}
+                <CheckIcon /> UNREADY
+            {:else}
+                <CheckOutlineIcon /> READY
+            {/if}
+        </button>
     </div>
 </main>
 
@@ -115,14 +127,6 @@
     <div id="id-view-label" class="header-text">GAME ID:</div>
     {gameState.id}
 </div>
-
-<button id="ready-btn" on:click={toggleReady}>
-    {#if myPlayerState?.isReady}
-        <CheckIcon /> UNREADY
-    {:else}
-        <CheckOutlineIcon /> READY
-    {/if}
-</button>
 
 <!-- Confirmation modal for leaving game -->
 {#if isModalOpen}
@@ -148,33 +152,41 @@
 
     #header {
         width: 100%;
-        max-width: 900px;
         height: 48px;
     }
 
     #content {
-        max-width: 1200px;
+        box-sizing: border-box;
         width: 100%;
+        flex: 1;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: stretch;
+        align-items: stretch;
         gap: 30px;
         overflow-y: auto;
     }
 
-    #playlist-label {
+    .label {
         font-size: 1rem;
         color: white;
         font-weight: 200;
         margin-bottom: -5px;
     }
 
-    .section-label {
+    .section-title {
         color: white;
         font-size: 1.3rem;
-        font-weight: 400;
+        font-weight: 600;
+        margin-bottom: 5px;
+        height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
     }
 
-    #playlist-title {
+    .title {
         font-size: 1.9rem;
         color: white;
         font-weight: 700;
@@ -182,7 +194,7 @@
     }
 
     iframe {
-        height: 100%;
+        flex: 1;
     }
 
     #embed-section {
@@ -190,27 +202,31 @@
         display: flex;
         flex: 1;
         min-width: 300px;
-        height: max-content;
         flex-direction: column;
     }
 
     #players-section {
+        flex: 1;
+        height: 100%;
         box-sizing: border-box;
         position: relative;
-        height: max-content;
         min-width: 300px;
-        width: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     #players-container {
-        width: max-content;
-        max-width: 100%;
+        box-sizing: border-box;
+        border: 1px solid gray;
+        padding: 20px;
+        border-radius: 5px;
+        flex: 1;
+        width: 100%;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: flex-start;
-        padding: 10px;
-        padding-inline: 0px;
+        align-items: flex-start;
         gap: 20px;
     }
 
@@ -260,25 +276,29 @@
         margin-bottom: -5px;
     }
 
+    #ready-btn-container {
+        width: 100%;
+        height: max-content;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
     #ready-btn {
         display: flex;
         flex-direction: row;
         justify-content: center;
         align-items: center;
         gap: 10px;
-        position: fixed;
+        /* position: fixed;
         bottom: 0px;
         left: 50%;
-        transform: translate(-50%);
+        transform: translate(-50%); */
+        /* margin-bottom: 50px; */
         font-size: 2.4rem;
         padding: 20px;
         padding-inline: 30px;
         font-weight: 800;
-        margin-bottom: 50px;
-    }
-
-    #ready-btn:hover {
-        box-shadow: 0px 0px 200px -10px var(--accent-light);
     }
 
     #back-btn {

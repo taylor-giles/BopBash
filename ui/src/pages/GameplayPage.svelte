@@ -226,7 +226,7 @@
         };
 
         //Make the embed
-        ($IFrameAPI as any)?.createController(
+        $IFrameAPI.createController(
             correctTrackEmbed,
             iframeOptions,
             callback,
