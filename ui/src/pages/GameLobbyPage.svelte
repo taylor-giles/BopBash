@@ -80,6 +80,7 @@
     >&lt Leave Game</button
 >
 <main>
+
     <div id="embed-section">
         <div id="playlist-label" class="body-text">Game Playlist:</div>
         <div id="playlist-title" class="header-text">
@@ -121,6 +122,7 @@
 
 <style>
     main {
+        position: relative;
         height: 100%;
         width: 100%;
         display: flex;
@@ -177,7 +179,7 @@
     }
 
     #id-view {
-        position: fixed;
+        position: absolute;
         top: 0px;
         left: 50%;
         transform: translate(-50%, 0);
@@ -248,5 +250,9 @@
         color: white;
         padding: 0px;
         margin: 32px;
+    }
+    #back-btn:hover{
+        color: var(--spotify-green);
+        background-color: transparent;
     }
 </style>

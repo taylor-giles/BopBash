@@ -7,19 +7,19 @@
 </script>
 
 <main>
-  <table>
+  <!-- <table>
     <thead>
       <tr>
         <th/>
-        <th> Name </th>
+        <th> Players </th>
         <th> Score </th>
       </tr>
-    </thead>
+    </thead> -->
 
     {#each players as player (player.id)}
       <PlayerScoreCard {player} highlight={player.id === $GameConnection.playerId}/>
     {/each}
-  </table>
+  <!-- </table> -->
 </main>
 
 <style>

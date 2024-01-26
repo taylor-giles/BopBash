@@ -12,7 +12,6 @@
     let games: GameState[];
     refresh();
 
-
     /**
      * Query API for updated list of games
      */
@@ -26,19 +25,23 @@
     /**
      * Return to home page
      */
-    function handleBackClick(){
+    function handleBackClick() {
         CurrentPage.set(Page.HOME);
     }
 </script>
 
 <main>
-    <button id="back-btn" on:click={handleBackClick}>&lt Back</button>
+    <div id="button-container">
+        <button class="header-btn" on:click={handleBackClick}>&lt Back</button>
+        <button class="header-btn" on:click={refresh}>Refresh</button>
+    </div>
+
     <div id="content">
         {#if !isRefreshing}
             <div id="games-container">
                 {#each games as game}
                     <div class="card-wrapper">
-                        <GameCard {game} on:click={() => joinGame(game.id)}/>
+                        <GameCard {game} on:click={() => joinGame(game.id)} />
                     </div>
                 {/each}
             </div>
@@ -47,7 +50,6 @@
             Refreshing...
         {/if}
     </div>
-    <button on:click={refresh}>Refresh</button>
 </main>
 
 <style>
@@ -58,6 +60,8 @@
         align-items: flex-start;
         height: 100%;
         width: 100%;
+        gap: 20px;
+        box-sizing: border-box;
     }
 
     #content {
@@ -66,6 +70,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        box-sizing: border-box;
+        overflow-y: scroll;
     }
 
     #games-container {
@@ -80,18 +86,31 @@
         justify-content: flex-start;
         align-items: center;
         gap: 20px;
+        box-sizing: border-box;
+    }
+
+    #button-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
     }
 
     .card-wrapper {
-        width: 400px;
-        max-width: 100%;
-        height: 270px;
+        flex: 1;
+        max-width: 875px;
+        min-width: 21.5rem; 
+        height: 19rem;
     }
 
-    #back-btn {
+    .header-btn {
         background-color: transparent;
         border: none;
         color: white;
         padding: 0px;
+    }
+    .header-btn:hover {
+        background-color: transparent;
+        color: var(--spotify-green);
     }
 </style>

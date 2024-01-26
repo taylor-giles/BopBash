@@ -41,6 +41,9 @@
 </script>
 
 <main>
+  <div id="appbar">
+    Beat Blitz
+  </div>
   <div id="page-content">
     <svelte:component this={PAGES[$CurrentPage]} />
   </div>
@@ -48,14 +51,27 @@
 
 <style>
   main {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
   }
   #page-content {
+    box-sizing: border-box;
+    padding: 2rem;
     flex: 1;
     width: 100%;
     height: 100%;
+  }
+  #appbar {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-inline: 15px;
+    background-color: var(--primary-dark);
+    height: 3rem;
+    font-size: 1.6rem;
   }
 </style>
