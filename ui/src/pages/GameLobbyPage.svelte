@@ -60,17 +60,16 @@
         CurrentPage.set(Page.HOME);
     }
 
-
     /**
      * Copies the game ID to clipboard
      */
-    function handleCopy(){
+    function handleCopy() {
         navigator.clipboard.writeText(gameState.id);
         gameIdText = "Game ID copied!";
         gameIdTextClass = "activated";
         setTimeout(() => {
             gameIdText = "Ask your friends to join!";
-            gameIdTextClass="";
+            gameIdTextClass = "";
         }, 5000);
     }
 
@@ -153,18 +152,21 @@
     class={myPlayerState?.isReady ? "activated" : ""}
     on:click={toggleReady}
 >
-    {#if myPlayerState?.isReady}
-        <div id="unready-content">
-            <div class="ready-btn">
+    <div class="ready-btn-content">
+        {#if myPlayerState?.isReady}
+            <div class="ready-btn-display">
                 <CheckIcon /> READY
             </div>
-            <div style="font-size: 0.8rem; margin: 0 -50%;">Waiting for game to start</div>
-        </div>
-    {:else}
-        <div class="ready-btn">
-            <CheckOutlineIcon /> READY
-        </div>
-    {/if}
+            <div style="font-size: 0.8rem; margin: 0 -50%;">
+                Waiting for other players
+            </div>
+        {:else}
+            <div class="ready-btn-display">
+                <CheckOutlineIcon /> READY
+            </div>
+            <div style="font-size: 0.7rem; margin: 0 -50%;">Click to Start</div>
+        {/if}
+    </div>
 </button>
 
 <!-- Confirmation modal for leaving game -->
@@ -180,8 +182,6 @@
     main {
         height: 100%;
         width: 100%;
-        position: relative;
-        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -190,13 +190,11 @@
     }
 
     #content {
-        box-sizing: border-box;
         width: 100%;
         flex: 1;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: stretch;
         gap: 30px;
         overflow-y: auto;
         margin-top: 4.5rem;
@@ -214,7 +212,7 @@
         font-size: 1.3rem;
         font-weight: 600;
         padding-bottom: 5px;
-        height: 3.34rem;
+        height: 3.6rem;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -229,10 +227,11 @@
 
     #embed-container {
         flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
     #embed-section {
-        box-sizing: border-box;
         display: flex;
         flex: 1;
         min-width: 260px;
@@ -240,7 +239,6 @@
     }
 
     #players-section {
-        box-sizing: border-box;
         flex: 1;
         height: 100%;
         position: relative;
@@ -250,7 +248,6 @@
     }
 
     #players-container {
-        box-sizing: border-box;
         border: 1px solid gray;
         background-color: var(--accent-dark);
         padding: 20px;
@@ -261,7 +258,6 @@
     }
 
     #players-content {
-        box-sizing: border-box;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -274,7 +270,7 @@
         max-height: 100%;
     }
 
-    .ready-btn {
+    .ready-btn-display {
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -285,7 +281,15 @@
         font-size: 1.9rem;
         color: white;
     }
-
+    .ready-btn-content {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        color: var(--primary-light);
+        overflow: hidden;
+        white-space: nowrap;
+        overflow: hidden;
+    }
     #ready-btn {
         position: absolute;
         top: 0px;
@@ -295,10 +299,9 @@
         background-image: radial-gradient(circle at top left, #888, #ccc, #aaa);
         background-size: cover;
 
-        padding: 1rem;
-        padding-inline: 2.7rem;
-        height: 4.4rem;
-        width: 14.5rem;
+        padding: 0.7rem;
+        height: 5.5rem;
+        width: 15rem;
 
         /* Border stuff */
         border: solid 4px transparent;
@@ -310,7 +313,7 @@
     }
     #ready-btn.activated {
         height: 5.5rem;
-        width: 20rem;
+        width: 18rem;
     }
 
     /* Handle glowing background as pseudo-element */
@@ -348,15 +351,7 @@
         }
     }
 
-    #unready-content {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        color: var(--primary-light);
-        overflow: hidden;
-        white-space: nowrap;
-        overflow: hidden;
-    }
+
 
     #leave-btn {
         color: var(--primary-light);
@@ -369,7 +364,7 @@
     #leave-btn:hover {
         color: var(--spotify-green);
     }
-    
+
     #game-id-view {
         display: flex;
         flex-direction: column;
@@ -391,7 +386,7 @@
         margin-bottom: 4px;
         padding-inline: 2px;
     }
-    #game-id-btn:hover{
+    #game-id-btn:hover {
         background-color: var(--primary-light);
         color: var(--primary-dark);
     }
