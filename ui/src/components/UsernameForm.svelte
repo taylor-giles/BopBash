@@ -66,7 +66,6 @@
         padding-inline: 40px;
         border-radius: 10px;
         border: 1px solid gray;
-        box-sizing: border-box;
         width: 100%;
         max-width: 900px;
         min-width: 300px;
@@ -93,7 +92,6 @@
         border-radius: 1px;
         padding: 5px;
         padding-inline: 10px;
-        box-sizing: border-box;
     }
     #username-input::placeholder {
         color: var(--primary-dark);

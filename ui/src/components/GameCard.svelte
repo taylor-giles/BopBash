@@ -51,7 +51,6 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        box-sizing: border-box;
         font-family: "Nunito Sans", sans-serif;
         text-transform: none;
         text-align: start;

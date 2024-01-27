@@ -69,7 +69,6 @@
         padding: 1.5rem;
         border-radius: 10px;
         border: 1px solid gray;
-        box-sizing: border-box;
         width: 100%;
         min-width: 21.5rem;
         height: 100%;
@@ -100,7 +99,6 @@
         border-radius: 1px;
         padding: 5px;
         padding-inline: 0px;
-        box-sizing: border-box;
         text-align: center;
         margin-top: 5px;
     }

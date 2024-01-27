@@ -343,7 +343,6 @@
     }
 
     #scoreboard-container {
-        box-sizing: border-box;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.4);
         border: 2px solid var(--primary-light);
@@ -357,7 +356,6 @@
     }
 
     #submission-panel {
-        box-sizing: border-box;
         width: 100%;
         height: max-content;
         display: flex;
@@ -371,7 +369,6 @@
         font-weight: 700;
         border-radius: 1px;
         padding-inline: 10px;
-        box-sizing: border-box;
         border: 1px solid var(--primary-light);
     }
 
@@ -394,7 +391,6 @@
         flex: 1;
         width: 100%;
         font-size: 1.3rem;
-        box-sizing: border-box;
         background-color: rgba(0, 0, 0, 0.4);
         border: 2px solid var(--primary-light);
         border-radius: 5px;

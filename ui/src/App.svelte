@@ -51,7 +51,6 @@
 
 <style>
   main {
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -59,7 +58,6 @@
   }
   #page-content {
     position: relative;
-    box-sizing: border-box;
     padding: 2rem;
     flex: 1;
     width: 100%;
