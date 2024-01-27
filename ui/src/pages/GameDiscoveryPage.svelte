@@ -37,7 +37,10 @@
     </div>
 
     <div id="content">
-        {#if !isRefreshing}
+        {#if isRefreshing}
+            <!-- TODO: Replace with loading animation -->
+            Refreshing...
+        {:else if games.length}
             <div id="games-container">
                 {#each games as game}
                     <div class="card-wrapper">
@@ -46,8 +49,7 @@
                 {/each}
             </div>
         {:else}
-            <!-- TODO: Replace with loading animation -->
-            Refreshing...
+            No games available. Make a new one!
         {/if}
     </div>
 </main>
@@ -61,7 +63,6 @@
         height: 100%;
         width: 100%;
         gap: 20px;
-        box-sizing: border-box;
     }
 
     #content {
@@ -70,7 +71,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        box-sizing: border-box;
         overflow-y: auto;
     }
 
@@ -86,7 +86,6 @@
         justify-content: flex-start;
         align-items: center;
         gap: 20px;
-        box-sizing: border-box;
     }
 
     #button-container {
@@ -99,7 +98,7 @@
     .card-wrapper {
         flex: 1;
         max-width: 600px;
-        min-width: 21.5rem; 
+        min-width: 21.5rem;
         height: 19rem;
     }
 

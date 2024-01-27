@@ -1,13 +1,18 @@
 :root {
   line-height: 1.5;
   font-weight: 400;
-  box-sizing: border-box;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   height: 100%;
+}
+
+/* For the love of everything holy and the sanity of all */
+* {
+  box-sizing: border-box;
+  outline: 1px solid red;
 }
 
 a {
@@ -22,7 +27,6 @@ a:hover {
 body {
   height: 100%;
   margin: 0;
-  box-sizing: border-box;
 }
 
 h1 {
@@ -45,12 +49,10 @@ h1 {
   justify-content: center;
   align-items: center;
   padding: 20px;
-  box-sizing: border-box;
 }
 
 #app {
   height: 100%;
-  box-sizing: border-box;
 }
 
 button {

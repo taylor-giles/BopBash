@@ -31,7 +31,6 @@
 
 <style>
     main {
-        box-sizing: border-box;
         display: flex;
         flex-direction: row;
         justify-content: center;
@@ -40,7 +39,6 @@
     }
 
     #content {
-        box-sizing: border-box;
         display: flex;
         flex-direction: row;
         justify-content: center;
@@ -54,7 +52,6 @@
 
     #selection-buttons-container {
         flex: 1;
-        box-sizing: border-box;
         width: max-content;
         max-width: 700px;
         min-width: 300px;
