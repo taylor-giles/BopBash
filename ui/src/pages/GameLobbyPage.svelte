@@ -1,6 +1,7 @@
 <script lang="ts">
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import CheckOutlineIcon from "svelte-material-icons/CheckCircleOutline.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
     import { IFrameAPI } from "../../IFrameAPI";
     import { GameStore, GameConnection } from "../../gameStore";
@@ -21,8 +22,6 @@
 
     //Show the playlist in an embedded iframe once everything is loaded
     let embed: HTMLIFrameElement;
-    let embedSection: HTMLDivElement;
-    let embedController: any;
 
     //Maintain a list of players and count of ready players
     let playerList: PlayerState[];
@@ -36,6 +35,10 @@
 
     //Modal opens iff this is true
     let isModalOpen = false;
+
+    //Text shown around game ID
+    let gameIdText = "Ask your friends to join!";
+    let gameIdTextClass = "";
 
     /**
      * Toggle player's ready state
@@ -55,6 +58,20 @@
     function leave() {
         GameAPI.leaveGame();
         CurrentPage.set(Page.HOME);
+    }
+
+
+    /**
+     * Copies the game ID to clipboard
+     */
+    function handleCopy(){
+        navigator.clipboard.writeText(gameState.id);
+        gameIdText = "Game ID copied!";
+        gameIdTextClass = "activated";
+        setTimeout(() => {
+            gameIdText = "Ask your friends to join!";
+            gameIdTextClass="";
+        }, 5000);
     }
 
     /**
@@ -79,16 +96,10 @@
         };
         $IFrameAPI.createController(embed, options, callback);
     }
-
     onMount(renderEmbed);
 </script>
 
 <main>
-    <div id="header">
-        <button id="back-btn" on:click={() => (isModalOpen = true)}>
-            &lt Leave Game
-        </button>
-    </div>
     <div id="content">
         <div id="embed-section">
             <div class="section-title">
@@ -97,7 +108,7 @@
                     {gameState?.playlist?.name}
                 </div>
             </div>
-            <div id="embed-container" bind:this={embedSection}>
+            <div id="embed-container">
                 <iframe
                     bind:this={embed}
                     title="Spotify-provided embedded playlist"
@@ -109,34 +120,52 @@
                 Players ({numReadyPlayers}/{playerList.length} Ready)
             </div>
             <div id="players-container">
-                {#each playerList as player}
-                    <PlayerCard {player} highlight={player === myPlayerState} />
-                {/each}
-
-                <!-- Spacer for scrolling -->
-                <!-- <div style="height: 200px; width: 100%;" /> -->
+                <div id="players-content">
+                    {#each playerList as player}
+                        <PlayerCard
+                            {player}
+                            highlight={player === myPlayerState}
+                        />
+                    {/each}
+                </div>
             </div>
         </div>
     </div>
-    <div id="ready-btn-container">
-        <button
-            id="ready-btn"
-            class={myPlayerState?.isReady ? "activated" : ""}
-            on:click={toggleReady}
-        >
-            {#if myPlayerState?.isReady}
-                <CheckIcon /> UNREADY
-            {:else}
-                <CheckOutlineIcon /> READY
-            {/if}
+    <div id="footer">
+        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+            &lt Leave Game
         </button>
+
+        <div id="game-id-view">
+            <div id="game-id-label" class={gameIdTextClass}>{gameIdText}</div>
+            <div id="game-id">
+                {gameState.id}
+                <button id="game-id-btn" on:click={handleCopy}>
+                    <CopyIcon height="0.9rem" width="0.9rem" />
+                </button>
+            </div>
+        </div>
     </div>
 </main>
 
-<div id="id-view" class="header-text">
-    <div id="id-view-label" class="header-text">GAME ID:</div>
-    {gameState.id}
-</div>
+<button
+    id="ready-btn"
+    class={myPlayerState?.isReady ? "activated" : ""}
+    on:click={toggleReady}
+>
+    {#if myPlayerState?.isReady}
+        <div id="unready-content">
+            <div class="ready-btn">
+                <CheckIcon /> READY
+            </div>
+            <div style="font-size: 0.8rem; margin: 0 -50%;">Waiting for game to start</div>
+        </div>
+    {:else}
+        <div class="ready-btn">
+            <CheckOutlineIcon /> READY
+        </div>
+    {/if}
+</button>
 
 <!-- Confirmation modal for leaving game -->
 {#if isModalOpen}
@@ -160,11 +189,6 @@
         gap: 20px;
     }
 
-    #header {
-        width: 100%;
-        height: 48px;
-    }
-
     #content {
         box-sizing: border-box;
         width: 100%;
@@ -175,6 +199,7 @@
         justify-content: stretch;
         gap: 30px;
         overflow-y: auto;
+        margin-top: 4.5rem;
     }
 
     .label {
@@ -233,135 +258,156 @@
         flex: 1;
         width: 100%;
         height: max-content;
+    }
+
+    #players-content {
+        box-sizing: border-box;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: flex-start;
+        justify-content: center;
         align-items: flex-start;
         gap: 20px;
+        width: max-content;
+        max-width: 100%;
+        height: max-content;
+        max-height: 100%;
     }
 
-    #id-view {
+    .ready-btn {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+
+        font-weight: 700;
+        font-size: 1.9rem;
+        color: white;
+    }
+
+    #ready-btn {
         position: absolute;
         top: 0px;
         left: 50%;
         transform: translate(-50%, 0);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+
         background-image: radial-gradient(circle at top left, #888, #ccc, #aaa);
         background-size: cover;
-        font-weight: 700;
-        font-size: 1.9rem;
-        color: white;
-        padding: 5px;
+
+        padding: 1rem;
         padding-inline: 2.7rem;
+        height: 4.4rem;
+        width: 14.5rem;
 
         /* Border stuff */
         border: solid 4px transparent;
         border-radius: 0px 0px 40px 40px;
         border-top: 0px;
         overflow: hidden; /* Ensure inner content doesn't overflow */
+
+        transition: 0.5s ease-out;
+    }
+    #ready-btn.activated {
+        height: 5.5rem;
+        width: 20rem;
     }
 
-    /* ID View background as pseudo-element */
-    #id-view:before {
+    /* Handle glowing background as pseudo-element */
+    #ready-btn:before {
         content: "";
         position: absolute;
-        top: -5px;
-        right: -5px;
-        bottom: -5px;
-        left: -5px;
+        top: -90px;
+        right: 0px;
+        bottom: -10px;
+        left: 0px;
         z-index: -1;
         border-radius: inherit;
         background: radial-gradient(
             ellipse at center top,
+            var(--accent-light) -15%,
             var(--accent),
-            var(--accent-dark) 120%
+            var(--accent-dark) 110%
         );
-    }
-
-    /* Change position of ID view on smaller screens */
-    @media (max-width: 550px) {
-        #id-view {
-            right: 0px;
-            transform: translate(0, 0);
-            border-radius: 0px 0px 0px 40px;
-            border-right: none;
-        }
-    }
-
-    #id-view-label {
-        font-weight: 500;
-        font-size: 0.9rem;
-        margin-bottom: -5px;
-    }
-
-    #ready-btn-container {
-        width: 100%;
-        height: max-content;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    #ready-btn {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        position: relative;
-        /* position: fixed;
-        bottom: 0px;
-        left: 50%;
-        transform: translate(-50%);
-        margin-bottom: 50px; */
-        font-size: 2.4rem;
-        padding: 20px;
-        padding-inline: 30px;
-        font-weight: 800;
-    }
-    #ready-btn.activated {
-        background-color: var(--spotify-green);
-    }
-
-    /* Button glow handled by psuedo-element */
-    #ready-btn::after {
-        position: absolute;
-        left: 0;
-        content: "";
-        width: 100%;
-        height: 100%;
-        border-radius: inherit;
-        box-shadow: 0px 0px 50px 0.1px var(--accent-light);
         animation: pulse-glow 8s ease-in infinite;
+        transition: top 0.5s ease-in-out;
     }
-    #ready-btn.activated::after {
-        opacity: 0;
+    #ready-btn.activated:before {
         animation: none;
+        top: 0px;
     }
     @keyframes pulse-glow {
         0% {
-            opacity: 0.1;
+            top: 0px;
         }
         50% {
-            opacity: 1;
+            top: -90px;
         }
         100% {
-            opacity: 0.1;
+            top: 0px;
         }
     }
 
-    #back-btn {
+    #unready-content {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        color: var(--primary-light);
+        overflow: hidden;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    #leave-btn {
+        color: var(--primary-light);
+        background-color: var(--accent-dark);
+        /* border: 1px solid var(--primary-light); */
+        padding: 0px;
+        font-size: 0.9rem;
+        height: 100%;
+    }
+    #leave-btn:hover {
+        color: var(--spotify-green);
+    }
+    
+    #game-id-view {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #game-id {
+        font-size: 1.3rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: max-content;
+        gap: 8px;
+    }
+    #game-id-btn {
         background-color: transparent;
         border: none;
-        color: white;
+        color: var(--primary-light);
         padding: 0px;
+        margin-bottom: 4px;
+        padding-inline: 2px;
     }
-    #back-btn:hover {
+    #game-id-btn:hover{
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+    }
+    #game-id-label {
+        font-size: 0.8rem;
+    }
+    #game-id-label.activated {
         color: var(--spotify-green);
-        background-color: transparent;
+    }
+    #footer {
+        width: 100%;
+        height: 48px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-bottom: -20px;
+        margin-top: -4px;
     }
 </style>
