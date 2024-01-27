@@ -32,10 +32,11 @@
     #content {
         width: max-content;
         height: max-content;
-        padding: 50px;
-        background-color: var(--primary-light);
+        padding: 2.8rem;
+        background-color: var(--accent-dark);
         border-radius: 12px;
-        color: black;
+        border: 1px solid gray;
+        color: var(--primary-light);
     }
 
     #header {
