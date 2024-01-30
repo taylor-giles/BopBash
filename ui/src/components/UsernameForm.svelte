@@ -102,7 +102,7 @@
     }
 
     #fail-text {
-        color: rgb(255, 50, 50);
+        color: var(--red);
     }
 
     #submit-btn {
