@@ -1,4 +1,6 @@
 <script lang="ts">
+    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
+    import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import type { GameState } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import { joinGame } from "../../api/player-api";
@@ -32,8 +34,12 @@
 
 <main>
     <div id="button-container">
-        <button class="header-btn" on:click={handleBackClick}>&lt Back</button>
-        <button class="header-btn" on:click={refresh}>Refresh</button>
+        <button class="header-btn" on:click={handleBackClick}>
+            <BackIcon /> Back
+        </button>
+        <button class="header-btn" on:click={refresh}>
+            <RefreshIcon /> Refresh
+        </button>
     </div>
 
     <div id="content">
@@ -63,6 +69,7 @@
         height: 100%;
         width: 100%;
         gap: 20px;
+        padding-top: 1rem;
     }
 
     #content {
@@ -98,7 +105,7 @@
     .card-wrapper {
         flex: 1;
         max-width: 600px;
-        min-width: 21.5rem;
+        min-width: 20rem;
         height: 19rem;
     }
 
@@ -108,6 +115,10 @@
         color: white;
         padding: 0px;
         outline: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
     }
     .header-btn:hover {
         background-color: transparent;
