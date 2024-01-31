@@ -24,10 +24,9 @@
 <style>
     button {
         height: 100%;
-        width: max-content;
-        max-width: 100%;
-        padding: 25px;
-        background-color: rgba(0, 0, 0, 0.5);
+        width: 100%;
+        padding: 20px;
+        background-color: var(--primary-light);
         text-transform: none;
         border: none;
         display: flex;
@@ -39,22 +38,20 @@
     }
 
     .title {
-        color: white;
+        color: var(--dark-accent);
         font-size: 1.5rem;
         font-weight: 600;
     }
     .description {
         flex: 1;
-        color: white;
+        color: var(--dark-accent);
         font-size: 1rem;
         font-weight: 100;
     }
     .instruction {
-        color: var(--primary-light);
+        color: var(--spotify-green);
         font-size: 0.9rem;
         font-weight: 300;
         margin-top: 0px;
     }
-
-
 </style>
