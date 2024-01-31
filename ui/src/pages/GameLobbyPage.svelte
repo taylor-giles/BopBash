@@ -1,6 +1,8 @@
 <script lang="ts">
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import CheckOutlineIcon from "svelte-material-icons/CheckCircleOutline.svelte";
+    import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
     import { IFrameAPI } from "../../IFrameAPI";
     import { GameStore, GameConnection } from "../../gameStore";
@@ -8,6 +10,8 @@
     import PlayerCard from "../components/PlayerCard.svelte";
     import { CurrentPage, Page } from "../../pageStore";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
+    import { onMount, tick } from "svelte";
+    import { scale } from "svelte/transition";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -20,23 +24,6 @@
 
     //Show the playlist in an embedded iframe once everything is loaded
     let embed: HTMLIFrameElement;
-    let embedAPI: any;
-    IFrameAPI.subscribe((api: any) => {
-        embedAPI = api;
-    });
-    $: if (embedAPI && embed && gameState) {
-        const element = embed;
-        const options = {
-            uri: `spotify:playlist:${gameState.playlist.id}`,
-            height: "200px",
-        };
-        const callback = (EmbedController: any) => {
-            EmbedController.addListener("ready", () => {
-                console.log("Embed controller is ready");
-            });
-        };
-        embedAPI.createController(element, options, callback);
-    }
 
     //Maintain a list of players and count of ready players
     let playerList: PlayerState[];
@@ -50,6 +37,10 @@
 
     //Modal opens iff this is true
     let isModalOpen = false;
+
+    //Text shown around game ID
+    let gameIdText = "Ask your friends to join!";
+    let gameIdTextClass = "";
 
     /**
      * Toggle player's ready state
@@ -70,44 +61,115 @@
         GameAPI.leaveGame();
         CurrentPage.set(Page.HOME);
     }
+
+    /**
+     * Copies the game ID to clipboard
+     */
+    function handleCopy() {
+        navigator.clipboard.writeText(gameState.id);
+        gameIdText = "Game ID copied!";
+        gameIdTextClass = "activated";
+        setTimeout(() => {
+            gameIdText = "Ask your friends to join!";
+            gameIdTextClass = "";
+        }, 5000);
+    }
+
+    /**
+     * Render the embedded playlist using the Spotify IFrameAPI
+     */
+    async function renderEmbed() {
+        await tick();
+
+        //Render new embed with IFrameAPI
+        let contentWidth = window.innerWidth;
+        let contentHeight = embed.getBoundingClientRect().height;
+        console.log(contentWidth, contentHeight);
+        let options = {
+            uri: `spotify:playlist:${gameState.playlist.id}`,
+            height: `100%`,
+        };
+        let callback = (EmbedController: any) => {
+            EmbedController.addListener("ready", () => {
+                console.log("Embed controller is ready");
+            });
+        };
+        $IFrameAPI.createController(embed, options, callback);
+    }
+    onMount(renderEmbed);
 </script>
 
-<div id="id-view" class="header-text">
-    <div id="id-view-label" class="header-text">GAME ID:</div>
-    {gameState.id}
-</div>
-<button id="back-btn" on:click={() => (isModalOpen = true)}
-    >&lt Leave Game</button
->
 <main>
-    <div id="embed-section">
-        <div id="playlist-label" class="body-text">Game Playlist:</div>
-        <div id="playlist-title" class="header-text">
-            {gameState?.playlist?.name}
+    <div id="content">
+        <div id="embed-section">
+            <div class="section-title">
+                <div class="label body-text">Game Playlist:</div>
+                <div class="title header-text">
+                    {gameState?.playlist?.name}
+                </div>
+            </div>
+            <div id="embed-container">
+                <iframe
+                    bind:this={embed}
+                    title="Spotify-provided embedded playlist"
+                />
+            </div>
         </div>
-        <iframe
-            title="Spotify-provided embedded playlist"
-            sandbox="allow-scripts"
-            bind:this={embed}
-        ></iframe>
+        <div id="players-section">
+            <div class="section-title header-text">
+                Players ({numReadyPlayers}/{playerList.length} Ready)
+            </div>
+            <div id="players-container">
+                <div id="players-content">
+                    {#each playerList as player (player.id)}
+                        <div transition:scale>
+                            <PlayerCard
+                                {player}
+                                highlight={player === myPlayerState}
+                            />
+                        </div>
+                    {/each}
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="players-section">
-        <div class="section-label body-text">
-            Players ({numReadyPlayers}/{playerList.length} Ready)
-        </div>
-        <div id="players-container">
-            {#each playerList as player}
-                <PlayerCard {player} highlight={player === myPlayerState} />
-            {/each}
+    <div id="footer">
+        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+            <BackIcon /> Leave Game
+        </button>
+
+        <div id="game-id-view">
+            <div id="game-id-label" class={gameIdTextClass}>{gameIdText}</div>
+            <div id="game-id">
+                {gameState.id}
+                <button id="game-id-btn" on:click={handleCopy}>
+                    <CopyIcon height="0.9rem" width="0.9rem" />
+                </button>
+            </div>
         </div>
     </div>
 </main>
-<button id="ready-btn" on:click={toggleReady}>
-    {#if myPlayerState?.isReady}
-        <CheckIcon /> UNREADY
-    {:else}
-        <CheckOutlineIcon /> READY
-    {/if}
+
+<button
+    id="ready-btn"
+    class:activated={myPlayerState?.isReady}
+    on:click={toggleReady}
+>
+    <div class="ready-btn-content">
+        {#if myPlayerState?.isReady}
+            <div class="ready-btn-display">
+                <CheckIcon /> READY
+            </div>
+            <div style="font-size: 0.8rem; margin: 0 -50%;">
+                Waiting for other players
+            </div>
+        {:else}
+            <div class="ready-btn-display">
+                <CheckOutlineIcon /> READY
+            </div>
+            <div style="font-size: 0.7rem; margin: 0 -50%;">Click to Start</div>
+        {/if}
+    </div>
 </button>
 
 <!-- Confirmation modal for leaving game -->
@@ -124,129 +186,182 @@
         height: 100%;
         width: 100%;
         display: flex;
-        box-sizing: border-box;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
-        padding-top: 70px;
+        gap: 20px;
     }
 
-    #playlist-label {
-        font-size: 1rem;
+    #content {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 30px;
+        overflow-y: auto;
+        margin-top: 6.5rem;
+    }
+
+    .label {
+        font-size: 0.9rem;
         color: white;
         font-weight: 200;
-        margin-bottom: -5px;
+        margin-bottom: -6px;
     }
 
-    .section-label {
+    .section-title {
         color: white;
         font-size: 1.3rem;
-        font-weight: 400;
+        font-weight: 600;
+        padding-bottom: 5px;
+        height: 3.6rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
     }
 
-    #playlist-title {
-        font-size: 1.9rem;
+    .title {
+        font-size: 1.5rem;
         color: white;
         font-weight: 700;
         margin-bottom: 5px;
     }
 
+    #embed-container {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
     #embed-section {
         display: flex;
-        width: 100%;
-        height: max-content;
+        flex: 1;
+        min-width: 260px;
         flex-direction: column;
     }
 
     #players-section {
+        flex: 1;
         height: 100%;
-        width: 100%;
+        position: relative;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
     }
 
     #players-container {
-        width: max-content;
-        max-width: 100%;
+        border: 2px solid gray;
+        background-color: var(--accent-dark);
+        padding: 20px;
+        border-radius: 0.75rem;
+        flex: 1;
+        width: 100%;
+        height: max-content;
+    }
+
+    #players-content {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
-        padding: 10px;
-        padding-inline: 0px;
+        align-items: flex-start;
         gap: 20px;
-        margin-bottom: 200px;
+        width: max-content;
+        max-width: 100%;
+        height: max-content;
+        max-height: 100%;
     }
 
-    #id-view {
-        position: fixed;
-        top: 0px;
-        left: 50%;
-        transform: translate(-50%, 0);
+    .ready-btn-display {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
-        background-image: radial-gradient(circle at top left, #888, #ccc, #aaa);
-        background-size: cover;
+        gap: 10px;
+
         font-weight: 700;
         font-size: 1.9rem;
         color: white;
-        padding: 5px;
-        padding-inline: 50px;
-
-        /* Border stuff */
-        border: solid 4px transparent;
-        border-radius: 0px 0px 40px 40px;
-        border-top: 0px;
-        overflow: hidden; /* Ensure inner content doesn't overflow */
     }
-
-    #id-view:before {
-        content: "";
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        bottom: -5px;
-        left: -5px;
-        z-index: -1;
-        border-radius: inherit;
-        background: radial-gradient(
-            ellipse at center top,
-            var(--accent),
-            black 210%
-        );
+    .ready-btn-content {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        color: var(--accent-light);
+        overflow: hidden;
+        white-space: nowrap;
+        overflow: hidden;
     }
-
-    #id-view-label {
-        font-weight: 500;
-        font-size: 0.9rem;
-        margin-bottom: -5px;
-    }
-
     #ready-btn {
+        position: absolute;
+        top: 1rem;
+        left: 50%;
+        transform: translate(-50%, 0);
+        padding: 0.7rem;
+        height: 5.5rem;
+        width: 15rem;
+        background-color: var(--spotify-green);
+        border: solid 2px var(--accent-light);
+        border-radius: 20px;
+        transition: 0.5s ease-out;
+    }
+    #ready-btn.activated {
+        height: 5.5rem;
+        width: 18rem;
+    }
+
+    #leave-btn {
+        color: var(--primary-light);
+        background-color: var(--accent-dark);
+        padding: 0px;
+        font-size: 0.9rem;
+        height: 100%;
         display: flex;
         flex-direction: row;
-        justify-content: center;
         align-items: center;
-        gap: 10px;
-        position: fixed;
-        bottom: 0px;
-        left: 50%;
-        transform: translate(-50%);
-        font-size: 2.4rem;
-        padding: 20px;
-        padding-inline: 30px;
-        font-weight: 800;
-        margin-bottom: 50px;
+        gap: 5px;
+    }
+    #leave-btn:hover {
+        color: var(--red);
     }
 
-    #back-btn {
-        position: absolute;
-        left: 0px;
-        top: 0px;
+    #game-id-view {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #game-id {
+        font-size: 1.3rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: max-content;
+        gap: 8px;
+    }
+    #game-id-btn {
         background-color: transparent;
         border: none;
-        color: white;
+        color: var(--primary-light);
         padding: 0px;
-        margin: 32px;
+        margin-bottom: 4px;
+        padding-inline: 2px;
+    }
+    #game-id-btn:hover {
+        color: var(--spotify-green);
+    }
+    #game-id-label {
+        font-size: 0.8rem;
+    }
+    #game-id-label.activated {
+        color: var(--spotify-green);
+    }
+    #footer {
+        width: 100%;
+        height: 48px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-top: -4px;
     }
 </style>

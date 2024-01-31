@@ -2,16 +2,16 @@
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import WaitingIcon from "svelte-material-icons/ProgressClock.svelte";
     import type { PlayerState } from "../../../shared/types";
-
+    
     export let player: PlayerState;
     export let highlight: boolean;
 </script>
 
 <main class:highlighted={highlight}>
     {#if player?.isReady}
-        <CheckIcon color={highlight ? "black" : "white"}/>
+        <CheckIcon color="white"/>
     {:else}
-        <WaitingIcon color={highlight ? "gray" : "gray"}/>
+        <WaitingIcon color="gray"/>
     {/if}
 
     {player.name}
@@ -32,7 +32,8 @@
         font-size: 1.3rem;
     }
     main.highlighted {
-        background-color: rgba(235, 235, 235, 0.7);
-        color: black;
+        /* background-color: rgba(235, 235, 235, 0.7);
+        color: black; */
+        color: var(--spotify-green);
     }
 </style>

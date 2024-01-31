@@ -1,4 +1,6 @@
 <script lang="ts">
+    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
+    import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import type { GameState } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import { joinGame } from "../../api/player-api";
@@ -11,7 +13,6 @@
     //Initialize games list by performing a refresh
     let games: GameState[];
     refresh();
-
 
     /**
      * Query API for updated list of games
@@ -26,28 +27,37 @@
     /**
      * Return to home page
      */
-    function handleBackClick(){
+    function handleBackClick() {
         CurrentPage.set(Page.HOME);
     }
 </script>
 
 <main>
-    <button id="back-btn" on:click={handleBackClick}>&lt Back</button>
+    <div id="button-container">
+        <button class="header-btn" on:click={handleBackClick}>
+            <BackIcon /> Back
+        </button>
+        <button class="header-btn" on:click={refresh}>
+            <RefreshIcon /> Refresh
+        </button>
+    </div>
+
     <div id="content">
-        {#if !isRefreshing}
+        {#if isRefreshing}
+            <!-- TODO: Replace with loading animation -->
+            Refreshing...
+        {:else if games.length}
             <div id="games-container">
                 {#each games as game}
                     <div class="card-wrapper">
-                        <GameCard {game} on:click={() => joinGame(game.id)}/>
+                        <GameCard {game} on:click={() => joinGame(game.id)} />
                     </div>
                 {/each}
             </div>
         {:else}
-            <!-- TODO: Replace with loading animation -->
-            Refreshing...
+            No games available. Make a new one!
         {/if}
     </div>
-    <button on:click={refresh}>Refresh</button>
 </main>
 
 <style>
@@ -58,6 +68,8 @@
         align-items: flex-start;
         height: 100%;
         width: 100%;
+        gap: 20px;
+        padding-top: 1rem;
     }
 
     #content {
@@ -66,6 +78,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        overflow-y: auto;
     }
 
     #games-container {
@@ -82,16 +95,34 @@
         gap: 20px;
     }
 
-    .card-wrapper {
-        width: 400px;
-        max-width: 100%;
-        height: 270px;
+    #button-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
     }
 
-    #back-btn {
+    .card-wrapper {
+        flex: 1;
+        max-width: 600px;
+        min-width: 20rem;
+        height: 19rem;
+    }
+
+    .header-btn {
         background-color: transparent;
         border: none;
         color: white;
         padding: 0px;
+        outline: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+    }
+    .header-btn:hover {
+        background-color: transparent;
+        color: var(--spotify-green);
+        border: 0px;
     }
 </style>

@@ -8,7 +8,7 @@
   import GameplayPage from "./pages/GameplayPage.svelte";
   import { GameStatus, type GameState } from "../../shared/types";
   import GameDiscoveryPage from "./pages/GameDiscoveryPage.svelte";
-
+    
   const PAGES: Record<Page, ComponentType> = {
     [Page.LOGIN]: LoginPage,
     [Page.HOME]: HomePage,
@@ -41,6 +41,10 @@
 </script>
 
 <main>
+  <div id="appbar">
+    Beat Blitz
+  </div>
+  
   <div id="page-content">
     <svelte:component this={PAGES[$CurrentPage]} />
   </div>
@@ -54,8 +58,24 @@
     height: 100%;
   }
   #page-content {
+    position: relative;
+    padding: 1rem;
+    padding-inline: 2rem;
     flex: 1;
     width: 100%;
     height: 100%;
+    overflow-y: auto;
+    min-width: 320px;
+    min-height: 620px;
+  }
+  #appbar {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-inline: 15px;
+    background-color: var(--primary-dark);
+    height: 3rem;
+    font-size: 1.6rem;
   }
 </style>

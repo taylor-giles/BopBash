@@ -1,37 +1,33 @@
 <script lang="ts">
+    import { flip } from "svelte/animate";
   import type { PlayerState } from "../../../shared/types";
   import { GameConnection, GameStore } from "../../gameStore";
   import PlayerScoreCard from "./PlayerScoreCard.svelte";
-  
+
   export let players: PlayerState[];
 </script>
 
 <main>
-  <table>
-    <thead>
-      <tr>
-        <th/>
-        <th> Name </th>
-        <th> Score </th>
-      </tr>
-    </thead>
-
-    {#each players as player (player.id)}
-      <PlayerScoreCard {player} highlight={player.id === $GameConnection.playerId}/>
-    {/each}
-  </table>
+  {#each players as player, index (player.id)}
+    <div class="score-card-container" animate:flip={{ duration: 200 }}>
+      <PlayerScoreCard
+        {player}
+        highlight={player.id === $GameConnection.playerId}
+        position={index + 1}
+      />
+    </div>
+  {/each}
 </main>
 
 <style>
-  table {
-    width: max-content;
-    height: max-content;
-    border-collapse: separate;
-    border-spacing: 20px 5px;
+  main {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
   }
 
-  th {
-    text-align: start;
-    font-size: 1.1em;
+  .score-card-container {
+    width: 100%;
+    font-size: 1rem;
   }
 </style>
