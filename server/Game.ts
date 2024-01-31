@@ -136,6 +136,9 @@ export class Game {
 
         //Remove this player from the players map
         this.players.delete(playerId);
+
+        //Update remaining players
+        this.broadcastUpdate();
     }
 
 
