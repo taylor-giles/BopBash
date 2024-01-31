@@ -1,4 +1,5 @@
 <script lang="ts">
+    import GameAPI from "../../api/api";
     import { CurrentPage, Page } from "../../pageStore";
     import GameIdForm from "../components/GameIDForm.svelte";
     import SelectionButton from "../components/SelectionButton.svelte";
@@ -14,6 +15,15 @@
                 on:click={() => CurrentPage.set(Page.FIND)}
             />
         </div>
+        <div style="text-align: center;">-OR-</div>
+        <div id="selection-buttons-container">
+            <div style="width: 100%; box-sizing:border-box;">
+                <SelectionButton
+                    title="Create Game"
+                    description="Start a new game from any playlist"
+                    on:click={GameAPI.createGame}
+                />
+            </div>
 
         <div style="flex:1; width:0px; box-sizing:border-box;">
             <SelectionButton

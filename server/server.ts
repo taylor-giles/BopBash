@@ -27,7 +27,7 @@ const app = express();
 // Enable CORS
 //TODO: REMOVE THIS!! It is only here to allow for dev over SSH.
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
