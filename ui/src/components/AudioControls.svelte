@@ -8,7 +8,7 @@
 
     export let audio: HTMLAudioElement;
     export let volumeLevel: number = 0.5;
-    let volumeOpen: boolean = false;    //Determines if the volume slider should be shown
+    let volumeOpen: boolean = false; //Determines if the volume slider should be shown
     let newVolumeOpen: boolean = true; //Used to avoid button press immediately undoing the effects of on:blur
     let isPaused: boolean = true;
 

@@ -1,18 +1,19 @@
 <script lang="ts">
-    import { onMount, tick } from "svelte";
+    import { tick } from "svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
-    import { GameStore, GameConnection } from "../../gameStore";
+    import { GameStore } from "../../gameStore";
     import AudioMotionAnalyzer from "audiomotion-analyzer";
-    import { GameStatus, Round, type GuessResult } from "../../../shared/types";
+    import { GameStatus, type GuessResult } from "../../../shared/types";
     import Scoreboard from "../components/Scoreboard.svelte";
     import { arraySum } from "../../../shared/utils";
     import { IFrameAPI } from "../../IFrameAPI";
-    import { fade, scale } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
     import { CurrentPage, Page } from "../../pageStore";
     import AudioControls from "../components/AudioControls.svelte";
+    import GameplayForm from "../components/GameplayForm.svelte";
 
     enum RoundPhase {
         COUNTDOWN,
@@ -34,8 +35,9 @@
     let isModalOpen: boolean = false;
     let volumeLevel: number = 0.5;
 
+    //HTML element references
+    let audioElement: HTMLAudioElement = new Audio();
     let audioAnalyzer: AudioMotionAnalyzer;
-    let audioElement: HTMLAudioElement;
     let countdownView: HTMLDivElement;
     let visualizerView: HTMLDivElement;
     let correctTrackEmbed: HTMLIFrameElement;
@@ -47,6 +49,7 @@
 
     //Every time the audio URL changes, start the next round
     $: if (audioURL) {
+        audioElement.src = audioURL;
         loadRound();
     }
 
@@ -64,7 +67,7 @@
     //If the player runs out of time, display the conclusion
     $: if ($GameStore.currentRound?.trackId) {
         correctTrackId = $GameStore.currentRound?.trackId;
-        showConclusion();
+        startConclusionPhase();
     }
 
     /**
@@ -80,19 +83,17 @@
         guessResult = undefined;
         correctTrackId = undefined;
 
-        //Start re-loading of audio element
-        audioLoaded = false;
-        audioElement = new Audio(audioURL);
-        audioElement;
-
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
-        audioElement.oncanplay = () => {
+        audioElement.oncanplaythrough = () => {
             audioLoaded = true;
         };
         audioElement.ontimeupdate = () => {
             timestamp = audioElement.currentTime;
         };
+
+        //Start re-loading of audio element
+        audioLoaded = false;
         audioElement.load();
     }
 
@@ -106,6 +107,7 @@
         //Wait for all stage changes to complete
         await tick();
 
+        //Return a promise that will resolve when the countdown is done
         return new Promise(async (resolve) => {
             //Set up timeouts to perform the countdown
             for (let i = 3; i >= 0; i--) {
@@ -212,15 +214,16 @@
             //Extract values from result
             guessResult = { ...result };
             correctTrackId = result.correctTrackId;
-            console.log(guessResult, correctTrackId);
-            showConclusion();
+
+            //Move to conclusion phase
+            startConclusionPhase();
         }
     }
 
     /**
-     * Shows the embedded IFrame element of the correct answer track
+     * Moves to conclusion phase
      */
-    async function showConclusion() {
+    async function startConclusionPhase() {
         //Move to conclusion phase and wait for render updates
         audioElement.pause();
         currentPhase = RoundPhase.CONCLUSION;
@@ -259,6 +262,7 @@
         <div id="main-content">
             {#if currentPhase === RoundPhase.CONCLUSION}
                 <div id="conclusion-content">
+                    <!-- Round results, including iframe -->
                     <div id="conclusion-results-container">
                         <div
                             id="conclusion-title"
@@ -279,6 +283,8 @@
                             Loading...
                         </iframe>
                     </div>
+
+                    <!-- Scoreboard in conclusion screen -->
                     <div id="conclusion-scoreboard-container">
                         <Scoreboard
                             players={Object.values($GameStore.players).toSorted(
@@ -290,13 +296,19 @@
                 </div>
             {:else}
                 <div id="gameplay-content">
+                    <!-- Header -->
                     <div id="header">
                         <div id="title">
                             Round {currentRoundNum + 1}
                         </div>
+
+                        <!-- Audio controls -->
                         {#if currentPhase === RoundPhase.PLAYING}
                             <div id="audio-controls-container">
-                                <AudioControls bind:audio={audioElement} bind:volumeLevel/>
+                                <AudioControls
+                                    bind:audio={audioElement}
+                                    bind:volumeLevel
+                                />
                             </div>
                         {/if}
                     </div>
@@ -314,59 +326,17 @@
                     </div>
 
                     <div id="submission-panel">
-                        <form on:submit={handleSubmit} id="submission-form">
-                            <div class="input-container">
-                                <label for="track-input" class="body-text">
-                                    Track:
-                                </label>
-                                <input
-                                    id="track-input"
-                                    class="header-text"
-                                    type="text"
-                                    placeholder="Enter track guess here"
-                                    bind:value={guessTrackId}
-                                    disabled={currentPhase !==
-                                        RoundPhase.PLAYING}
-                                />
-                            </div>
+                        <div id="form-wrapper">
+                            <!-- Form for entering guesses -->
+                            <GameplayForm
+                                bind:guessTrackId
+                                bind:guessArtistId
+                                disabled={currentPhase !== RoundPhase.PLAYING}
+                                on:submit={handleSubmit}
+                                on:skip={voteSkip}
+                            />
 
-                            <div class="input-container">
-                                <label for="artist-input" class="body-text">
-                                    Artist:
-                                </label>
-                                <input
-                                    id="artist-input"
-                                    class="header-text"
-                                    type="text"
-                                    placeholder="Enter artist guess here"
-                                    bind:value={guessArtistId}
-                                    disabled={currentPhase !==
-                                        RoundPhase.PLAYING}
-                                />
-                            </div>
-
-                            <div id="submission-btn-container">
-                                <button
-                                    type="button"
-                                    id="skip-btn"
-                                    class="submission-btn"
-                                    on:click={voteSkip}
-                                    disabled={currentPhase !==
-                                        RoundPhase.PLAYING}
-                                >
-                                    Skip
-                                </button>
-                                <button
-                                    type="submit"
-                                    id="submit-btn"
-                                    class="submission-btn"
-                                    disabled={currentPhase !==
-                                        RoundPhase.PLAYING}
-                                >
-                                    Submit
-                                </button>
-                            </div>
-
+                            <!-- "Get Ready" overlay display -->
                             {#if currentPhase !== RoundPhase.PLAYING}
                                 <div
                                     id="get-ready-overlay"
@@ -376,10 +346,11 @@
                                     Get ready!
                                 </div>
                             {/if}
-                        </form>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Scoreboard -->
                 {#if showScoreboard}
                     <div id="scoreboard-container">
                         <Scoreboard
@@ -392,12 +363,15 @@
                 {/if}
             {/if}
         </div>
+
+        <!-- Footer -->
         <div id="footer">
             <button id="leave-btn" on:click={() => (isModalOpen = true)}>
                 <BackIcon />
                 Leave Game
             </button>
 
+            <!-- Button to show scoreboard -->
             {#if currentPhase !== RoundPhase.CONCLUSION}
                 <button
                     id="show-scoreboard-btn"
@@ -413,32 +387,6 @@
             {/if}
         </div>
     {/if}
-
-    <!-- {#if currentPhase === RoundPhase.CONCLUSION}
-        <div class="modal">
-            <div id="conclusion-modal-content">
-                
-
-                <iframe
-                    title="View track on Spotify"
-                    bind:this={correctTrackEmbed}
-                >
-                    Loading...
-                </iframe>
-
-                <div id="conclusion-scoreboard-label">Scoreboard:</div>
-                <div id="conclusion-scoreboard-container">
-                    <Scoreboard
-                        players={Object.values($GameStore.players).toSorted(
-                            (a, b) => arraySum(b.scores) - arraySum(a.scores),
-                        )}
-                    />
-                </div>
-
-                <div>The next round will start soon - please wait.</div>
-            </div>
-        </div>
-    {/if} -->
 </main>
 
 <!-- Confirmation modal for leaving game -->
@@ -538,47 +486,12 @@
         gap: 20px;
     }
 
-    #submission-form {
+    #form-wrapper {
         position: relative;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
         height: max-content;
-        gap: 15px;
+        width: 100%;
         max-width: 700px;
         min-width: 260px;
-    }
-
-    #submission-btn-container {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        gap: 3rem;
-    }
-
-    .input-container {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-    }
-
-    label {
-        font-size: 1.1rem;
-    }
-
-    .submission-btn {
-        width: 7rem;
-    }
-
-    input {
-        font-size: 1.1rem;
-        font-weight: 700;
-        border-radius: 1px;
-        padding-inline: 10px;
-        border: 1px solid var(--primary-light);
-        height: 2.5rem;
-        overflow-x: auto;
-        background-color: var(--primary-light);
     }
 
     #get-ready-overlay {
