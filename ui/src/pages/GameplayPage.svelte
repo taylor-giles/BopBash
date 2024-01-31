@@ -1,5 +1,7 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
+    import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
+    import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
     import { GameStore, GameConnection } from "../../gameStore";
     import AudioMotionAnalyzer from "audiomotion-analyzer";
@@ -7,6 +9,10 @@
     import Scoreboard from "../components/Scoreboard.svelte";
     import { arraySum } from "../../../shared/utils";
     import { IFrameAPI } from "../../IFrameAPI";
+    import { fade, scale } from "svelte/transition";
+    import ConfirmationModal from "../components/ConfirmationModal.svelte";
+    import { CurrentPage, Page } from "../../pageStore";
+    import AudioControls from "../components/AudioControls.svelte";
 
     enum RoundPhase {
         COUNTDOWN,
@@ -21,8 +27,12 @@
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
     let audioLoaded: boolean = false;
     let guessTrackId: string = "";
+    let guessArtistId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
+    let showScoreboard: boolean = window.innerWidth > 700;
+    let isModalOpen: boolean = false;
+    let volumeLevel: number = 0.5;
 
     let audioAnalyzer: AudioMotionAnalyzer;
     let audioElement: HTMLAudioElement;
@@ -73,6 +83,7 @@
         //Start re-loading of audio element
         audioLoaded = false;
         audioElement = new Audio(audioURL);
+        audioElement;
 
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
@@ -118,10 +129,11 @@
     /**
      * Begins the playing phase
      */
-    function startPlayingPhase() {
+    async function startPlayingPhase() {
         if (!audioAnalyzer || audioAnalyzer.isDestroyed) {
             //Set phase
             currentPhase = RoundPhase.PLAYING;
+            await tick();
 
             //Play the audio
             audioElement.play();
@@ -217,6 +229,7 @@
         //Construct IFrameAPI request
         let iframeOptions = {
             uri: `spotify:track:${correctTrackId}`,
+            height: "100%",
         };
         let callback = (EmbedController: any) => {
             console.log("EmbedController: ", EmbedController);
@@ -226,11 +239,16 @@
         };
 
         //Make the embed
-        $IFrameAPI.createController(
-            correctTrackEmbed,
-            iframeOptions,
-            callback,
-        );
+        $IFrameAPI.createController(correctTrackEmbed, iframeOptions, callback);
+    }
+
+    /**
+     * Removes this player from this game and leaves this page
+     */
+    function leave() {
+        audioElement.pause();
+        GameAPI.leaveGame();
+        CurrentPage.set(Page.HOME);
     }
 </script>
 
@@ -238,64 +256,168 @@
     {#if isGameDone}
         <div id="done-screen">Done!</div>
     {:else}
-        <div id="gameplay-content">
-            <div id="title">
-                Round {currentRoundNum + 1}
-            </div>
+        <div id="main-content">
+            {#if currentPhase === RoundPhase.CONCLUSION}
+                <div id="conclusion-content">
+                    <div id="conclusion-results-container">
+                        <div
+                            id="conclusion-title"
+                            style={`color: ${
+                                guessResult?.isCorrect
+                                    ? "var(--spotify-green)"
+                                    : "var(--red)"
+                            }`}
+                        >
+                            {guessResult?.isCorrect
+                                ? "Nice job!"
+                                : "Aww, shucks :("}
+                        </div>
+                        <iframe
+                            title="View track on Spotify"
+                            bind:this={correctTrackEmbed}
+                        >
+                            Loading...
+                        </iframe>
+                    </div>
+                    <div id="conclusion-scoreboard-container">
+                        <Scoreboard
+                            players={Object.values($GameStore.players).toSorted(
+                                (a, b) =>
+                                    arraySum(b.scores) - arraySum(a.scores),
+                            )}
+                        />
+                    </div>
+                </div>
+            {:else}
+                <div id="gameplay-content">
+                    <div id="header">
+                        <div id="title">
+                            Round {currentRoundNum + 1}
+                        </div>
+                        {#if currentPhase === RoundPhase.PLAYING}
+                            <div id="audio-controls-container">
+                                <AudioControls bind:audio={audioElement} bind:volumeLevel/>
+                            </div>
+                        {/if}
+                    </div>
+                    <div id="center-display">
+                        {#if currentPhase === RoundPhase.COUNTDOWN}
+                            <!-- Container for countdown display -->
+                            <div id="countdown" bind:this={countdownView}></div>
+                        {:else if currentPhase === RoundPhase.PLAYING}
+                            <!-- Container for audio visualization -->
+                            <div
+                                id="visualizer-view"
+                                bind:this={visualizerView}
+                            ></div>
+                        {/if}
+                    </div>
 
-            <div id="center-display">
-                {#if currentPhase === RoundPhase.COUNTDOWN}
-                    <!-- Container for countdown display -->
-                    <div id="countdown" bind:this={countdownView}></div>
+                    <div id="submission-panel">
+                        <form on:submit={handleSubmit} id="submission-form">
+                            <div class="input-container">
+                                <label for="track-input" class="body-text">
+                                    Track:
+                                </label>
+                                <input
+                                    id="track-input"
+                                    class="header-text"
+                                    type="text"
+                                    placeholder="Enter track guess here"
+                                    bind:value={guessTrackId}
+                                    disabled={currentPhase !==
+                                        RoundPhase.PLAYING}
+                                />
+                            </div>
+
+                            <div class="input-container">
+                                <label for="artist-input" class="body-text">
+                                    Artist:
+                                </label>
+                                <input
+                                    id="artist-input"
+                                    class="header-text"
+                                    type="text"
+                                    placeholder="Enter artist guess here"
+                                    bind:value={guessArtistId}
+                                    disabled={currentPhase !==
+                                        RoundPhase.PLAYING}
+                                />
+                            </div>
+
+                            <div id="submission-btn-container">
+                                <button
+                                    type="button"
+                                    id="skip-btn"
+                                    class="submission-btn"
+                                    on:click={voteSkip}
+                                    disabled={currentPhase !==
+                                        RoundPhase.PLAYING}
+                                >
+                                    Skip
+                                </button>
+                                <button
+                                    type="submit"
+                                    id="submit-btn"
+                                    class="submission-btn"
+                                    disabled={currentPhase !==
+                                        RoundPhase.PLAYING}
+                                >
+                                    Submit
+                                </button>
+                            </div>
+
+                            {#if currentPhase !== RoundPhase.PLAYING}
+                                <div
+                                    id="get-ready-overlay"
+                                    class="header-text"
+                                    transition:fade={{ duration: 100 }}
+                                >
+                                    Get ready!
+                                </div>
+                            {/if}
+                        </form>
+                    </div>
+                </div>
+
+                {#if showScoreboard}
+                    <div id="scoreboard-container">
+                        <Scoreboard
+                            players={Object.values($GameStore.players).toSorted(
+                                (a, b) =>
+                                    arraySum(b.scores) - arraySum(a.scores),
+                            )}
+                        />
+                    </div>
                 {/if}
-
-                <!-- Container for audio visualization -->
-                <div bind:this={visualizerView}></div>
-            </div>
-
-            <div id="submission-panel">
-                <form on:submit={handleSubmit}>
-                    <input
-                        id="guess-input"
-                        class="header-text"
-                        type="text"
-                        placeholder="Start entering your guess here"
-                        bind:value={guessTrackId}
-                    />
-
-                    <button type="submit" id="submit-btn"> Submit </button>
-                    <button type="button" id="skip-btn" on:click={voteSkip}>
-                        Skip
-                    </button>
-                </form>
-            </div>
+            {/if}
         </div>
-        <div id="scoreboard-container">
-            <Scoreboard
-                players={Object.values($GameStore.players).toSorted(
-                    (a, b) => arraySum(b.scores) - arraySum(a.scores),
-                )}
-            />
+        <div id="footer">
+            <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+                <BackIcon />
+                Leave Game
+            </button>
+
+            {#if currentPhase !== RoundPhase.CONCLUSION}
+                <button
+                    id="show-scoreboard-btn"
+                    on:click={() => (showScoreboard = !showScoreboard)}
+                >
+                    <PodiumIcon />
+                    {#if showScoreboard}
+                        Hide
+                    {:else}
+                        Show
+                    {/if}
+                </button>
+            {/if}
         </div>
     {/if}
 
-    {#if currentPhase === RoundPhase.CONCLUSION}
+    <!-- {#if currentPhase === RoundPhase.CONCLUSION}
         <div class="modal">
             <div id="conclusion-modal-content">
-                <div id="conclusion-message-container">
-                    <div
-                        id="conclusion-title"
-                        style={`color: ${
-                            guessResult?.isCorrect
-                                ? "var(--spotify-green)"
-                                : "red"
-                        }`}
-                    >
-                        {guessResult?.isCorrect
-                            ? "Nice job!"
-                            : "Aww, shucks :("}
-                    </div>
-                </div>
+                
 
                 <iframe
                     title="View track on Spotify"
@@ -313,26 +435,54 @@
                     />
                 </div>
 
-                <div>
-                    The next round will start soon - please wait.
-                </div>
+                <div>The next round will start soon - please wait.</div>
             </div>
         </div>
-    {/if}
+    {/if} -->
 </main>
+
+<!-- Confirmation modal for leaving game -->
+{#if isModalOpen}
+    <ConfirmationModal
+        on:no={() => (isModalOpen = false)}
+        on:yes={leave}
+        bodyText="Are you sure you want to leave this game?"
+    />
+{/if}
 
 <style>
     main {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         height: 100%;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    #header,
+    #footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #main-content {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        gap: 36px;
+        flex: 1;
+        width: 100%;
     }
 
     #gameplay-content {
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
         width: 100%;
         height: 100%;
+        flex: 4;
+        position: relative;
     }
 
     #center-display {
@@ -343,43 +493,123 @@
     }
 
     #scoreboard-container {
+        flex: 1;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(0, 0, 0, 0.8);
         border: 2px solid var(--primary-light);
         border-radius: 5px;
-        margin-left: 50px;
-        margin-bottom: 2px;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+    @media (max-width: 700px) {
+        #scoreboard-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+        }
     }
 
     #countdown {
-        font-size: 300px;
+        font-size: 14rem;
+        max-height: 11.5rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    #visualizer-view {
+        height: 11.5rem;
+        width: 11.5rem;
     }
 
     #submission-panel {
-        width: 100%;
+        flex: 1;
         height: max-content;
         display: flex;
+        width: 100%;
+        justify-content: center;
         flex-direction: row;
         gap: 20px;
     }
 
-    #guess-input {
-        flex: 1;
+    #submission-form {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: max-content;
+        gap: 15px;
+        max-width: 700px;
+        min-width: 260px;
+    }
+
+    #submission-btn-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 3rem;
+    }
+
+    .input-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    label {
+        font-size: 1.1rem;
+    }
+
+    .submission-btn {
+        width: 7rem;
+    }
+
+    input {
         font-size: 1.1rem;
         font-weight: 700;
         border-radius: 1px;
         padding-inline: 10px;
         border: 1px solid var(--primary-light);
+        height: 2.5rem;
+        overflow-x: auto;
+        background-color: var(--primary-light);
     }
 
-    #conclusion-modal-content {
-        width: 70%;
-        height: calc(100% - 60px);
+    #get-ready-overlay {
+        position: absolute;
+        top: -5%;
+        left: -5%;
+        height: 115%;
+        width: 110%;
+        background-color: rgba(0, 0, 0, 0.95);
+        border-radius: 4px;
+        border: 1px solid gray;
+        font-size: 3rem;
+        color: white;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
         justify-content: center;
-        gap: 10px;
+        align-items: center;
+    }
+
+    #conclusion-content {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 36px;
+    }
+
+    #conclusion-results-container {
+        flex: 1;
+        min-width: 260px;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
     #conclusion-title {
@@ -389,17 +619,15 @@
 
     #conclusion-scoreboard-container {
         flex: 1;
-        width: 100%;
-        font-size: 1.3rem;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(0, 0, 0, 0.8);
         border: 2px solid var(--primary-light);
         border-radius: 5px;
-    }
-
-    #conclusion-scoreboard-label {
-        margin-left: 10px;
-        font-size: 1.5rem;
-        margin-top: 30px;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
     }
 
     #done-screen {
@@ -410,7 +638,27 @@
         font-size: 300px;
     }
 
-    form {
-        display: contents;
+    #show-scoreboard-btn {
+        height: max-content;
+        color: var(--primary-light);
+        background-color: transparent;
+        border: 1px solid gray;
+        font-size: 0.9rem;
+        width: max-content;
+    }
+
+    #leave-btn {
+        color: var(--primary-light);
+        background-color: transparent;
+        padding: 0px;
+        font-size: 0.9rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+        width: max-content;
+    }
+    #leave-btn:hover {
+        color: var(--red);
     }
 </style>
