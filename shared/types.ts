@@ -1,7 +1,7 @@
 export enum GameStatus {
-    PENDING="Pending",
-    ACTIVE="Active",
-    ENDED="Ended"
+    PENDING = "Pending",
+    ACTIVE = "Active",
+    ENDED = "Ended"
 }
 
 export class Round {
@@ -10,7 +10,7 @@ export class Round {
     maxDuration: number;   //Maximum duration of this round, in milliseconds
     startTime: number; //Maps player ID to the time that player started this round
 
-    public constructor(trackId: string, previewURL: string, maxDuration: number){
+    public constructor(trackId: string, previewURL: string, maxDuration: number) {
         this.trackId = trackId;
         this.previewURL = previewURL;
         this.maxDuration = maxDuration;
@@ -37,38 +37,18 @@ export type GameState = {
     },
     currentRound?: {
         index: number,
-        audioURL: string
+        audioURL: string,
+        trackId?: string
     }
     status: GameStatus,
     numRounds: number,
 }
 
-// export enum GameUpdateType {
-//     ROUND = "Round",
-//     SCORE = "Score",
-//     GAME_OVER = "End",
-//     GAME_START = "Start"
-// }
-
-// export type GameUpdateTypePayloads = {
-//     [GameUpdateType.ROUND]: {
-//         audioURL: string
-//     },
-
-//     [GameUpdateType.SCORE]: {
-//         playerId: string,
-//         score: number
-//     }[],
-
-//     [GameUpdateType.GAME_OVER]: void,
-
-//     [GameUpdateType.GAME_START]: {
-//         playlist: Playlist, 
-//     }
-// }
-
-// export type GameUpdate = GameState
-
+export type GuessResult = {
+    isCorrect: boolean,
+    score: number,
+    correctTrackId: string,
+}
 
 export type Track = {
     id: string,
