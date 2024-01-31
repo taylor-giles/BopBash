@@ -1,6 +1,7 @@
 <script lang="ts">
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import CheckOutlineIcon from "svelte-material-icons/CheckCircleOutline.svelte";
+    import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
     import { IFrameAPI } from "../../IFrameAPI";
@@ -10,6 +11,7 @@
     import { CurrentPage, Page } from "../../pageStore";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
     import { onMount, tick } from "svelte";
+    import { scale } from "svelte/transition";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -77,7 +79,6 @@
      * Render the embedded playlist using the Spotify IFrameAPI
      */
     async function renderEmbed() {
-        console.log("Rendering");
         await tick();
 
         //Render new embed with IFrameAPI
@@ -120,11 +121,13 @@
             </div>
             <div id="players-container">
                 <div id="players-content">
-                    {#each playerList as player}
-                        <PlayerCard
-                            {player}
-                            highlight={player === myPlayerState}
-                        />
+                    {#each playerList as player (player.id)}
+                        <div transition:scale>
+                            <PlayerCard
+                                {player}
+                                highlight={player === myPlayerState}
+                            />
+                        </div>
                     {/each}
                 </div>
             </div>
@@ -132,7 +135,7 @@
     </div>
     <div id="footer">
         <button id="leave-btn" on:click={() => (isModalOpen = true)}>
-            &lt Leave Game
+            <BackIcon /> Leave Game
         </button>
 
         <div id="game-id-view">
@@ -149,7 +152,7 @@
 
 <button
     id="ready-btn"
-    class={myPlayerState?.isReady ? "activated" : ""}
+    class:activated={myPlayerState?.isReady}
     on:click={toggleReady}
 >
     <div class="ready-btn-content">
@@ -197,7 +200,7 @@
         flex-wrap: wrap;
         gap: 30px;
         overflow-y: auto;
-        margin-top: 4.5rem;
+        margin-top: 6.5rem;
     }
 
     .label {
@@ -248,7 +251,7 @@
     }
 
     #players-container {
-        border: 1px solid gray;
+        border: 2px solid gray;
         background-color: var(--accent-dark);
         padding: 20px;
         border-radius: 0.75rem;
@@ -285,30 +288,22 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-        color: var(--primary-light);
+        color: var(--accent-light);
         overflow: hidden;
         white-space: nowrap;
         overflow: hidden;
     }
     #ready-btn {
         position: absolute;
-        top: 0px;
+        top: 1rem;
         left: 50%;
         transform: translate(-50%, 0);
-
-        background-image: radial-gradient(circle at top left, #888, #ccc, #aaa);
-        background-size: cover;
-
         padding: 0.7rem;
         height: 5.5rem;
         width: 15rem;
-
-        /* Border stuff */
-        border: solid 4px transparent;
-        border-radius: 0px 0px 40px 40px;
-        border-top: 0px;
-        overflow: hidden; /* Ensure inner content doesn't overflow */
-
+        background-color: var(--spotify-green);
+        border: solid 2px var(--accent-light);
+        border-radius: 20px;
         transition: 0.5s ease-out;
     }
     #ready-btn.activated {
@@ -316,53 +311,19 @@
         width: 18rem;
     }
 
-    /* Handle glowing background as pseudo-element */
-    #ready-btn:before {
-        content: "";
-        position: absolute;
-        top: -90px;
-        right: 0px;
-        bottom: -10px;
-        left: 0px;
-        z-index: -1;
-        border-radius: inherit;
-        background: radial-gradient(
-            ellipse at center top,
-            var(--accent-light) -15%,
-            var(--accent),
-            var(--accent-dark) 110%
-        );
-        animation: pulse-glow 8s ease-in infinite;
-        transition: top 0.5s ease-in-out;
-    }
-    #ready-btn.activated:before {
-        animation: none;
-        top: 0px;
-    }
-    @keyframes pulse-glow {
-        0% {
-            top: 0px;
-        }
-        50% {
-            top: -90px;
-        }
-        100% {
-            top: 0px;
-        }
-    }
-
-
-
     #leave-btn {
         color: var(--primary-light);
         background-color: var(--accent-dark);
-        /* border: 1px solid var(--primary-light); */
         padding: 0px;
         font-size: 0.9rem;
         height: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
     }
     #leave-btn:hover {
-        color: var(--spotify-green);
+        color: var(--red);
     }
 
     #game-id-view {
@@ -387,8 +348,7 @@
         padding-inline: 2px;
     }
     #game-id-btn:hover {
-        background-color: var(--primary-light);
-        color: var(--primary-dark);
+        color: var(--spotify-green);
     }
     #game-id-label {
         font-size: 0.8rem;
@@ -402,7 +362,6 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        margin-bottom: -20px;
         margin-top: -4px;
     }
 </style>
