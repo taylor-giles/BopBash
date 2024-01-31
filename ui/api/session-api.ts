@@ -58,3 +58,11 @@ export async function getGames(): Promise<GameState[]>{
         return [];
     });
 }
+
+
+export async function createGame(){
+    apiCaller.post('/newGame', {
+        playlistId: "0xXeznNbTyIj3tpnt3841Y",
+        numRounds: 10
+    })
+}
