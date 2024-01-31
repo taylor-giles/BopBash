@@ -14,7 +14,7 @@
     [Page.HOME]: HomePage,
     [Page.LOBBY]: GameLobbyPage,
     [Page.FIND]: GameDiscoveryPage,
-    [Page.GAME]: GameplayPage
+    [Page.GAME]: GameplayPage,
   };
 
   //Maintain a reference to the player information and WebSocket connection object

@@ -57,14 +57,14 @@ export function getGame(gameId: string): Game {
 
 
 /**
- * Returns the Game object for the specified player's current active game
+ * Convenience function for getting the game that a player is currently playing
  * @param playerId The ID of the player to query on
  * @returns The Game object for the player's active game
  * @throws Error if the player is not in an active game
  */
 export function getPlayerActiveGame(playerId: string): Game {
     let gameId = playerGames.get(playerId);
-    if(!gameId){
+    if (!gameId) {
         throw new Error(`Unable to find active game for player ${playerId}`);
     }
     return getGame(gameId);
@@ -199,10 +199,12 @@ export async function addPlayerToGame(playerId: string, gameId: string) {
  * @param playerId The ID of the player to remove from their game
  */
 export async function removePlayerFromGame(playerId: string) {
+    //Note - avoid using getPlayerActiveGame here since this function should NOT throw an error
+    //  if the player is not in a game. It is sometimes used to ensure a player is not in a game.
     let player = getPlayer(playerId);
 
     //Check if the player is in a game
-    if(player?.activeGameInfo?.gameId){
+    if (player?.activeGameInfo?.gameId) {
         let game = getGame(player.activeGameInfo.gameId);
 
         //Remove the player from the game
@@ -212,9 +214,13 @@ export async function removePlayerFromGame(playerId: string) {
         playerGames.delete(playerId);
 
         console.log(`Removed player ${player.id} (${player.name}) from game ${game.id} (${game.playlist.name})`);
+
+        //Stop the game if it is now empty
+        if (game.players.size <= 0) {
+            stopGame(game.id);
+        }
     }
     player.activeGameInfo = null;
-   
 }
 
 
@@ -226,7 +232,7 @@ export async function stopGame(gameId: string) {
     let game = getGame(gameId);
 
     //Remove all players from the game
-    for(let playerId of game.players.keys()){
+    for (let playerId of game.players.keys()) {
         removePlayerFromGame(playerId);
     }
 
