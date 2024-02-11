@@ -82,9 +82,6 @@
         await tick();
 
         //Render new embed with IFrameAPI
-        let contentWidth = window.innerWidth;
-        let contentHeight = embed.getBoundingClientRect().height;
-        console.log(contentWidth, contentHeight);
         let options = {
             uri: `spotify:playlist:${gameState.playlist.id}`,
             height: `100%`,
@@ -100,7 +97,7 @@
 </script>
 
 <main>
-    <div id="footer">
+    <div id="header">
         <button id="leave-btn" on:click={() => (isModalOpen = true)}>
             <BackIcon /> Leave Game
         </button>
@@ -116,27 +113,6 @@
                 </button>
             </div>
         </div>
-    </div>
-    <div id="ready-btn-wrapper">
-        <button
-            id="ready-btn"
-            class:activated={myPlayerState?.isReady}
-            on:click={toggleReady}
-        >
-            {#if myPlayerState?.isReady}
-                <div class="ready-btn-display">
-                    <CheckIcon /> READY
-                </div>
-                <div style="font-size: 0.8rem;">Waiting for other players</div>
-            {:else}
-                <div class="ready-btn-display">
-                    <CheckOutlineIcon /> READY UP
-                </div>
-                <!-- <div style="font-size: 0.7rem;">
-                    Click to Start
-                </div> -->
-            {/if}
-        </button>
     </div>
     <div id="content">
         <div id="embed-section">
@@ -171,6 +147,24 @@
             </div>
         </div>
     </div>
+    <div id="ready-btn-wrapper">
+        <button
+            id="ready-btn"
+            class:activated={myPlayerState?.isReady}
+            on:click={toggleReady}
+        >
+            {#if myPlayerState?.isReady}
+                <div class="ready-btn-display">
+                    <CheckIcon /> READY
+                </div>
+                <div style="font-size: 0.8rem;">Waiting for other players</div>
+            {:else}
+                <div class="ready-btn-display">
+                    <CheckOutlineIcon /> READY UP
+                </div>
+            {/if}
+        </button>
+    </div>
 </main>
 
 <!-- Confirmation modal for leaving game -->
@@ -190,16 +184,16 @@
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
-        gap: 20px;
+        gap: 0.8rem;
     }
 
     #content {
         width: 100%;
-        flex: 1;
+        flex-grow: 1;
         display: flex;
         flex-direction: row;
-        padding-bottom: 100px;
-        gap: 30px;
+        gap: 20px;
+        height: 0px;
     }
     #embed-section {
         display: flex;
@@ -215,11 +209,11 @@
         flex: 1;
         flex-basis: 100%;
     }
+
+    /* This instead of flex-wrap to allow for children to flex-grow along vertical axis */
     @media (max-width: 700px) {
-        /* This instead of flex-wrap to allow for children to flex-grow along vertical axis */
         #content {
             flex-direction: column;
-            overflow-y: auto;
             gap: 0px;
         }
 
@@ -227,7 +221,8 @@
             flex-basis: 0;
         }
 
-        #ready-btn-wrapper {
+        #players-section {
+            height: 0px;
         }
     }
 
@@ -253,7 +248,6 @@
         font-size: 1.5rem;
         color: white;
         font-weight: 700;
-        margin-bottom: 5px;
     }
 
     #embed-container {
@@ -265,24 +259,23 @@
     #players-container {
         border: 2px solid gray;
         background-color: var(--accent-dark);
-        padding: 20px;
         border-radius: 0.75rem;
         flex: 1;
         width: 100%;
-        height: max-content;
+        overflow-y: auto;
     }
 
     #players-content {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: space-evenly;
         align-items: flex-start;
-        gap: 20px;
+        gap: 15px;
         width: max-content;
         max-width: 100%;
-        height: max-content;
-        max-height: 100%;
+        height: min-content;
+        padding: 20px;
     }
 
     .ready-btn-display {
@@ -292,31 +285,32 @@
         justify-content: center;
         gap: 10px;
         font-weight: 700;
-        font-size: 1.9rem;
+
     }
     #ready-btn {
         padding: 0.7rem;
         width: 18rem;
         height: 4rem;
-        transition: 0.5s ease-out;
+        transition: 0.8s ease;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         gap: 5px;
-        box-shadow: 0px 0px 100px 10px rgba(255, 255, 255, 0.5);
         outline: none;
+        font-size: 1.9rem;
+        max-width: 100%;
+    }
+    #ready-btn:hover {
+        background-color: var(--accent-light);
     }
     #ready-btn.activated {
-        height: 5rem;
-        width: 20rem;
+        font-size: 1.5rem;
+        width: 22rem;
         background-color: var(--spotify-green);
-        box-shadow: 0px 0px 100px 10px var(--spotify-green);
     }
     #ready-btn-wrapper {
-        position: absolute;
-        bottom: 20px;
-        width: max-content;
+        width: 100%;
         height: max-content;
         display: flex;
         justify-content: center;
@@ -344,7 +338,7 @@
         align-items: center;
     }
     #game-id {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -366,7 +360,7 @@
     #game-id-label.activated {
         color: var(--spotify-green);
     }
-    #footer {
+    #header {
         width: 100%;
         height: max-content;
         display: flex;
