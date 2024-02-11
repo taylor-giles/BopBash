@@ -100,6 +100,44 @@
 </script>
 
 <main>
+    <div id="footer">
+        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+            <BackIcon /> Leave Game
+        </button>
+
+        <div id="game-id-view">
+            <div id="game-id-label" class={gameIdTextClass}>
+                {gameIdText}
+            </div>
+            <div id="game-id">
+                {gameState.id}
+                <button id="game-id-btn" on:click={handleCopy}>
+                    <CopyIcon height="0.9rem" width="0.9rem" />
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="ready-btn-wrapper">
+        <button
+            id="ready-btn"
+            class:activated={myPlayerState?.isReady}
+            on:click={toggleReady}
+        >
+            {#if myPlayerState?.isReady}
+                <div class="ready-btn-display">
+                    <CheckIcon /> READY
+                </div>
+                <div style="font-size: 0.8rem;">Waiting for other players</div>
+            {:else}
+                <div class="ready-btn-display">
+                    <CheckOutlineIcon /> READY UP
+                </div>
+                <!-- <div style="font-size: 0.7rem;">
+                    Click to Start
+                </div> -->
+            {/if}
+        </button>
+    </div>
     <div id="content">
         <div id="embed-section">
             <div class="section-title">
@@ -133,44 +171,7 @@
             </div>
         </div>
     </div>
-    <div id="footer">
-        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
-            <BackIcon /> Leave Game
-        </button>
-
-        <div id="game-id-view">
-            <div id="game-id-label" class={gameIdTextClass}>{gameIdText}</div>
-            <div id="game-id">
-                {gameState.id}
-                <button id="game-id-btn" on:click={handleCopy}>
-                    <CopyIcon height="0.9rem" width="0.9rem" />
-                </button>
-            </div>
-        </div>
-    </div>
 </main>
-
-<button
-    id="ready-btn"
-    class:activated={myPlayerState?.isReady}
-    on:click={toggleReady}
->
-    <div class="ready-btn-content">
-        {#if myPlayerState?.isReady}
-            <div class="ready-btn-display">
-                <CheckIcon /> READY
-            </div>
-            <div style="font-size: 0.8rem; margin: 0 -50%;">
-                Waiting for other players
-            </div>
-        {:else}
-            <div class="ready-btn-display">
-                <CheckOutlineIcon /> READY
-            </div>
-            <div style="font-size: 0.7rem; margin: 0 -50%;">Click to Start</div>
-        {/if}
-    </div>
-</button>
 
 <!-- Confirmation modal for leaving game -->
 {#if isModalOpen}
@@ -197,10 +198,37 @@
         flex: 1;
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
+        padding-bottom: 100px;
         gap: 30px;
-        overflow-y: auto;
-        margin-top: 6.5rem;
+    }
+    #embed-section {
+        display: flex;
+        min-width: 260px;
+        flex-direction: column;
+        flex: 1;
+        flex-basis: 100%;
+    }
+    #players-section {
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        flex-basis: 100%;
+    }
+    @media (max-width: 700px) {
+        /* This instead of flex-wrap to allow for children to flex-grow along vertical axis */
+        #content {
+            flex-direction: column;
+            overflow-y: auto;
+            gap: 0px;
+        }
+
+        #embed-section {
+            flex-basis: 0;
+        }
+
+        #ready-btn-wrapper {
+        }
     }
 
     .label {
@@ -234,22 +262,6 @@
         overflow: hidden;
     }
 
-    #embed-section {
-        display: flex;
-        flex: 1;
-        min-width: 260px;
-        flex-direction: column;
-    }
-
-    #players-section {
-        flex: 1;
-        height: 100%;
-        position: relative;
-        min-width: 260px;
-        display: flex;
-        flex-direction: column;
-    }
-
     #players-container {
         border: 2px solid gray;
         background-color: var(--accent-dark);
@@ -279,36 +291,35 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
-
         font-weight: 700;
         font-size: 1.9rem;
-        color: white;
-    }
-    .ready-btn-content {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        color: var(--accent-light);
-        overflow: hidden;
-        white-space: nowrap;
-        overflow: hidden;
     }
     #ready-btn {
-        position: absolute;
-        top: 1rem;
-        left: 50%;
-        transform: translate(-50%, 0);
         padding: 0.7rem;
-        height: 5.5rem;
-        width: 15rem;
-        background-color: var(--spotify-green);
-        border: solid 2px var(--accent-light);
-        border-radius: 20px;
+        width: 18rem;
+        height: 4rem;
         transition: 0.5s ease-out;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0px 0px 100px 10px rgba(255, 255, 255, 0.5);
+        outline: none;
     }
     #ready-btn.activated {
-        height: 5.5rem;
-        width: 18rem;
+        height: 5rem;
+        width: 20rem;
+        background-color: var(--spotify-green);
+        box-shadow: 0px 0px 100px 10px var(--spotify-green);
+    }
+    #ready-btn-wrapper {
+        position: absolute;
+        bottom: 20px;
+        width: max-content;
+        height: max-content;
+        display: flex;
+        justify-content: center;
     }
 
     #leave-btn {
@@ -321,6 +332,7 @@
         flex-direction: row;
         align-items: center;
         gap: 5px;
+        outline: none;
     }
     #leave-btn:hover {
         color: var(--red);
@@ -346,9 +358,7 @@
         padding: 0px;
         margin-bottom: 4px;
         padding-inline: 2px;
-    }
-    #game-id-btn:hover {
-        color: var(--spotify-green);
+        outline: none;
     }
     #game-id-label {
         font-size: 0.8rem;
@@ -358,10 +368,9 @@
     }
     #footer {
         width: 100%;
-        height: 48px;
+        height: max-content;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        margin-top: -4px;
     }
 </style>
