@@ -66,7 +66,7 @@
     height: 100%;
     overflow-y: auto;
     min-width: 320px;
-    min-height: 620px;
+    min-height: 500px;
   }
   #appbar {
     display: flex;
