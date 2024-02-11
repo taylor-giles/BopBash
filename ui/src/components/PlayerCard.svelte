@@ -26,10 +26,10 @@
         background-color: rgba(50, 50, 50, 0.5);
         color: white;
         width: max-content;
-        padding: 20px;
+        padding: 0.9rem;
         justify-content: center;
         align-items: center;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     main.highlighted {
         /* background-color: rgba(235, 235, 235, 0.7);
