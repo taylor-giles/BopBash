@@ -80,6 +80,16 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.text-button {
+  border: none;
+  background-color: transparent;
+  padding: 0px;
+  outline: none;
+}
+.text-button:hover:not(:disabled) {
+  background-color: transparent;
+}
+
 /* @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
