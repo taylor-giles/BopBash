@@ -8,8 +8,9 @@
   import GameplayPage from "./pages/GameplayPage.svelte";
   import { GameStatus, type GameState } from "../../shared/types";
   import GameDiscoveryPage from "./pages/GameDiscoveryPage.svelte";
-    import GameAPI from "../api/api";
-  
+  import GameAPI from "../api/api";
+  import ErrorModal from "./components/ErrorModal.svelte";
+
   const PAGES: Record<Page, ComponentType> = {
     [Page.LOGIN]: LoginPage,
     [Page.HOME]: HomePage,
@@ -17,6 +18,9 @@
     [Page.FIND]: GameDiscoveryPage,
     [Page.GAME]: GameplayPage,
   };
+
+  //If this is non-empty, the error modal will be shown
+  let errorMsg = "";
 
   //Obtain and remove game ID from URL if it exists
   const gameToJoin = new URLSearchParams(window.location.search).get("game");
@@ -27,8 +31,14 @@
     if (value) {
       CurrentPage.set(Page.HOME);
 
-      if(gameToJoin) {
-        GameAPI.joinGame(gameToJoin);
+      //Attempt to join
+      if (gameToJoin) {
+        GameAPI.joinGame(gameToJoin).then((error) => {
+          //Show error modal on failure
+          if (error) {
+            errorMsg = `Unable to join game '${gameToJoin}'`;
+          }
+        });
       }
     }
   });
@@ -48,14 +58,16 @@
 </script>
 
 <main>
-  <div id="appbar">
-    Beat Blitz
-  </div>
-  
+  <div id="appbar">Beat Blitz</div>
+
   <div id="page-content">
     <svelte:component this={PAGES[$CurrentPage]} />
   </div>
 </main>
+
+{#if errorMsg}
+  <ErrorModal {errorMsg} on:close={() => (errorMsg = "")} />
+{/if}
 
 <style>
   main {
