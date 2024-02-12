@@ -34,10 +34,10 @@
 
 <main>
     <div id="button-container">
-        <button class="header-btn" on:click={handleBackClick}>
+        <button class="header-btn text-button" on:click={handleBackClick}>
             <BackIcon /> Back
         </button>
-        <button class="header-btn" on:click={refresh}>
+        <button class="header-btn text-button" on:click={refresh}>
             <RefreshIcon /> Refresh
         </button>
     </div>
@@ -110,19 +110,13 @@
     }
 
     .header-btn {
-        background-color: transparent;
-        border: none;
         color: white;
-        padding: 0px;
-        outline: none;
         display: flex;
         flex-direction: row;
         align-items: center;
         gap: 5px;
     }
     .header-btn:hover {
-        background-color: transparent;
         color: var(--spotify-green);
-        border: 0px;
     }
 </style>

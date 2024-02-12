@@ -1,7 +1,10 @@
 <script lang="ts">
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import CheckOutlineIcon from "svelte-material-icons/CheckCircleOutline.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import CloseIcon from "svelte-material-icons/Close.svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
+    import AddFriendsIcon from "svelte-material-icons/AccountMultiplePlus.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
     import { IFrameAPI } from "../../IFrameAPI";
@@ -12,6 +15,7 @@
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
+    import Modal from "../components/Modal.svelte";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -35,12 +39,12 @@
         }, 0);
     }
 
-    //Modal opens iff this is true
-    let isModalOpen = false;
+    //Modals open iff this is true
+    let isLeavingModalOpen = false;
+    let isSharingModalOpen = false;
 
-    //Text shown around game ID
-    let gameIdText = "Ask your friends to join!";
-    let gameIdTextClass = "";
+    //Generate share link for this game
+    const shareLink = `${window.location.origin}?game=${$GameStore.id}`;
 
     /**
      * Toggle player's ready state
@@ -63,16 +67,16 @@
     }
 
     /**
-     * Copies the game ID to clipboard
+     * Shares the game join information
      */
-    function handleCopy() {
-        navigator.clipboard.writeText(gameState.id);
-        gameIdText = "Game ID copied!";
-        gameIdTextClass = "activated";
-        setTimeout(() => {
-            gameIdText = "Ask your friends to join!";
-            gameIdTextClass = "";
-        }, 5000);
+    function handleShare() {
+        if (navigator.canShare?.()) {
+            navigator.share({
+                url: shareLink,
+                title: "Beat Blitz",
+                text: "Join me for a thrilling song-based smackdown on Beat Blitz!",
+            });
+        }
     }
 
     /**
@@ -98,21 +102,22 @@
 
 <main>
     <div id="header">
-        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+        <button
+            id="leave-btn"
+            class="text-button"
+            on:click={() => (isLeavingModalOpen = true)}
+        >
             <BackIcon /> Leave Game
         </button>
 
-        <div id="game-id-view">
-            <div id="game-id-label" class={gameIdTextClass}>
-                {gameIdText}
-            </div>
-            <div id="game-id">
-                {gameState.id}
-                <button id="game-id-btn" on:click={handleCopy}>
-                    <CopyIcon height="0.9rem" width="0.9rem" />
-                </button>
-            </div>
-        </div>
+        <button
+            id="open-share-btn"
+            class="text-button"
+            on:click={() => (isSharingModalOpen = true)}
+        >
+            <AddFriendsIcon height="0.9rem" width="0.9rem" />
+            Invite friends
+        </button>
     </div>
     <div id="content">
         <div id="embed-section">
@@ -168,12 +173,69 @@
 </main>
 
 <!-- Confirmation modal for leaving game -->
-{#if isModalOpen}
+{#if isLeavingModalOpen}
     <ConfirmationModal
-        on:no={() => (isModalOpen = false)}
+        on:no={() => (isLeavingModalOpen = false)}
         on:yes={leave}
         bodyText="Are you sure you want to leave this game?"
     />
+{/if}
+
+<!-- Share modal -->
+{#if isSharingModalOpen}
+    <Modal on:close={() => (isSharingModalOpen = false)}>
+        <div id="share-modal-content">
+            <div style="width: 100%; margin-bottom: -20px;">
+                <button
+                    class="text-button"
+                    on:click={() => (isSharingModalOpen = false)}
+                >
+                    <CloseIcon />
+                </button>
+            </div>
+
+            <div id="share-modal-title">Ask your friends to join!</div>
+
+            <!-- QR code, link, and Game ID -->
+            <div id="share-modal-info-container">
+                <div id="share-modal-game-id" class="header-text">
+                    GAME ID:
+                    <div id="game-id-display">
+                        {$GameStore.id}
+                    </div>
+                </div>
+                <div id="qr-code-container">
+                    <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${shareLink}`}
+                        alt="QR code"
+                    />
+                </div>
+                <div id="share-modal-link">
+                    <a href={shareLink}>
+                        {shareLink}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Share body information text -->
+            <div class="body-text" id="share-modal-text">
+                Others can join your game by:
+                <ul>
+                    <li>Entering the Game ID on the home page</li>
+                    <li>Scanning the QR code above</li>
+                    <li>Using the join link shown above</li>
+                </ul>
+            </div>
+
+            <!-- Share button -->
+            {#if navigator.canShare?.()}
+                <button id="share-btn" on:click={handleShare}>
+                    <ShareIcon />
+                    Share
+                </button>
+            {/if}
+        </div>
+    </Modal>
 {/if}
 
 <style>
@@ -285,7 +347,6 @@
         justify-content: center;
         gap: 10px;
         font-weight: 700;
-
     }
     #ready-btn {
         padding: 0.7rem;
@@ -318,53 +379,105 @@
 
     #leave-btn {
         color: var(--primary-light);
-        background-color: var(--accent-dark);
-        padding: 0px;
         font-size: 0.9rem;
         height: 100%;
         display: flex;
         flex-direction: row;
         align-items: center;
         gap: 5px;
-        outline: none;
     }
     #leave-btn:hover {
         color: var(--red);
     }
 
-    #game-id-view {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    #game-id {
-        font-size: 1.1rem;
+    #open-share-btn {
         display: flex;
         flex-direction: row;
         align-items: center;
-        height: max-content;
-        gap: 8px;
-    }
-    #game-id-btn {
-        background-color: transparent;
-        border: none;
         color: var(--primary-light);
-        padding: 0px;
+        padding: 10px;
         margin-bottom: 4px;
-        padding-inline: 2px;
-        outline: none;
-    }
-    #game-id-label {
+        border: 1px solid var(--primary-light);
         font-size: 0.8rem;
+        gap: 5px;
     }
-    #game-id-label.activated {
-        color: var(--spotify-green);
-    }
+
     #header {
         width: 100%;
         height: max-content;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+    }
+
+    #share-modal-content {
+        background-color: var(--primary-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid gray;
+        color: var(--accent-dark);
+        gap: 1rem;
+        margin: 1rem;
+        max-width: 500px;
+    }
+
+    #share-modal-game-id {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        font-size: 1.5rem;
+        font-weight: 300;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #game-id-display {
+        font-weight: 800;
+        color: var(--accent);
+    }
+
+    #share-modal-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    #share-modal-link {
+        font-size: 0.9rem;
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        justify-content: center;
+    }
+
+    #share-modal-info-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #share-btn {
+        border: 1px solid black;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #qr-code-container {
+        width: 130px;
+        height: 130px;
+        border: 5px solid white;
+        outline: 5px solid var(--accent-dark);
+        background-color: white;
+        border-radius: 5px;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 1rem;
     }
 </style>

@@ -8,7 +8,8 @@
   import GameplayPage from "./pages/GameplayPage.svelte";
   import { GameStatus, type GameState } from "../../shared/types";
   import GameDiscoveryPage from "./pages/GameDiscoveryPage.svelte";
-    
+    import GameAPI from "../api/api";
+  
   const PAGES: Record<Page, ComponentType> = {
     [Page.LOGIN]: LoginPage,
     [Page.HOME]: HomePage,
@@ -17,12 +18,18 @@
     [Page.GAME]: GameplayPage,
   };
 
-  //Maintain a reference to the player information and WebSocket connection object
-  let connection: PlayerConnection;
+  //Obtain and remove game ID from URL if it exists
+  const gameToJoin = new URLSearchParams(window.location.search).get("game");
+  window.history.replaceState({}, "", "/");
+
+  //When the player connects, go to home page and try to join game from URL, if it exists
   GameConnection.subscribe((value) => {
     if (value) {
-      connection = value;
       CurrentPage.set(Page.HOME);
+
+      if(gameToJoin) {
+        GameAPI.joinGame(gameToJoin);
+      }
     }
   });
 
