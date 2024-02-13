@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ComponentType } from "svelte";
   import { GameConnection, GameStore, PlayerConnection } from "../gameStore";
-  import { Page, CurrentPage } from "../pageStore";
+  import { Page, CurrentPage, ErrorMessage } from "../pageStore";
   import GameLobbyPage from "./pages/GameLobbyPage.svelte";
   import HomePage from "./pages/HomePage.svelte";
   import LoginPage from "./pages/LoginPage.svelte";
@@ -33,12 +33,7 @@
 
       //Attempt to join
       if (gameToJoin) {
-        GameAPI.joinGame(gameToJoin).then((error) => {
-          //Show error modal on failure
-          if (error) {
-            errorMsg = `Unable to join game '${gameToJoin}'`;
-          }
-        });
+        GameAPI.joinGame(gameToJoin);
       }
     }
   });
@@ -65,8 +60,9 @@
   </div>
 </main>
 
-{#if errorMsg}
-  <ErrorModal {errorMsg} on:close={() => (errorMsg = "")} />
+<!-- Error Modal (displays error message from store)-->
+{#if $ErrorMessage}
+  <ErrorModal errorMsg={$ErrorMessage} on:close={() => ErrorMessage.set("")} />
 {/if}
 
 <style>
