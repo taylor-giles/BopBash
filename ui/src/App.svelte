@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ComponentType } from "svelte";
-    import { GameConnection, GameStore } from "../gameStore";
+    import { GameConnection, GameStore, PlayerConnection } from "../gameStore";
     import { Page, CurrentPage, ErrorMessage } from "../pageStore";
     import GameLobbyPage from "./pages/GameLobbyPage.svelte";
     import HomePage from "./pages/HomePage.svelte";
@@ -18,6 +18,9 @@
         [Page.FIND]: GameDiscoveryPage,
         [Page.GAME]: GameplayPage,
     };
+
+    //If this is non-empty, the error modal will be shown
+    let errorMsg = "";
 
     //Obtain and remove game ID from URL if it exists
     const gameToJoin = new URLSearchParams(window.location.search).get("game");
