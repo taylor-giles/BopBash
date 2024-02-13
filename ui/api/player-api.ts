@@ -3,6 +3,7 @@ import { API_ADDRESS } from '../../shared/constants';
 import { GameConnection, type PlayerConnection } from '../gameStore';
 import { WebSocketRoute, type WebSocketRequest } from "../../shared/ws-routes"
 import type { GuessResult } from '../../shared/types';
+import { ErrorMessage } from '../pageStore';
 
 const apiCaller = axios.create({
     baseURL: API_ADDRESS,
@@ -11,6 +12,16 @@ const apiCaller = axios.create({
 
 let playerConnection: PlayerConnection;
 GameConnection.subscribe((value) => playerConnection = value);
+
+/**
+ * Displays the error message in modal and prints error data to console
+ * @param errorMsg The error message to display in modal
+ * @param error Additional error information to print to console
+ */
+function setError(errorMsg: string, error: any) {
+    console.error(errorMsg, error);
+    ErrorMessage.set(errorMsg);
+}
 
 
 /**
@@ -30,7 +41,7 @@ apiCaller.interceptors.request.use((config) => {
     if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
-        return config;
+    return config;
 }, (error) => {
     console.error(error);
 });
@@ -44,12 +55,12 @@ apiCaller.interceptors.request.use((config) => {
 export async function joinGame(gameId: string): Promise<string | void> {
     return apiCaller.post(`/joinGame/${gameId}`).then((res) => {
         if (res.data.error) {
-            console.error("Failed to join game: ", res?.data?.error);
+            console.error(`Failed to join game '${gameId}'. Please try again.`, res?.data?.error);
             return res?.data?.error;
         }
         return;
     }).catch((error) => {
-        console.error("Failed to join game: ", error);
+        setError(`Failed to join game '${gameId}'. Please try again.`, error);
         return error.message;
     });
 }
@@ -62,14 +73,14 @@ export async function joinGame(gameId: string): Promise<string | void> {
  * @returns The result of the guess as a GuessResult object
  */
 export async function submitGuess(roundNum: number, trackId: string): Promise<GuessResult | void> {
-    return apiCaller.post(`/submitGuess`, {roundNum: roundNum, trackId: trackId}).then((res) => {
-        if(res.data.error){
-            console.error("Failed to submit guess: ", res.data?.error);
+    return apiCaller.post(`/submitGuess`, { roundNum: roundNum, trackId: trackId }).then((res) => {
+        if (res.data.error) {
+            console.error("Failed to submit guess", res.data?.error);
         } else {
             return res.data;
         }
     }).catch((error) => {
-        console.error("Failed to submit guess: ", error);
+        console.error("Failed to submit guess", error);
     });
 }
 
