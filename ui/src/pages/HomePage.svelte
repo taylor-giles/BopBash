@@ -10,12 +10,13 @@
         <div style="flex: 1;">
             <GameIdForm />
         </div>
-        <div style="text-align: center;">-OR-</div>
+        <div id="separator">-OR-</div>
         <div id="selection-buttons-container">
             <div style="width: 100%; box-sizing:border-box;">
                 <SelectionButton
                     title="Create Game"
                     description="Start a new game from any playlist"
+                    on:click={GameAPI.createGame}
                 />
             </div>
 
@@ -60,5 +61,14 @@
         flex-direction: column;
         justify-content: center;
         gap: 25px;
+    }
+
+    #separator {
+        text-align: center;
+    }
+    @media(max-width: 860px) {
+        #separator {
+            width: 100%;
+        }
     }
 </style>
