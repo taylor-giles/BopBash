@@ -14,3 +14,8 @@ export enum Page {
  * A Svelte store that provides access to the currently active UI page
  */
 export const CurrentPage: Writable<Page> = writable<Page>(Page.LOGIN);
+
+/**
+ * A Svelte store that allows for setting an error message to be shown in an error modal.
+ */
+export const ErrorMessage: Writable<string> = writable<string>("");
