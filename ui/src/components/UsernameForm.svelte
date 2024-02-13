@@ -1,56 +1,64 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
     import { MAX_USERNAME_LENGTH } from "../../../shared/constants";
-    
+    import { connectAs } from "../../gameStore";
+
     let username = "";
     let failed = false;
     let ready = false;
     let failText = "";
 
-    function handleSubmit(e: Event){
+    /**
+     * Submits the form by attempting to connect via API
+     */
+    function handleSubmit(e: Event) {
         e.preventDefault();
-        if(!failed) {
-            dispatch('start', username);
+        if (!failed) {
+            //Establish the GameConnection
+            connectAs(username);
         }
     }
-
 
     //Input validation
     $: {
         failed = username.length > MAX_USERNAME_LENGTH;
-        ready = username.length > 0 && !failed
-        if(username?.length > MAX_USERNAME_LENGTH){
-            failText = `Username cannot exceed ${MAX_USERNAME_LENGTH} characters in length.`
-        } else if(!username){
+        ready = username.length > 0 && !failed;
+        if (username?.length > MAX_USERNAME_LENGTH) {
+            failText = `Username cannot exceed ${MAX_USERNAME_LENGTH} characters in length.`;
+        } else if (!username) {
             failText = "Username must be provided";
         } else {
-            failText = ""
+            failText = "";
         }
     }
 </script>
 
 <main>
-    <div id="username-label" class="header-text">
-        Enter a Username
-    </div>
+    <div id="username-label" class="header-text">Enter a Username</div>
 
     <form on:submit={handleSubmit}>
-        <input id="username-input" class="header-text" type="text" placeholder="Username" bind:value={username}/>
-        <div id="fail-text" class="body-text" style={`display: ${failed ? "flex" : "none"}`}>
+        <input
+            id="username-input"
+            class="header-text"
+            type="text"
+            placeholder="Username"
+            bind:value={username}
+        />
+        <div
+            id="fail-text"
+            class="body-text"
+            style={`display: ${failed ? "flex" : "none"}`}
+        >
             {failText}
         </div>
-    
+
         <div id="info-text" class="body-text">
-            No login required!<br/>
+            No login required!<br />
             Rude or offensive names will not be tolerated.
         </div>
-    
-        <button type="submit" id="submit-btn" disabled={!ready}>
-            Start
-        </button>
+
+        <button type="submit" id="submit-btn" disabled={!ready}> Start </button>
     </form>
-    
 </main>
 
 <style>
@@ -70,7 +78,7 @@
         max-width: 900px;
         min-width: 300px;
     }
-    
+
     form {
         display: contents;
     }

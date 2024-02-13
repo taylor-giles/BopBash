@@ -29,13 +29,12 @@
         </div>
     </div>
 
-    <div id="footer" >
+    <div id="footer">
         <div id="game-id" class="header-text">
             {game.id}
         </div>
         <button on:click> Join Game </button>
     </div>
-
 </main>
 
 <style>
