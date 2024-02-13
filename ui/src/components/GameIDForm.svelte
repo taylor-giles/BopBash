@@ -6,6 +6,9 @@
     let failed = false;
     let failText = "";
 
+    /**
+     * Submits the form by attempting to join game via API call
+     */
     async function handleSubmit(e: Event) {
         e.preventDefault();
 
