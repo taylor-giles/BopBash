@@ -7,11 +7,11 @@
     import AddFriendsIcon from "svelte-material-icons/AccountMultiplePlus.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
-    import { IFrameAPI } from "../../IFrameAPI";
-    import { GameStore, GameConnection } from "../../gameStore";
+    import { IFrameAPI } from "../../stores/IFrameAPI";
+    import { GameStore, GameConnection } from "../../stores/gameStore";
     import GameAPI from "../../api/api";
     import PlayerCard from "../components/PlayerCard.svelte";
-    import { CurrentPage, Page } from "../../pageStore";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";

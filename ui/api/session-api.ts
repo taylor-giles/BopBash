@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
 import type { GameState } from '../../shared/types';
-import { ErrorMessage } from '../pageStore';
+import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
     baseURL: API_ADDRESS,

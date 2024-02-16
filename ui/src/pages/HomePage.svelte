@@ -1,6 +1,6 @@
 <script lang="ts">
     import GameAPI from "../../api/api";
-    import { CurrentPage, Page } from "../../pageStore";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     import GameIdForm from "../components/GameIDForm.svelte";
     import SelectionButton from "../components/SelectionButton.svelte";
 </script>

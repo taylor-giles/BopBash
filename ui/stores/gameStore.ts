@@ -1,8 +1,8 @@
 import type { Readable, Writable } from 'svelte/store';
 import { readable, writable } from 'svelte/store';
-import { WS_ADDRESS } from '../shared/constants';
-import type { GameState } from '../shared/types';
-import * as SessionAPI from './api/session-api';
+import { WS_ADDRESS } from '../../shared/constants';
+import type { GameState } from '../../shared/types';
+import * as SessionAPI from '../api/session-api';
 
 /**
  * Class that encapsulates all information needed for this player to communicate with the server API.

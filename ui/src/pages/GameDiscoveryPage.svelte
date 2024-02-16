@@ -4,7 +4,7 @@
     import type { GameState } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import { joinGame } from "../../api/player-api";
-    import { CurrentPage, Page } from "../../pageStore";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     import GameCard from "../components/GameCard.svelte";
 
     //"Refreshing" indicator is shown iff this is true

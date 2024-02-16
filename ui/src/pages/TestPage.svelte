@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { IFrameAPI } from "../../IFrameAPI";
+    import { IFrameAPI } from "../../stores/IFrameAPI";
 
     let iframe: HTMLIFrameElement;
     IFrameAPI.subscribe((api: any) => {
