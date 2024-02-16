@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
-import { GameConnection, type PlayerConnection } from '../gameStore';
+import { GameConnection, type PlayerConnection } from '../stores/gameStore';
 import { WebSocketRoute, type WebSocketRequest } from "../../shared/ws-routes"
 import type { GuessResult } from '../../shared/types';
-import { ErrorMessage } from '../pageStore';
+import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
     baseURL: API_ADDRESS,

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { MAX_USERNAME_LENGTH } from "../../../shared/constants";
-    import { connectAs } from "../../gameStore";
+    import { connectAs } from "../../stores/gameStore";
 
     let username = "";
     let failed = false;

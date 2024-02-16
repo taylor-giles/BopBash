@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ComponentType } from "svelte";
-    import { GameConnection, GameStore, PlayerConnection } from "../gameStore";
-    import { Page, CurrentPage, ErrorMessage } from "../pageStore";
+    import { GameConnection, GameStore } from "../stores/gameStore";
+    import { Page, CurrentPage, ErrorMessage } from "../stores/pageStore";
     import GameLobbyPage from "./pages/GameLobbyPage.svelte";
     import HomePage from "./pages/HomePage.svelte";
     import LoginPage from "./pages/LoginPage.svelte";

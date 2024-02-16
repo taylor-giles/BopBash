@@ -3,15 +3,15 @@
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
-    import { GameStore } from "../../gameStore";
+    import { GameStore } from "../../stores/gameStore";
     import AudioMotionAnalyzer, { type ConstructorOptions } from "audiomotion-analyzer";
     import { GameStatus, type GuessResult } from "../../../shared/types";
     import Scoreboard from "../components/Scoreboard.svelte";
     import { arraySum } from "../../../shared/utils";
-    import { IFrameAPI } from "../../IFrameAPI";
+    import { IFrameAPI } from "../../stores/IFrameAPI";
     import { fade } from "svelte/transition";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
-    import { CurrentPage, Page } from "../../pageStore";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     import AudioControls from "../components/AudioControls.svelte";
     import GameplayForm from "../components/GameplayForm.svelte";
     import RoundProgressBar from "../components/RoundProgressBar.svelte";
