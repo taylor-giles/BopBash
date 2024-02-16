@@ -38,6 +38,7 @@ export type GameState = {
     currentRound?: {
         index: number,
         audioURL: string,
+        duration: number,
         trackId?: string
     }
     status: GameStatus,
