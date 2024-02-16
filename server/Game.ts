@@ -19,7 +19,8 @@ export class Game {
     status: GameStatus;
     currentRound?: {
         index: number,
-        audioURL: string
+        audioURL: string,
+        duration: number,
         trackId?: string
     }
 
@@ -81,7 +82,7 @@ export class Game {
         }
 
         //Convert chosen tracks set to list of Rounds
-        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 30000));
+        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 40000));
     }
 
 
@@ -300,7 +301,8 @@ export class Game {
         //Set the currentRound variable
         this.currentRound = {
             index: index,
-            audioURL: this.rounds[index].previewURL
+            audioURL: this.rounds[index].previewURL,
+            duration: this.rounds[index].maxDuration
         };
 
         //Inform players
