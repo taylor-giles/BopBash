@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from "svelte";
+    import { onDestroy, tick } from "svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
@@ -14,6 +14,7 @@
     import { CurrentPage, Page } from "../../pageStore";
     import AudioControls from "../components/AudioControls.svelte";
     import GameplayForm from "../components/GameplayForm.svelte";
+    import RoundProgressBar from "../components/RoundProgressBar.svelte";
 
     enum RoundPhase {
         COUNTDOWN,
@@ -34,6 +35,8 @@
     let showScoreboard: boolean = window.innerWidth > 700;
     let isModalOpen: boolean = false;
     let volumeLevel: number = 0.5;
+    let currentRoundTime: number = 0;
+    let roundTimer: ReturnType<typeof setInterval>;
 
     //HTML element references
     let audioElement: HTMLAudioElement = new Audio();
@@ -42,8 +45,14 @@
     let visualizerView: HTMLDivElement;
     let correctTrackEmbed: HTMLIFrameElement;
 
-    //Maintain game variables
+    //Get colors from CSS
+    const spotifyGreen = getComputedStyle(document.documentElement).getPropertyValue('--spotify-green');
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    const red = getComputedStyle(document.documentElement).getPropertyValue('--red');
+
+    //Maintain round & game variables
     $: currentRoundNum = $GameStore.currentRound?.index ?? -1;
+    $: currentRoundDuration = ($GameStore.currentRound?.duration ?? 101) - 100;
     $: audioURL = $GameStore.currentRound?.audioURL;
     $: isGameDone = $GameStore.status === GameStatus.ENDED;
 
@@ -75,13 +84,18 @@
      */
     async function loadRound() {
         //Destroy audio analyzer
-        if (audioAnalyzer) {
-            audioAnalyzer.destroy();
-        }
+        audioAnalyzer?.destroy();
+
+        //Destroy timer
+        clearInterval(roundTimer);
 
         //Reset round variables
         guessResult = undefined;
         correctTrackId = undefined;
+        currentRoundTime = 0;
+        roundTimer = setInterval(() => {
+            currentRoundTime += 100;
+        }, 100);
 
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
@@ -253,6 +267,16 @@
         GameAPI.leaveGame();
         CurrentPage.set(Page.HOME);
     }
+
+
+    //Handle destruction
+    onDestroy(() => {
+        //Destroy audio analyzer
+        audioAnalyzer?.destroy();
+
+        //Destroy timer
+        clearInterval(roundTimer);
+    });
 </script>
 
 <main>
@@ -322,6 +346,16 @@
                                 id="visualizer-view"
                                 bind:this={visualizerView}
                             ></div>
+
+                            <div id="song-timer-view">
+                                <RoundProgressBar
+                                    progress={currentRoundTime / currentRoundDuration}
+                                    duration={200}
+                                    gradientColors={[spotifyGreen, red]}
+                                    gradientPositions={[0.7, 1]}
+                                    baseThickness={2}
+                                />
+                            </div>
                         {/if}
                     </div>
 
@@ -341,7 +375,7 @@
                                 <div
                                     id="get-ready-overlay"
                                     class="header-text"
-                                    transition:fade={{ duration: 100 }}
+                                    transition:fade={{ duration: 150 }}
                                 >
                                     Get ready!
                                 </div>
@@ -438,6 +472,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        padding: 2rem;
     }
 
     #scoreboard-container {
@@ -474,6 +509,11 @@
     #visualizer-view {
         height: 11.5rem;
         width: 11.5rem;
+    }
+    #song-timer-view {
+        position: absolute;
+        width: 17rem;
+        height: 17rem;
     }
 
     #submission-panel {
