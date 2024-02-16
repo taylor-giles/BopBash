@@ -4,7 +4,7 @@
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
     import { GameStore } from "../../gameStore";
-    import AudioMotionAnalyzer from "audiomotion-analyzer";
+    import AudioMotionAnalyzer, { type ConstructorOptions } from "audiomotion-analyzer";
     import { GameStatus, type GuessResult } from "../../../shared/types";
     import Scoreboard from "../components/Scoreboard.svelte";
     import { arraySum } from "../../../shared/utils";
@@ -26,6 +26,31 @@
         "data:audio/wav;base64,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",
     );
 
+    //Millis between numbers shown in countdown
+    const countdownInterval = 500;
+
+    //Audio visualization options
+    const visualizerOptions: ConstructorOptions = {
+        showScaleX: false,
+        roundBars: true,
+        overlay: true,
+        showBgColor: true,
+        bgAlpha: 0,
+        showPeaks: false,
+        mode: 8,
+        barSpace: 0.1,
+        height: 200,
+        width: 200,
+        maxFreq: 15000,
+        smoothing: 0.95,
+        reflexAlpha: 1,
+        reflexRatio: 0.5,
+        colorMode: "bar-level",
+        weightingFilter: "B",
+        alphaBars: true,
+    };
+
+    //Round & game variables
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
     let audioLoaded: boolean = false;
     let guessTrackId: string = "";
@@ -36,7 +61,6 @@
     let isModalOpen: boolean = false;
     let volumeLevel: number = 0.5;
     let currentRoundTime: number = 0;
-    let roundTimer: ReturnType<typeof setInterval>;
 
     //HTML element references
     let audioElement: HTMLAudioElement = new Audio();
@@ -46,17 +70,25 @@
     let correctTrackEmbed: HTMLIFrameElement;
 
     //Get colors from CSS
-    const spotifyGreen = getComputedStyle(document.documentElement).getPropertyValue('--spotify-green');
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent');
-    const red = getComputedStyle(document.documentElement).getPropertyValue('--red');
+    const spotifyGreen = getComputedStyle(
+        document.documentElement,
+    ).getPropertyValue("--spotify-green");
+    const accent = getComputedStyle(document.documentElement).getPropertyValue(
+        "--accent",
+    );
+    const red = getComputedStyle(document.documentElement).getPropertyValue(
+        "--red",
+    );
 
     //Maintain round & game variables
     $: currentRoundNum = $GameStore.currentRound?.index ?? -1;
-    $: currentRoundDuration = ($GameStore.currentRound?.duration ?? 101) - 100;
+    $: currentRoundDuration =
+        ($GameStore.currentRound?.duration ?? countdownInterval * 4) -
+        countdownInterval * 3;
     $: audioURL = $GameStore.currentRound?.audioURL;
     $: isGameDone = $GameStore.status === GameStatus.ENDED;
 
-    //Every time the audio URL changes, start the next round
+    //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
         audioElement.src = audioURL;
         loadRound();
@@ -68,12 +100,12 @@
         timestamp = audioElement.currentTime;
     }
 
-    //When audio is ready, start playing
+    //When audio is ready, start the round
     $: if (audioLoaded) {
         doCountdown().then(startPlayingPhase);
     }
 
-    //If the player runs out of time, display the conclusion
+    //If the correct answer has been delivered to the player, display the conclusion
     $: if ($GameStore.currentRound?.trackId) {
         correctTrackId = $GameStore.currentRound?.trackId;
         startConclusionPhase();
@@ -86,16 +118,10 @@
         //Destroy audio analyzer
         audioAnalyzer?.destroy();
 
-        //Destroy timer
-        clearInterval(roundTimer);
-
         //Reset round variables
         guessResult = undefined;
         correctTrackId = undefined;
         currentRoundTime = 0;
-        roundTimer = setInterval(() => {
-            currentRoundTime += 100;
-        }, 100);
 
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
@@ -136,7 +162,7 @@
                             }
                         }
                     },
-                    (3 - i) * 750,
+                    (3 - i) * countdownInterval,
                 );
             }
         });
@@ -153,6 +179,7 @@
 
             //Play the audio
             audioElement.play();
+            audioElement.loop = true;
 
             //Generate an audio visualizer
             audioAnalyzer = new AudioMotionAnalyzer(visualizerView, {
@@ -160,23 +187,7 @@
                 source: audioElement,
 
                 //Set options
-                showScaleX: false,
-                roundBars: true,
-                overlay: true,
-                showBgColor: true,
-                bgAlpha: 0,
-                showPeaks: false,
-                mode: 8,
-                barSpace: 0.1,
-                height: 200,
-                width: 200,
-                maxFreq: 15000,
-                smoothing: 0.95,
-                reflexAlpha: 1,
-                reflexRatio: 0.5,
-                colorMode: "bar-level",
-                weightingFilter: "B",
-                alphaBars: true,
+                ...visualizerOptions,
             });
 
             //Make and use audio visualizer gradient
@@ -268,14 +279,10 @@
         CurrentPage.set(Page.HOME);
     }
 
-
     //Handle destruction
     onDestroy(() => {
         //Destroy audio analyzer
         audioAnalyzer?.destroy();
-
-        //Destroy timer
-        clearInterval(roundTimer);
     });
 </script>
 
@@ -349,11 +356,12 @@
 
                             <div id="song-timer-view">
                                 <RoundProgressBar
-                                    progress={currentRoundTime / currentRoundDuration}
-                                    duration={200}
+                                    progress={1}
+                                    duration={currentRoundDuration}
                                     gradientColors={[spotifyGreen, red]}
                                     gradientPositions={[0.7, 1]}
                                     baseThickness={2}
+                                    easing={(t) => t}
                                 />
                             </div>
                         {/if}
