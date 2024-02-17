@@ -19,9 +19,6 @@
         [Page.GAME]: GameplayPage,
     };
 
-    //If this is non-empty, the error modal will be shown
-    let errorMsg = "";
-
     //Obtain and remove game ID from URL if it exists
     const gameToJoin = new URLSearchParams(window.location.search).get("game");
     window.history.replaceState({}, "", "/");
