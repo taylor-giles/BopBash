@@ -5,7 +5,6 @@
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import AddFriendsIcon from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import { GameStore, GameConnection } from "../../stores/gameStore";
