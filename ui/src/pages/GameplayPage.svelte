@@ -128,11 +128,10 @@
         //Reset round variables
         guessResult = undefined;
         correctTrackId = undefined;
+        guessTrackId = "";
+        guessArtistId = "";
         currentRoundTime = 0;
-
-        //Create source node associated with main audio context
-        // let sourceNode = $MainAudioContext.createMediaElementSource(audioElement);
-
+        
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
         audioElement.oncanplaythrough = () => {
@@ -141,10 +140,7 @@
         audioElement.ontimeupdate = () => {
             timestamp = audioElement.currentTime;
         };
-
-        //Connect new source node to the speakers
-        // sourceNode.connect($MainAudioContext.destination)
-
+        
         //Start re-loading of audio element
         audioLoaded = false;
         audioElement.load();
