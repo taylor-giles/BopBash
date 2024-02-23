@@ -55,10 +55,7 @@ export async function authenticate(req: PlayerRequest, res: Response, next: Next
  * Returns information about the requested playlist
  * 
  * Request Params:
- *  - id: The ID of the playlist
- * 
- * Request Body:
- *  - None
+ *  - id: string - The ID of the playlist
  * 
  * Response Body:
  *  - On Success:
@@ -80,6 +77,47 @@ export async function getPlaylistData(req: Request, res: Response) {
         return res.status(200).json(result);
     }).catch((error) => {
         console.error(`Unable to get playlist data for playlist ${id}`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
+
+
+/**
+ * GET /findPlaylists
+ * Returns a set of metadata for each playlist matching the query
+ * 
+ * Request Params:
+ *  - query: string - The search query
+ * 
+ * Request Query Parameters:
+ *  - limit: number - The max number of results to include. Max is 50
+ *  - offset: number - The index of search results to start query at
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - List of PlaylistMetadata objects for playlists matching query
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function findPlaylists(req: Request, res: Response) {
+    let query = req.params.query;
+    let limit: number | undefined = parseInt(req?.query?.limit as string);
+    let offset: number | undefined = parseInt(req?.query?.offset as string);
+
+    //Make limit and offset undefined if they are NaN (so default values will be used)
+    limit = isNaN(limit) ? undefined : limit;
+    offset = isNaN(offset) ? undefined : offset;
+
+    //Ensure query is provided
+    if (!query) {
+        return res.status(400).json({ error: "Query must be provided" });
+    }
+
+    //Use Spotify API to search for playlist
+    SpotifyAPI.searchPlaylist(query, offset, limit).then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        console.error(`Unable to perform playlist search for query: ${query}`, error.message);
         return res.status(500).json({ error: error.message });
     });
 }
