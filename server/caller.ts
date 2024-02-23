@@ -3,7 +3,7 @@ import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
 import { load as cheerio } from "cheerio";
 import { playlistFields, tracksFields } from "./types";
-import { Playlist, Track } from "../shared/types";
+import { Playlist, PlaylistMetadata, Track } from "../shared/types";
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -112,7 +112,7 @@ async function callAPI(requestOptions: RequestOptions, formData?: ParsedUrlQuery
 
                 //Check result status code
                 if (result.res.statusCode != 200) {
-                    reject({ ...result, error: new Error(`Bad status code: ${result.res.statusCode}. Message: ${result.res.statusMessage}`) });
+                    reject({ ...result, error: new Error(`Bad status code: ${result.res.statusCode}. Data: ${result.responseData}`) });
                 } else {
                     resolve(result);
                 }
@@ -210,10 +210,10 @@ export async function findPlaylistData(id: string): Promise<Playlist> {
 
     //Make request to get playlist data
     let result = await callAPI(requestOptions).catch(onFailure);
-    if(!result){
+    if (!result) {
         throw new Error("Playlist not found");
     }
-    
+
     let data = JSON.parse(result?.responseData);
     let numTracks: number = data.tracks.total < TRACK_NUM_LIMIT ? data.tracks.total : TRACK_NUM_LIMIT; //Enforce track num limit
 
@@ -221,7 +221,7 @@ export async function findPlaylistData(id: string): Promise<Playlist> {
     let tracks: Track[] = [];
     for (let offset = 0; tracks.length < numTracks; offset += 100) {
         let newTracks = await findPlaylistTracks(id, offset).catch(onFailure);
-        tracks = [...tracks, ...newTracks]; 
+        tracks = [...tracks, ...newTracks];
     }
 
     //Store the tracks in the playlist object
@@ -239,10 +239,10 @@ export async function findPlaylistData(id: string): Promise<Playlist> {
  * @param limit Max number of tracks to get in query. Max is 100.
  * @returns List of tracks in the playlist starting at the specified offset
  */
-export async function findPlaylistTracks(playlistId: string, offset: number, limit: number=100): Promise<Track[]> {
+export async function findPlaylistTracks(playlistId: string, offset: number, limit: number = 100): Promise<Track[]> {
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
-        path: `/v1/playlists/${playlistId}/tracks?fields=${tracksFields}&offset=${offset}&limit=${limit}`,
+        path: `/v1/playlists/${playlistId}/tracks?fields=${tracksFields}&offset=${offset}&limit=${Math.min(limit, 100)}`,
         method: "GET"
     }
 
@@ -255,7 +255,7 @@ export async function findPlaylistTracks(playlistId: string, offset: number, lim
     let result = await callAPI(requestOptions).catch(onFailure);
 
     //Return resulting list of tracks
-    return JSON.parse(result.responseData).items;
+    return JSON.parse(result.responseData).items ?? [];
 }
 
 
@@ -281,6 +281,33 @@ export async function getTrackPreviewURL(id: string): Promise<string> {
     }
 
     return callAPI(requestOptions).then(onSuccess);
+}
+
+
+/**
+ * Uses the Spotify API to search for playlists that match the given query
+ * @param query The search query
+ * @param offset Index to start query at
+ * @param limit Max number of tracks to get in query. Max is 50.
+ * @returns List of metadata objects for playlists in response
+ */
+export async function searchPlaylist(query: string, offset: number = 0, limit: number = 5): Promise<PlaylistMetadata[]> {
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/search?q=${encodeURIComponent(`"${query}"`)}&type=playlist&offset=${offset}&limit=${Math.min(limit, 50)}`,
+        method: "GET"
+    }
+
+    //Configure callbacks
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+    }
+
+    //Make request
+    let result = await callAPI(requestOptions).catch(onFailure);
+
+    //Return resulting list of playlists
+    return JSON.parse(result.responseData)?.playlists?.items ?? [];
 }
 
 

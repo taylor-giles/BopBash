@@ -9,6 +9,7 @@ const router = express.Router();
  * For documentation for each endpoint, see corresponding controller function.
  */
 router.get('/getPlaylistData/:id', Controller.ensureId, Controller.getPlaylistData);
+router.get('/findPlaylists/:query', Controller.findPlaylists);
 router.get('/getGames', Controller.getGames);
 router.post('/newGame', Controller.makeNewGame);
 router.post('/registerNewPlayer', Controller.registerNewPlayer);
