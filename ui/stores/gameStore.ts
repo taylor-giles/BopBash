@@ -31,28 +31,32 @@ export const GameConnection: Writable<PlayerConnection> = writable<PlayerConnect
 /**
  * A Svelte readable store that stays up-to-date with the latest game state
  */
-export const GameStore: Readable<GameState> = readable<GameState>(undefined, (set) => {
+export const GameStore: Readable<GameState> = readable<GameState>(undefined,
     //This callback is called by Svelte when this store gets its first subscriber.
-    return GameConnection.subscribe((connection) => {
-        //This callback is called whenever the value of GameConnection changes.
-        //Whenever the GameConnection is re-defined, re-assign its onMessage listener.
-        if (connection) {
-            connection.onmessage = (event) => {
-                //Setting the onMessage listener to set this readable store for every message
-                // ensures that this store always updates whenever a new message is received.
-                try {
-                    //All messages received should be game states
-                    let data = JSON.parse(event.data);
+    (set) => {
+        return GameConnection.subscribe(
+            //This callback is called whenever the value of GameConnection changes.
+            (connection) => {
+                //Whenever the GameConnection is re-defined, re-assign its onMessage listener.
+                if (connection) {
+                    connection.onmessage = (event) => {
+                        //Setting the onMessage listener to set this readable store for every message
+                        // ensures that this store always updates whenever a new message is received.
+                        try {
+                            //All messages received should be game states
+                            let data = JSON.parse(event.data);
 
-                    //TODO: Type-check the data to ensure it is GameState
-                    set(data);
-                } catch (e) {
-                    console.error(`Error parsing message from server: ${JSON.stringify(event.data)}`, e)
+                            //TODO: Type-check the data to ensure it is GameState
+                            set(data);
+                        } catch (e) {
+                            console.error(`Error parsing message from server: ${JSON.stringify(event.data)}`, e)
+                        }
+                    }
                 }
             }
-        }
-    });
-});
+        );
+    }
+);
 
 
 /**

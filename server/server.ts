@@ -32,7 +32,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-
 app.use(express.json());
 app.listen(EXPRESS_PORT, () => {
     console.log(`Express server listening on port ${EXPRESS_PORT}.`);

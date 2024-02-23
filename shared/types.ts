@@ -61,12 +61,19 @@ export type Track = {
     previewURL?: string
 }
 
-export type Playlist = {
+export type PlaylistMetadata = {
     name: string,
     id: string,
     uri: string,
+    external_urls: { spotify: string }
     type: "playlist",
     description: string,
+    images: { height: number | null, width: number | null, url: string }[],
+    owner: { display_name: string, id: string, type: "user", uri: string, external_urls: { spotify: string } }
+    tracks: { total: number }
+}
+
+export type Playlist = PlaylistMetadata & {
     tracks: {
         total: number,
         items: { track: Track }[]
