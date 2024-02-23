@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
-import type { GameState } from '../../shared/types';
+import type { GameState, PlaylistMetadata } from '../../shared/types';
 import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
@@ -31,6 +31,22 @@ export async function getPlaylistData(id: string): Promise<any> {
     }).catch((error) => {
         setError("Failed to get playlist data", error);
         return null;
+    });
+}
+
+
+/**
+ * Requests a Spotify search for playlists using the provided query
+ * @param query Search query
+ * @param offset The index of results to start query at
+ * @param limit The max number of results to return
+ */
+export async function findPlaylists(query: string, offset?: number, limit?: number) : Promise<PlaylistMetadata[]> {
+    return apiCaller.get(`/findPlaylists/${query}`, { params: { offset: offset, limit: limit } }).then((res) => {
+        return res.data;
+    }).catch((error) => {
+        setError("Unable to perform search. Please try again.", error);
+        return [];
     });
 }
 
