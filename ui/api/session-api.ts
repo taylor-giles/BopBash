@@ -41,7 +41,7 @@ export async function getPlaylistData(id: string): Promise<any> {
  * @param offset The index of results to start query at
  * @param limit The max number of results to return
  */
-export async function findPlaylists(query: string, offset?: number, limit?: number) : Promise<PlaylistMetadata[]> {
+export async function findPlaylists(query: string, offset?: number, limit?: number) : Promise<{nextOffset: number, results: PlaylistMetadata[]}> {
     return apiCaller.get(`/findPlaylists/${query}`, { params: { offset: offset, limit: limit } }).then((res) => {
         return res.data;
     }).catch((error) => {
