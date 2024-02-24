@@ -291,10 +291,10 @@ export async function getTrackPreviewURL(id: string): Promise<string> {
  * @param limit Max number of tracks to get in query. Max is 50.
  * @returns List of metadata objects for playlists in response
  */
-export async function searchPlaylist(query: string, offset: number = 0, limit: number = 5): Promise<PlaylistMetadata[]> {
+export async function searchPlaylist(query: string, offset: number = 0, limit: number = 5): Promise<{nextOffset: number, results: PlaylistMetadata[]}> {
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
-        path: `/v1/search?q=${encodeURIComponent(`"${query}"`)}&type=playlist&offset=${offset}&limit=${Math.min(limit, 50)}`,
+        path: `/v1/search?q=${encodeURIComponent(query)}&type=playlist&offset=${offset}&limit=${Math.min(limit, 50)}`,
         method: "GET"
     }
 
@@ -305,9 +305,14 @@ export async function searchPlaylist(query: string, offset: number = 0, limit: n
 
     //Make request
     let result = await callAPI(requestOptions).catch(onFailure);
+    let responseData = JSON.parse(result.responseData);
+
+    //Extract the next offset from the provided next URL
+    let nextURL = responseData?.playlists?.next;
+    let nextOffset = nextURL ? parseInt(new URLSearchParams((new URL(nextURL)).search).get("offset") ?? "") : -1;
 
     //Return resulting list of playlists
-    return JSON.parse(result.responseData)?.playlists?.items ?? [];
+    return {nextOffset: nextOffset, results: responseData.playlists?.items ?? []};
 }
 
 
