@@ -95,7 +95,8 @@ export async function getPlaylistData(req: Request, res: Response) {
  * 
  * Response Body:
  *  - On Success:
- *      - List of PlaylistMetadata objects for playlists matching query
+ *      - nextOffset: number - The offset to use to search the next "page" of results
+ *      - results: PlaylistMetadata[] - List of playlists matching query
  *  - On Failure:
  *      - error: string - Error message
  */
@@ -108,8 +109,8 @@ export async function findPlaylists(req: Request, res: Response) {
     limit = isNaN(limit) ? undefined : limit;
     offset = isNaN(offset) ? undefined : offset;
 
-    //Ensure query is provided
-    if (!query) {
+    //Ensure query is provided and is not only whitespace
+    if (!query || query.replace(/\s/g, '').length <= 0) {
         return res.status(400).json({ error: "Query must be provided" });
     }
 
