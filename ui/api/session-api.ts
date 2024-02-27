@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
-import type { GameState, PlaylistMetadata } from '../../shared/types';
+import type { GameState, Playlist, PlaylistMetadata } from '../../shared/types';
 import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
@@ -25,7 +25,7 @@ function setError(errorMsg: string, error: any) {
  * @param id The ID of the playlist to query for
  * @returns The playlist data
  */
-export async function getPlaylistData(id: string): Promise<any> {
+export async function getPlaylistData(id: string): Promise<Playlist> {
     return apiCaller.get(`/getPlaylistData/${id}`).then((res) => {
         return res.data;
     }).catch((error) => {

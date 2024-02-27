@@ -4,11 +4,26 @@ export enum GameStatus {
     ENDED = "Ended"
 }
 
+export enum GameType { NORMAL, CHOICES, THEATER }
+export type GameTypeMetadata = {name: string, description: string}
+export const GameTypes: Record<GameType, GameTypeMetadata> = {
+    [GameType.NORMAL]: {name: "Normal", description: "A high-speed song guessing game. Type the title to earn points!"},
+    [GameType.CHOICES]: {name: "Choices", description: "Lightning rounds with song choices. Be quick and click the right song choice to earn points!"},
+    [GameType.THEATER]: {name: "Theater", description: "In-person song guessing fun. Each player uses their device to guess the track, which plays from one device."}
+}
+
+export enum GameVisibility { PUBLIC, PRIVATE }
+export type GameVisibilityMetadata = { name: string, description: string}
+export const GameVisibilities: Record<GameVisibility, GameVisibilityMetadata> = {
+    [GameVisibility.PUBLIC]: {name: "Public", description: "Anyone can join this game from the Find Games page."},
+    [GameVisibility.PRIVATE]: {name: "Private", description: "Only players with the Game ID will be able to join this game."}
+}
+
 export class Round {
     trackId: string;
     previewURL: string;
-    maxDuration: number;   //Maximum duration of this round, in milliseconds
-    startTime: number; //Maps player ID to the time that player started this round
+    maxDuration: number;    //Maximum duration of this round, in milliseconds
+    startTime: number;      //Maps player ID to the time that player started this round
 
     public constructor(trackId: string, previewURL: string, maxDuration: number) {
         this.trackId = trackId;

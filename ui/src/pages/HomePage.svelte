@@ -16,7 +16,7 @@
                 <SelectionButton
                     title="Create Game"
                     description="Start a new game from any playlist"
-                    on:click={GameAPI.createGame}
+                    on:click={() => CurrentPage.set(Page.CREATE)}
                 />
             </div>
 
