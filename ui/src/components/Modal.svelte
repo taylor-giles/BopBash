@@ -22,7 +22,7 @@
 
 <div class="modal">
     <!-- svelte-ignore a11y-autofocus -->
-    <div id="modal-content-wrapper" tabindex="-1" autofocus on:blur={handleBlur}>
+    <div id="modal-content-wrapper" style="outline: none;" tabindex="-1" autofocus on:blur={handleBlur}>
         <slot />
     </div>
 </div>

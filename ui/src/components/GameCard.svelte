@@ -76,6 +76,7 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
+        word-break: break-word;
     }
     #description-label {
         font-weight: 500;
