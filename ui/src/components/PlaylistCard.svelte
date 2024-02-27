@@ -214,8 +214,8 @@
     }
 
     #expand-icon {
-        height: 2rem;
-        width: 2rem;
+        height: 1.5rem;
+        width: 1.5rem;
     }
 
     #owner-container {
@@ -230,6 +230,12 @@
     #owner-content {
         font-weight: 600;
         font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
     }
 
     #tracks-count {
