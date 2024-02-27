@@ -7,14 +7,15 @@
     import collapse from "svelte-collapse";
     import {
         GameType,
-        GameTypes,
-        GameVisibilities,
         GameVisibility,
         type PlaylistMetadata,
     } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import PlaylistCard from "../components/PlaylistCard.svelte";
-    import { ErrorMessage } from "../../stores/pageStore";
+    import { CurrentPage, ErrorMessage, Page } from "../../stores/pageStore";
+    import { IFrameAPI } from "../../stores/IFrameAPI";
+    import ConfirmationModal from "../components/ConfirmationModal.svelte";
+    import { GameTypes, GameVisibilities } from "../game-types";
 
     const SEARCH_LIMIT = 10;
     const DEFAULT_SEARCH = "Top 50";
@@ -39,13 +40,17 @@
     let isLoading = false;
     let selectedGameType: GameType = GameType.NORMAL;
     let selectedVisibility: GameVisibility = GameVisibility.PUBLIC;
-    let selectedPlaylist: PlaylistMetadata;
+    let selectedPlaylistId: string;
+
+    let embed: HTMLIFrameElement;
 
     $: canSearch = !isLoading && nextOffset >= 0;
     $: isComplete =
-        selectedPlaylist !== undefined &&
+        selectedPlaylistId !== undefined &&
         selectedGameType !== undefined &&
         selectedVisibility !== undefined;
+
+    let showCancelModal = false;
 
     /**
      * Obtains the next "page" of search results
@@ -53,6 +58,7 @@
     async function doNextSearch(query: string) {
         //Do not allow for whitespace search queries
         if (query.replace(/\s/g, "").length <= 0) {
+            lastQuery = " ";
             nextOffset = -1;
             return;
         }
@@ -93,6 +99,9 @@
         doNextSearch(lastQuery);
     }
 
+    /**
+     * Search for playlist from provided link
+     */
     async function handleLinkSearch(e: Event) {
         e.preventDefault();
         isLoading = true;
@@ -100,12 +109,32 @@
         //Extract playlist ID
         try {
             let playlistId = new URL(linkQuery).pathname?.split("/")?.[2];
-            selectedPlaylist = await GameAPI.getPlaylistData(playlistId);
+            selectedPlaylistId = (await GameAPI.getPlaylistData(playlistId)).id;
         } catch (e) {
             ErrorMessage.set("Please provide a valid Spotify playlist URL.");
         }
 
         isLoading = false;
+    }
+
+    /**
+     * Select the playlist with the given ID
+     */
+    async function handleSelect(playlistId: string) {
+        selectedPlaylistId = playlistId;
+        await tick();
+
+        //Render new embed with IFrameAPI
+        let options = {
+            uri: `spotify:playlist:${selectedPlaylistId}`,
+            height: "100%",
+            width: "100%",
+        };
+        $IFrameAPI.createController(embed, options, () => {});
+    }
+
+    async function handleFinish() {
+        ErrorMessage.set("This action is not yet supported");
     }
 
     onMount(() => {
@@ -120,7 +149,24 @@
             class="text-button"
             on:click={() => (gameOptionsExpanded = !gameOptionsExpanded)}
         >
-            <div class="section-header header-text">Game Options</div>
+            <div style="padding-top: 1.5px; display: flex; align-items: center; gap: 0.5rem;">
+                <div class="section-header header-text">Game Options</div>
+                    <div class="game-option-icons-container">
+                        <svelte:component
+                            this={GameTypes[selectedGameType].icon}
+                        />
+                        <svelte:component
+                            this={GameVisibilities[selectedVisibility].icon}
+                        />
+                    </div>
+
+                    <!-- <div style="font-size: 0.9rem; font-weight: 300;">
+                        {GameTypes[selectedGameType].name} | {GameVisibilities[
+                            selectedVisibility
+                        ].name}
+                    </div> -->
+            </div>
+
             <div id="expand-icon">
                 {#if gameOptionsExpanded}
                     <CollapseIcon height="100%" width="100%" />
@@ -143,7 +189,7 @@
                 <div class="options-container">
                     {#each GAME_TYPE_OPTIONS as type}
                         <button
-                            class="game-type-btn"
+                            class="selection-btn"
                             class:selected={selectedGameType === type}
                             on:click={() => (selectedGameType = type)}
                         >
@@ -160,7 +206,7 @@
                 <div class="options-container">
                     {#each GAME_VISIBILITY_OPTIONS as visibilityOption}
                         <button
-                            class="game-type-btn"
+                            class="selection-btn"
                             class:selected={selectedVisibility ===
                                 visibilityOption}
                             on:click={() =>
@@ -178,70 +224,127 @@
     </div>
 
     <div id="playlist-search-section" class="section">
-        <div class="section-header header-text">Find a Playlist</div>
-        <div>
-            Every game needs music! Each round, a random song will be selected
-            from the Spotify playlist that you select. You can choose any <b>
-                public
-            </b> playlist on Spotify.
-        </div>
-        <div id="playlist-search-container">
-            <form on:submit={handleSearch}>
-                <input
-                    type="text"
-                    id="playlist-search-input"
-                    bind:value={searchQuery}
-                    placeholder="Search for playlists"
+        {#if selectedPlaylistId}
+            <!-- Embedded playlist preview -->
+            <div class="section-header header-text">Game Playlist</div>
+            <div class="section-description">
+                Each round, a random song will be selected from this playlist.
+            </div>
+            <div id="embed-container">
+                <iframe
+                    bind:this={embed}
+                    title="Spotify-provided embedded playlist"
                 />
-                <button type="submit" class="search-btn text-button">
-                    <SearchIcon height="100%" />
+            </div>
+            <div
+                style="margin-top: -5px; display:flex; justify-content: center;"
+            >
+                <button
+                    class="selection-btn"
+                    on:click={() => (selectedPlaylistId = "")}
+                >
+                    Select a Different Playlist
                 </button>
-            </form>
-            <form on:submit={handleLinkSearch}>
-                <input
-                    type="text"
-                    id="playlist-search-input"
-                    bind:value={linkQuery}
-                    placeholder="Find playlist by Spotify link"
-                />
-                <button type="submit" class="search-btn text-button">
-                    <WebSearchIcon height="100%" />
-                </button>
-            </form>
-        </div>
-        <div id="results-container">
-            {#each results as playlist (playlist.id)}
-                <PlaylistCard {playlist} expanded={expandAll} />
-            {/each}
-
-            <!-- Search content loading information -->
-            {#if lastQuery}
-                {#if nextOffset < 0}
-                    <div id="end-display">
-                        No
-                        {#if results.length > 0}
-                            more
-                        {/if}
-                        results. Try another search!
-                    </div>
-                {:else if isLoading}
-                    <div id="loading">Loading...</div>
-                {:else if results.length > 0}
-                    <button
-                        id="load-more-btn"
-                        class="text-button"
-                        on:click={() => {
-                            doNextSearch(lastQuery);
-                        }}
-                        disabled={!canSearch}
-                    >
-                        Load More Results
+            </div>
+        {:else}
+            <!-- Playlist search content -->
+            <div class="section-header header-text">Find a Playlist</div>
+            <div class="section-description">
+                Every game needs music! Each round, a random song will be
+                selected from the Spotify playlist that you select. You can
+                choose any <b> public </b> playlist on Spotify.
+            </div>
+            <div id="playlist-search-container">
+                <!-- Search by query -->
+                <form on:submit={handleSearch}>
+                    <input
+                        type="text"
+                        id="playlist-search-input"
+                        bind:value={searchQuery}
+                        placeholder="Search for playlists"
+                    />
+                    <button type="submit" class="search-btn text-button">
+                        <SearchIcon height="100%" />
                     </button>
+                </form>
+
+                <!-- Search by link -->
+                <form on:submit={handleLinkSearch}>
+                    <input
+                        type="text"
+                        id="playlist-search-input"
+                        bind:value={linkQuery}
+                        placeholder="Find playlist by Spotify link"
+                    />
+                    <button type="submit" class="search-btn text-button">
+                        <WebSearchIcon height="100%" />
+                    </button>
+                </form>
+            </div>
+            <div id="results-container">
+                <!-- Show a PlaylistCard for each playlist in the search results list -->
+                {#each results as playlist (playlist.id)}
+                    <PlaylistCard
+                        {playlist}
+                        expanded={expandAll}
+                        on:select={() => handleSelect(playlist.id)}
+                    />
+                {/each}
+
+                <!-- Search content loading information -->
+                {#if lastQuery}
+                    {#if nextOffset < 0}
+                        <div id="end-display">
+                            No
+                            {#if results.length > 0}
+                                more
+                            {/if}
+                            results. Try another search!
+                        </div>
+                    {:else if isLoading}
+                        <div id="loading">Loading...</div>
+                    {:else if results.length > 0}
+                        <button
+                            id="load-more-btn"
+                            class="text-button"
+                            on:click={() => {
+                                doNextSearch(lastQuery);
+                            }}
+                            disabled={!canSearch}
+                        >
+                            Load More Results
+                        </button>
+                    {/if}
                 {/if}
-            {/if}
-        </div>
+            </div>
+        {/if}
+    </div>
+
+    <div id="footer">
+        <button
+            class="footer-btn selection-btn"
+            on:click={() => (showCancelModal = true)}
+        >
+            Cancel
+        </button>
+        <button
+            class="footer-btn"
+            on:click={handleFinish}
+            disabled={!isComplete}
+        >
+            Finish
+        </button>
     </div>
 </main>
+
+{#if showCancelModal}
+    <ConfirmationModal
+        headerText="Cancel"
+        bodyText="Are you sure you want to abandon this new game?"
+        on:yes={() => CurrentPage.set(Page.HOME)}
+        on:no={() => (showCancelModal = false)}
+    />
+{/if}
 
 <style>
     main {
@@ -268,6 +371,15 @@
 
     #game-options-container {
         gap: 0px;
+    }
+
+    .game-option-icons-container {
+        color: var(--accent-light);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
     }
 
     #playlist-search-container {
@@ -326,6 +438,10 @@
         padding-top: 15px;
     }
 
+    #embed-container {
+        flex: 1;
+    }
+
     .options-container {
         display: flex;
         flex-direction: row;
@@ -353,24 +469,27 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        align-items: stretch;
         gap: 15px;
         border: 2px solid gray;
         border-radius: 12px;
         padding: 1rem;
-        min-width: 290px;
     }
     .options-section {
         flex: 1;
         border: none;
         align-items: center;
-        min-width: 300px;
         border-radius: 0px;
         background-color: var(--accent-dark);
     }
 
     .section-header {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         width: max-content;
+    }
+
+    .section-description {
+        text-align: justify;
     }
 
     #playlist-search-section {
@@ -378,15 +497,16 @@
         flex: 1;
     }
 
-    .game-type-btn {
+    .selection-btn {
+        width: max-content;
         color: var(--primary-light);
         background-color: transparent;
         border: 2px solid var(--primary-light);
         border-radius: 8px;
         font-size: 1rem;
     }
-    .game-type-btn:hover,
-    .game-type-btn.selected {
+    .selection-btn:hover,
+    .selection-btn.selected {
         color: var(--spotify-green);
         background-color: transparent;
         border: 2px solid var(--spotify-green);
@@ -403,17 +523,18 @@
     }
 
     #expand-icon {
-        height: 2rem;
-        width: 2rem;
+        height: 1.8rem;
+        width: 1.8rem;
     }
 
-    #v-div {
-        background-color: gray;
-        width: 2px;
+    #footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: 10px;
     }
-    @media(max-width: 720px) {
-        #v-div {
-            display: none;
-        }
+    .footer-btn {
+        width: 9rem;
     }
 </style>
