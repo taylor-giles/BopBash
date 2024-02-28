@@ -133,7 +133,7 @@ export async function findPlaylists(req: Request, res: Response) {
  * 
  * Request Body:
  *  - playlistId: string - The ID of the playlist to make a game for
- *  - numRounds: number - The desired number of rounds for this game
+ *  - gameOptions: GameOptions - The options for this game
  * 
  * Response Body:
  *  - On Success:
@@ -145,11 +145,11 @@ export async function findPlaylists(req: Request, res: Response) {
  */
 export async function makeNewGame(req: Request, res: Response) {
     let playlistId = req?.body?.playlistId;
-    let numRounds = req?.body?.numRounds;
+    let gameOptions = req?.body?.gameOptions;
 
     //Ensure all needed information is provided
-    if (!playlistId || !numRounds) {
-        return res.status(400).json({ error: "Both playlistId and numRounds must be specified in request body." });
+    if (!playlistId || !gameOptions) {
+        return res.status(400).json({ error: "Both playlistId and gameOptions must be specified in request body." });
     }
 
     console.log("Handling request to create new game for playlist: ", playlistId);
@@ -164,9 +164,9 @@ export async function makeNewGame(req: Request, res: Response) {
     }
 
     //Create the game and register it with game driver
-    GameManager.generateNewGame(playlist, numRounds).then((game) => {
+    GameManager.generateNewGame(playlist, gameOptions).then((game) => {
         //Respond to sender with game ID
-        res.status(200).json({ id: game.id, numRounds: game.rounds.length, playlistId: playlistId });
+        res.status(200).json({ gameId: game.id, numRounds: game.rounds.length, playlistId: playlistId });
     }).catch((error) => {
         console.error("Unable to create new game", error.message);
         res.status(500).json({ error: error.message });

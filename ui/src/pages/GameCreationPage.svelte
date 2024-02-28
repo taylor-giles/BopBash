@@ -35,11 +35,13 @@
     let lastQuery = "";
     let results: PlaylistMetadata[] = [];
     let gameOptionsExpanded = false;
+    let showAdvancedOptions = false;
     let expandAll = false;
     let nextOffset = 0;
     let isLoading = false;
     let selectedGameType: GameType = GameType.NORMAL;
     let selectedVisibility: GameVisibility = GameVisibility.PUBLIC;
+    let numRounds: number = 5;
     let selectedPlaylistId: string;
 
     let embed: HTMLIFrameElement;
@@ -49,6 +51,7 @@
         selectedPlaylistId !== undefined &&
         selectedGameType !== undefined &&
         selectedVisibility !== undefined;
+    $: numRounds = numRounds ?? "";
 
     let showCancelModal = false;
 
@@ -133,8 +136,29 @@
         $IFrameAPI.createController(embed, options, () => {});
     }
 
+    /**
+     * Perform input checks and create the game
+     */
     async function handleFinish() {
-        ErrorMessage.set("This action is not yet supported");
+        //Verify that the number of rounds is within bounds
+        numRounds =
+            numRounds && numRounds <= 100 && numRounds > 0 ? numRounds : 5;
+
+        //Verify that a valid playlist has been selected
+        if (
+            !selectedPlaylistId ||
+            !(await GameAPI.getPlaylistData(selectedPlaylistId))
+        ) {
+            ErrorMessage.set("Please select a valid playlist");
+            return;
+        }
+
+        //Create and join the game
+        GameAPI.createGame(selectedPlaylistId, {numRounds: numRounds}).then((gameId) => {
+            if(gameId) {
+                GameAPI.joinGame(gameId);
+            }
+        });
     }
 
     onMount(() => {
@@ -149,18 +173,18 @@
             class="text-button"
             on:click={() => (gameOptionsExpanded = !gameOptionsExpanded)}
         >
-            <div style="padding-top: 1.5px; display: flex; align-items: center; gap: 0.5rem;">
+            <div
+                style="padding-top: 1.5px; display: flex; align-items: center; gap: 0.5rem;"
+            >
                 <div class="section-header header-text">Game Options</div>
-                    <div class="game-option-icons-container">
-                        <svelte:component
-                            this={GameTypes[selectedGameType].icon}
-                        />
-                        <svelte:component
-                            this={GameVisibilities[selectedVisibility].icon}
-                        />
-                    </div>
+                <div class="game-option-icons-container">
+                    <svelte:component this={GameTypes[selectedGameType].icon} />
+                    <svelte:component
+                        this={GameVisibilities[selectedVisibility].icon}
+                    />
+                </div>
 
-                    <!-- <div style="font-size: 0.9rem; font-weight: 300;">
+                <!-- <div style="font-size: 0.9rem; font-weight: 300;">
                         {GameTypes[selectedGameType].name} | {GameVisibilities[
                             selectedVisibility
                         ].name}
@@ -177,49 +201,81 @@
         </button>
 
         <div
-            id="sections-container"
+            id="game-options-section"
             use:collapse={{
                 open: gameOptionsExpanded,
                 duration: 0.3,
                 easing: "ease",
             }}
         >
-            <div class="options-section">
-                <div class="section-header header-text">Pick a Game Type</div>
-                <div class="options-container">
-                    {#each GAME_TYPE_OPTIONS as type}
-                        <button
-                            class="selection-btn"
-                            class:selected={selectedGameType === type}
-                            on:click={() => (selectedGameType = type)}
-                        >
-                            {GameTypes[type].name}
-                        </button>
-                    {/each}
+            <div class="options-sections-container">
+                <div class="options-section">
+                    <div class="section-header header-text">
+                        Pick a Game Type
+                    </div>
+                    <div class="options-container">
+                        {#each GAME_TYPE_OPTIONS as type}
+                            <button
+                                class="selection-btn"
+                                class:selected={selectedGameType === type}
+                                on:click={() => (selectedGameType = type)}
+                            >
+                                {GameTypes[type].name}
+                            </button>
+                        {/each}
+                    </div>
+                    <div class="option-description-display">
+                        {GameTypes[selectedGameType].description}
+                    </div>
                 </div>
-                <div class="option-description-display">
-                    {GameTypes[selectedGameType].description}
+                <div class="options-section">
+                    <div class="section-header header-text">Who's Playing?</div>
+                    <div class="options-container">
+                        {#each GAME_VISIBILITY_OPTIONS as visibilityOption}
+                            <button
+                                class="selection-btn"
+                                class:selected={selectedVisibility ===
+                                    visibilityOption}
+                                on:click={() =>
+                                    (selectedVisibility = visibilityOption)}
+                            >
+                                {GameVisibilities[visibilityOption].name}
+                            </button>
+                        {/each}
+                    </div>
+                    <div class="option-description-display">
+                        {GameVisibilities[selectedVisibility].description}
+                    </div>
                 </div>
             </div>
-            <div class="options-section">
-                <div class="section-header header-text">Who's Playing?</div>
-                <div class="options-container">
-                    {#each GAME_VISIBILITY_OPTIONS as visibilityOption}
-                        <button
-                            class="selection-btn"
-                            class:selected={selectedVisibility ===
-                                visibilityOption}
-                            on:click={() =>
-                                (selectedVisibility = visibilityOption)}
-                        >
-                            {GameVisibilities[visibilityOption].name}
-                        </button>
-                    {/each}
-                </div>
-                <div class="option-description-display">
-                    {GameVisibilities[selectedVisibility].description}
+            <div
+                class="options-sections-container"
+                use:collapse={{
+                    open: showAdvancedOptions,
+                    duration: 0.3,
+                    easing: "ease",
+                }}
+            >
+                <div class="options-section advanced">
+                    <div class="section-header header-text">
+                        Number of Rounds
+                    </div>
+                    <input
+                        class="number-option"
+                        type="number"
+                        name="num-rounds"
+                        min="1"
+                        max="100"
+                        bind:value={numRounds}
+                    />
                 </div>
             </div>
+            <button
+                class="selection-btn"
+                on:click={() => (showAdvancedOptions = !showAdvancedOptions)}
+            >
+                {showAdvancedOptions ? "Hide" : "Show"} Advanced Options
+            </button>
         </div>
     </div>
 
@@ -319,7 +375,6 @@
             </div>
         {/if}
     </div>
-
     <div id="footer">
         <button
             class="footer-btn selection-btn"
@@ -348,9 +403,10 @@
 
 <style>
     main {
+        position: relative;
         display: flex;
         flex-direction: column;
-        height: 100%;
+        min-height: 100%;
         gap: 15px;
     }
 
@@ -401,7 +457,7 @@
         justify-content: center;
         flex: 1;
         flex-basis: 0px;
-        transition: flex-basis 0.5s ease-out;
+        transition: flex-basis 0.4s ease-out;
     }
     form:focus-within {
         border: 1px solid var(--spotify-green);
@@ -455,13 +511,20 @@
         text-align: center;
     }
 
-    #sections-container {
+    .options-sections-container {
         width: 100%;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         gap: 2px;
         background-color: gray;
+    }
+
+    #game-options-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
     }
 
     .section,
@@ -481,6 +544,18 @@
         align-items: center;
         border-radius: 0px;
         background-color: var(--accent-dark);
+    }
+    .options-section.advanced {
+        margin-top: 2px;
+    }
+
+    .number-option {
+        border: 1px solid var(--spotify-green);
+        text-align: center;
+        width: max-content;
+        border-radius: 4px;
+        padding: 5px;
+        width: 8rem;
     }
 
     .section-header {
@@ -528,13 +603,18 @@
     }
 
     #footer {
+        padding-inline: 1rem;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
         gap: 1rem;
-        padding-bottom: 10px;
+        border-radius: 20px 20px 0px 0px;
+        width: 100%;
+        background-color: var(--accent-dark) AA;
+        opacity: 0.8;
     }
     .footer-btn {
         width: 9rem;
+        opacity: 1;
     }
 </style>

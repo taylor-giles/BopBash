@@ -90,10 +90,13 @@ button:focus-visible {
   background-color: transparent;
   padding: 0px;
   outline: none;
+  color: var(--primary-light);
 }
 
 .text-button:hover:enabled {
   background-color: transparent;
+  color: var(--spotify-green);
+  border-color: var(--spotify-green);
 }
 
 .text-button:focus,
