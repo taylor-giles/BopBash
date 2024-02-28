@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
-import type { GameState, PlaylistMetadata } from '../../shared/types';
+import type { GameOptions, GameState, Playlist, PlaylistMetadata } from '../../shared/types';
 import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
@@ -25,7 +25,7 @@ function setError(errorMsg: string, error: any) {
  * @param id The ID of the playlist to query for
  * @returns The playlist data
  */
-export async function getPlaylistData(id: string): Promise<any> {
+export async function getPlaylistData(id: string): Promise<Playlist> {
     return apiCaller.get(`/getPlaylistData/${id}`).then((res) => {
         return res.data;
     }).catch((error) => {
@@ -77,20 +77,29 @@ export async function registerPlayer(name: string): Promise<{ playerId: string, 
 export async function getGames(): Promise<GameState[]> {
     return apiCaller.get('/getGames').then((res) => {
         if (res?.data?.error) {
-            console.error("Failed to obtain list of games", res?.data?.error);
+            setError("Failed to obtain list of games", res?.data?.error);
             return [];
         }
         return res?.data;
     }).catch((error) => {
-        console.error("Failed to obtain list of games", error);
+        setError("Failed to obtain list of games", error);
         return [];
     });
 }
 
 
-export async function createGame() {
-    apiCaller.post('/newGame', {
-        playlistId: "0xXeznNbTyIj3tpnt3841Y",
-        numRounds: 10
+export async function createGame(playlistId: string, gameOptions: GameOptions): Promise<string | null> {
+    return apiCaller.post('/newGame', {
+        playlistId: playlistId,
+        gameOptions: gameOptions
+    }).then((res) => {
+        if(res?.data?.error){
+            setError("Failed to create new game", res?.data?.error);
+            return null;
+        }
+        return res?.data?.gameId;
+    }).catch((error) => {
+        setError("Failed to create new game", error);
+        return null;
     })
 }

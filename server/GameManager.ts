@@ -8,7 +8,7 @@
 import ObservableMap from '../utils/ObservableMap';
 import { Game, Player } from './Game';
 import { PlayerConnection } from './types';
-import { GameState, GameStatus, Playlist } from "../shared/types";
+import { GameOptions, GameState, GameStatus, Playlist } from "../shared/types";
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -148,12 +148,12 @@ export async function establishPlayerConnection(playerId: string, connection: Pl
 /**
  * Creates a new game for the given playlist
  * @param playlist The playlist to be played in the new game
- * @param numRounds The number of rounds in this game
+ * @param gameOptions The parameters for this game
  * @returns Game object for the new game
  */
-export async function generateNewGame(playlist: Playlist, numRounds: number): Promise<Game> {
+export async function generateNewGame(playlist: Playlist, gameOptions: GameOptions): Promise<Game> {
     //Create the game object
-    let newGame = await Game.newInstance(generateNewGameId(), playlist, numRounds);
+    let newGame = await Game.newInstance(generateNewGameId(), playlist, gameOptions);
 
     //Register the game 
     activeGames.set(newGame.id, newGame);

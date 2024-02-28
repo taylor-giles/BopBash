@@ -10,6 +10,7 @@
     import GameDiscoveryPage from "./pages/GameDiscoveryPage.svelte";
     import GameAPI from "../api/api";
     import ErrorModal from "./components/ErrorModal.svelte";
+    import GameCreationPage from "./pages/GameCreationPage.svelte";
 
     const PAGES: Record<Page, ComponentType> = {
         [Page.LOGIN]: LoginPage,
@@ -17,6 +18,7 @@
         [Page.LOBBY]: GameLobbyPage,
         [Page.FIND]: GameDiscoveryPage,
         [Page.GAME]: GameplayPage,
+        [Page.CREATE]: GameCreationPage
     };
 
     //Obtain and remove game ID from URL if it exists
@@ -74,7 +76,7 @@
     #page-content {
         position: relative;
         padding: 1rem;
-        padding-inline: 2rem;
+        padding-inline: 1rem;
         flex: 1;
         width: 100%;
         height: 100%;

@@ -1,14 +1,21 @@
+export enum GameType { NORMAL, CHOICES, THEATER }
+export enum GameVisibility { PUBLIC, PRIVATE }
+
 export enum GameStatus {
     PENDING = "Pending",
     ACTIVE = "Active",
     ENDED = "Ended"
 }
 
+export type GameOptions = {
+    numRounds: number
+}
+
 export class Round {
     trackId: string;
     previewURL: string;
-    maxDuration: number;   //Maximum duration of this round, in milliseconds
-    startTime: number; //Maps player ID to the time that player started this round
+    maxDuration: number;    //Maximum duration of this round, in milliseconds
+    startTime: number;      //Maps player ID to the time that player started this round
 
     public constructor(trackId: string, previewURL: string, maxDuration: number) {
         this.trackId = trackId;
