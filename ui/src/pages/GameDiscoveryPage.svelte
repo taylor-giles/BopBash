@@ -55,7 +55,8 @@
                 {/each}
             </div>
         {:else}
-            No games available. Make a new one!
+            <div>No public games available.</div>
+            <button id="new-game-btn" class="text-button" on:click={()=> CurrentPage.set(Page.CREATE)}> Make a new game </button>
         {/if}
     </div>
 </main>
@@ -76,9 +77,11 @@
         width: 100%;
         flex: 1;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         overflow-y: auto;
+        gap: 20px;
     }
 
     #games-container {
@@ -100,6 +103,15 @@
         flex-direction: row;
         justify-content: space-between;
         width: 100%;
+    }
+
+    #new-game-btn {
+        border: 1px solid var(--primary-light);
+        padding: 0.5rem;
+        padding-inline: 1rem;
+    }
+    #new-game-btn:hover{
+        border-color: var(--spotify-green);
     }
 
     .card-wrapper {

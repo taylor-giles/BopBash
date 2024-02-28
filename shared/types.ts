@@ -7,6 +7,10 @@ export enum GameStatus {
     ENDED = "Ended"
 }
 
+export type GameOptions = {
+    numRounds: number
+}
+
 export class Round {
     trackId: string;
     previewURL: string;
