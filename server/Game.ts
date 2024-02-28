@@ -1,5 +1,5 @@
 import { PlayerConnection } from "./types";
-import { GuessResult, Playlist, Track } from "../shared/types";
+import { GameOptions, GuessResult, Playlist, Track } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
@@ -42,11 +42,11 @@ export class Game {
      * (Async replacement for a constructor)
      * @param id The ID of the new game
      * @param playlist The playlist that this game will be played on
-     * @param desiredNumRounds The desired number of rounds for this game
+     * @param gameOptions The desired parameters for this game
      */
-    public static async newInstance(id: string, playlist: Playlist, desiredNumRounds: number): Promise<Game> {
+    public static async newInstance(id: string, playlist: Playlist, gameOptions: GameOptions): Promise<Game> {
         let newGame = new Game(id, playlist);
-        await newGame.generateRounds(desiredNumRounds);
+        await newGame.generateRounds(gameOptions.numRounds);
         return newGame;
     }
 

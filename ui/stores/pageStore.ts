@@ -8,6 +8,7 @@ export enum Page {
   LOBBY = "Lobby",
   GAME = "Game",
   FIND = "Find",
+  CREATE = "Create"
 }
 
 /**
