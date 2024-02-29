@@ -8,27 +8,26 @@
     import {
         GameType,
         GameVisibility,
+        type GameOption,
+        type GameOptions,
         type PlaylistMetadata,
+        ADVANCED_OPTIONS_DEFINITIONS,
+        GAME_TYPE_OPTIONS,
+        GAME_VISIBILITY_OPTIONS,
     } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import PlaylistCard from "../components/PlaylistCard.svelte";
     import { CurrentPage, ErrorMessage, Page } from "../../stores/pageStore";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
-    import { GameTypes, GameVisibilities } from "../game-types";
+    import { GAME_TYPES, GAME_VISIBILITIES } from "../game-types";
 
     const SEARCH_LIMIT = 10;
     const DEFAULT_SEARCH = "Top 50";
 
-    const GAME_TYPE_OPTIONS = [
-        GameType.NORMAL,
-        GameType.CHOICES,
-        GameType.THEATER,
-    ];
-    const GAME_VISIBILITY_OPTIONS = [
-        GameVisibility.PUBLIC,
-        GameVisibility.PRIVATE,
-    ];
+    //A typed iterator representation of the advanced options definitions
+    const ADVANCED_OPTIONS_ENTRIES: [keyof GameOptions, GameOption][] =
+        Object.entries(ADVANCED_OPTIONS_DEFINITIONS).map(([key, value]) => [key as keyof GameOptions, value]);
 
     let searchQuery = "";
     let linkQuery = "";
@@ -39,27 +38,35 @@
     let expandAll = false;
     let nextOffset = 0;
     let isLoading = false;
+
     let selectedGameType: GameType = GameType.NORMAL;
     let selectedVisibility: GameVisibility = GameVisibility.PUBLIC;
-    let numRounds: number = 5;
     let selectedPlaylistId: string;
 
     let embed: HTMLIFrameElement;
 
+    //Flag to indicate if current search can be performed
     $: canSearch = !isLoading && nextOffset >= 0;
+
+    //Flag to indicate if the game can be created
     $: isComplete =
         selectedPlaylistId !== undefined &&
         selectedGameType !== undefined &&
         selectedVisibility !== undefined;
-    $: numRounds = numRounds ?? "";
 
     let showCancelModal = false;
+
+    //Initialize advanced options values
+    let advancedOptions: GameOptions = {};
+    for (let [key, value] of ADVANCED_OPTIONS_ENTRIES) {
+        advancedOptions[key as keyof GameOptions] = value.default;
+    }
 
     /**
      * Obtains the next "page" of search results
      */
     async function doNextSearch(query: string) {
-        //Do not allow for whitespace search queries
+        //Do not allow for whitespace-only search queries
         if (query.replace(/\s/g, "").length <= 0) {
             lastQuery = " ";
             nextOffset = -1;
@@ -107,12 +114,16 @@
      */
     async function handleLinkSearch(e: Event) {
         e.preventDefault();
+        lastQuery = " ";
+        results = [];
+        nextOffset = 0;
         isLoading = true;
+        await tick();
 
         //Extract playlist ID
         try {
             let playlistId = new URL(linkQuery).pathname?.split("/")?.[2];
-            selectedPlaylistId = (await GameAPI.getPlaylistData(playlistId)).id;
+            handleSelect((await GameAPI.getPlaylistData(playlistId)).id);
         } catch (e) {
             ErrorMessage.set("Please provide a valid Spotify playlist URL.");
         }
@@ -140,9 +151,19 @@
      * Perform input checks and create the game
      */
     async function handleFinish() {
-        //Verify that the number of rounds is within bounds
-        numRounds =
-            numRounds && numRounds <= 100 && numRounds > 0 ? numRounds : 5;
+        //Fall back to default values when chosen values are out of bounds for advanced options
+        for (let [key, option] of ADVANCED_OPTIONS_ENTRIES) {
+            let value = advancedOptions[key as keyof GameOptions];
+            if (
+                value !== undefined &&
+                option.min !== undefined &&
+                option.max !== undefined
+            ) {
+                if (value > option.max || value < option.min) {
+                    advancedOptions[key as keyof GameOptions] = option.default;
+                }
+            }
+        }
 
         //Verify that a valid playlist has been selected
         if (
@@ -153,12 +174,22 @@
             return;
         }
 
+        console.log(advancedOptions);
         //Create and join the game
-        GameAPI.createGame(selectedPlaylistId, {numRounds: numRounds}).then((gameId) => {
-            if(gameId) {
-                GameAPI.joinGame(gameId);
-            }
-        });
+        GameAPI.createGame(selectedPlaylistId, selectedGameType, selectedVisibility, advancedOptions).then(
+            (gameId) => {
+                if (gameId) {
+                    GameAPI.joinGame(gameId);
+                }
+            },
+        );
+    }
+
+    async function setAdvancedOption(
+        optionName: keyof GameOptions,
+        newValue: number,
+    ) {
+        advancedOptions[optionName] = newValue;
     }
 
     onMount(() => {
@@ -178,17 +209,13 @@
             >
                 <div class="section-header header-text">Game Options</div>
                 <div class="game-option-icons-container">
-                    <svelte:component this={GameTypes[selectedGameType].icon} />
                     <svelte:component
-                        this={GameVisibilities[selectedVisibility].icon}
+                        this={GAME_TYPES[selectedGameType].icon}
+                    />
+                    <svelte:component
+                        this={GAME_VISIBILITIES[selectedVisibility].icon}
                     />
                 </div>
-
-                <!-- <div style="font-size: 0.9rem; font-weight: 300;">
-                        {GameTypes[selectedGameType].name} | {GameVisibilities[
-                            selectedVisibility
-                        ].name}
-                    </div> -->
             </div>
 
             <div id="expand-icon">
@@ -220,12 +247,12 @@
                                 class:selected={selectedGameType === type}
                                 on:click={() => (selectedGameType = type)}
                             >
-                                {GameTypes[type].name}
+                                {GAME_TYPES[type].name}
                             </button>
                         {/each}
                     </div>
                     <div class="option-description-display">
-                        {GameTypes[selectedGameType].description}
+                        {GAME_TYPES[selectedGameType].description}
                     </div>
                 </div>
                 <div class="options-section">
@@ -239,38 +266,55 @@
                                 on:click={() =>
                                     (selectedVisibility = visibilityOption)}
                             >
-                                {GameVisibilities[visibilityOption].name}
+                                {GAME_VISIBILITIES[visibilityOption].name}
                             </button>
                         {/each}
                     </div>
                     <div class="option-description-display">
-                        {GameVisibilities[selectedVisibility].description}
+                        {GAME_VISIBILITIES[selectedVisibility].description}
                     </div>
                 </div>
             </div>
+
+            <!-- Advanced options -->
             <div
-                class="options-sections-container"
                 use:collapse={{
                     open: showAdvancedOptions,
                     duration: 0.3,
                     easing: "ease",
                 }}
+                style="width: 100%;"
             >
-                <div class="options-section advanced">
-                    <div class="section-header header-text">
-                        Number of Rounds
-                    </div>
-                    <input
-                        class="number-option"
-                        type="number"
-                        name="num-rounds"
-                        min="1"
-                        max="100"
-                        bind:value={numRounds}
-                    />
+                <div class="section-header header-text">Advanced Options</div>
+                <div class="options-sections-container advanced">
+                    {#each ADVANCED_OPTIONS_ENTRIES as [key, option] (key)}
+                        {#if option.gameTypes.includes(selectedGameType)}
+                            <div class="options-section advanced">
+                                <div class="section-header header-text">
+                                    {option.name}
+                                </div>
+                                <input
+                                    class="{option.type}-option"
+                                    type={option.type}
+                                    name={key}
+                                    min={option.min}
+                                    max={option.max}
+                                    value={advancedOptions[key]}
+                                    on:change={(e) => {
+                                        setAdvancedOption(
+                                            key,
+                                            parseInt(e.currentTarget.value),
+                                        );
+                                    }}
+                                />
+                            </div>
+                        {/if}
+                    {/each}
                 </div>
             </div>
+
             <button
+                id="advanced-options-btn"
                 class="selection-btn"
                 on:click={() => (showAdvancedOptions = !showAdvancedOptions)}
             >
@@ -307,8 +351,9 @@
             <div class="section-header header-text">Find a Playlist</div>
             <div class="section-description">
                 Every game needs music! Each round, a random song will be
-                selected from the Spotify playlist that you select. You can
-                choose any <b> public </b> playlist on Spotify.
+                selected from the Spotify playlist that you select. <br /> You can
+                choose any public playlist on Spotify, including genre and artist
+                mixes.
             </div>
             <div id="playlist-search-container">
                 <!-- Search by query -->
@@ -475,6 +520,9 @@
         outline: none;
         border: none;
     }
+    input:invalid {
+        border-color: var(--red);
+    }
 
     .search-btn {
         color: var(--spotify-green);
@@ -519,6 +567,11 @@
         gap: 2px;
         background-color: gray;
     }
+    .options-sections-container.advanced {
+        border: 2px solid gray;
+        border-radius: 6px;
+        gap: 2px;
+    }
 
     #game-options-section {
         display: flex;
@@ -546,7 +599,8 @@
         background-color: var(--accent-dark);
     }
     .options-section.advanced {
-        margin-top: 2px;
+        margin-top: 0px;
+        border-radius: 6px;
     }
 
     .number-option {
@@ -570,6 +624,7 @@
     #playlist-search-section {
         min-width: 100%;
         flex: 1;
+        gap: 0.75rem;
     }
 
     .selection-btn {
@@ -595,6 +650,11 @@
     }
     #load-more-btn:hover {
         color: var(--spotify-green);
+    }
+
+    #advanced-options-btn {
+        font-size: 0.8rem;
+        border-width: 1px;
     }
 
     #expand-icon {

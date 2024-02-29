@@ -1,5 +1,5 @@
 import { PlayerConnection } from "./types";
-import { GameOptions, GuessResult, Playlist, Track } from "../shared/types";
+import { ADVANCED_OPTIONS_DEFINITIONS, GameOptions, GameType, GameVisibility, GuessResult, Playlist, Track } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
@@ -13,7 +13,10 @@ const POST_ROUND_WAIT_TIME = 10000;
  */
 export class Game {
     id: string;
+    type: GameType;
+    visibility: GameVisibility;
     playlist: Playlist;
+    gameOptions: GameOptions;
     players: ObservableMap<string, Player>;
     rounds: Round[];
     status: GameStatus;
@@ -28,12 +31,23 @@ export class Game {
     private endCurrentRound: (value: void | PromiseLike<void>) => void = () => { };
 
     //Constructor
-    private constructor(id: string, playlist: Playlist) {
+    private constructor(id: string, playlist: Playlist, type: GameType, visibility: GameVisibility, gameOptions: GameOptions) {
         this.id = id;
+        this.type = type;
+        this.visibility = visibility;
         this.playlist = playlist;
         this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
+
+        //Check gameOptions bounds and set defaults if needed - ensure that all game options are defined
+        this.gameOptions = gameOptions;
+        for (let [key, option] of Object.entries(ADVANCED_OPTIONS_DEFINITIONS)) {
+            let currentValue = this.gameOptions[key as keyof GameOptions];
+            if (currentValue === undefined || currentValue < option.min || currentValue > option.max) {
+                this.gameOptions[key as keyof GameOptions] = option.default;
+            }
+        }
     }
 
 
@@ -42,11 +56,13 @@ export class Game {
      * (Async replacement for a constructor)
      * @param id The ID of the new game
      * @param playlist The playlist that this game will be played on
+     * @param type The type of this game
+     * @param visibility The visibility of this game
      * @param gameOptions The desired parameters for this game
      */
-    public static async newInstance(id: string, playlist: Playlist, gameOptions: GameOptions): Promise<Game> {
-        let newGame = new Game(id, playlist);
-        await newGame.generateRounds(gameOptions.numRounds);
+    public static async newInstance(id: string, playlist: Playlist, type: GameType, visibility: GameVisibility, gameOptions: GameOptions): Promise<Game> {
+        let newGame = new Game(id, playlist, type, visibility, gameOptions);
+        await newGame.generateRounds(gameOptions.numRounds!);
         return newGame;
     }
 
@@ -82,7 +98,7 @@ export class Game {
         }
 
         //Convert chosen tracks set to list of Rounds
-        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 40000));
+        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", this.gameOptions.roundDuration! * 1000));
     }
 
 
@@ -204,7 +220,7 @@ export class Game {
         let player = this.getPlayer(playerId);
 
         //Do not accept the guess if the player is already ready for round to end
-        if(player.activeGameInfo!.isReady){
+        if (player.activeGameInfo!.isReady) {
             throw new Error("Player is already ready for round end.");
         }
 
@@ -274,7 +290,7 @@ export class Game {
                 await this.startRound(i);
 
                 //End the round by readying all players and sending the correct track ID
-                this.currentRound!.trackId = this.rounds[i].trackId; 
+                this.currentRound!.trackId = this.rounds[i].trackId;
                 for (let player of this.players.values()) {
                     player.activeGameInfo!.isReady = true;
                 }
@@ -284,7 +300,7 @@ export class Game {
                 await new Promise((resolve) => setTimeout(resolve, POST_ROUND_WAIT_TIME));
             }
         }
-        
+
         //End the game
         this.end();
     }
