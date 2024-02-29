@@ -1,14 +1,38 @@
+import type { TransformKeys } from "./utils";
+
+//A list of the possible game types
 export enum GameType { NORMAL, CHOICES, THEATER }
+export const GAME_TYPE_OPTIONS = [
+    GameType.NORMAL,
+    GameType.CHOICES,
+    GameType.THEATER,
+];
+
+//A list of the possible game visibilities
 export enum GameVisibility { PUBLIC, PRIVATE }
+export const GAME_VISIBILITY_OPTIONS = [
+    GameVisibility.PUBLIC,
+    GameVisibility.PRIVATE,
+];
+
+//A list of the possible game options
+export type GameOption = { name: string, type: "number", default: number, min: number, max: number, gameTypes: GameType[] }
+export const ADVANCED_OPTIONS_DEFINITIONS: TransformKeys<GameOptions, GameOption> = {
+    numRounds: { name: "Number of Rounds", type: "number", default: 5, min: 1, max: 50, gameTypes: GAME_TYPE_OPTIONS },
+    roundDuration: { name: "Round Duration", type: "number", default: 30, min: 10, max: 60, gameTypes: GAME_TYPE_OPTIONS },
+    numChoices: { name: "Number of Choices", type: "number", default: 4, min: 2, max: 8, gameTypes: [GameType.CHOICES] }
+}
+
+export interface GameOptions {
+    numRounds?: number,
+    roundDuration?: number,
+    numChoices?: number
+}
 
 export enum GameStatus {
     PENDING = "Pending",
     ACTIVE = "Active",
     ENDED = "Ended"
-}
-
-export type GameOptions = {
-    numRounds: number
 }
 
 export class Round {
