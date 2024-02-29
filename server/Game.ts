@@ -1,5 +1,5 @@
 import { PlayerConnection } from "./types";
-import { ADVANCED_OPTIONS_DEFINITIONS, GameOptions, GameType, GameVisibility, GuessResult, Playlist, Track } from "../shared/types";
+import { ADVANCED_OPTIONS_DEFINITIONS, GameOptions, GameType, GameVisibility, GuessResult, Playlist, Track, TrackChoice } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
@@ -24,6 +24,7 @@ export class Game {
         index: number,
         audioURL: string,
         duration: number,
+        choices?: { id: string, name: string, artist: string }[]
         trackId?: string
     }
 
@@ -62,7 +63,7 @@ export class Game {
      */
     public static async newInstance(id: string, playlist: Playlist, type: GameType, visibility: GameVisibility, gameOptions: GameOptions): Promise<Game> {
         let newGame = new Game(id, playlist, type, visibility, gameOptions);
-        await newGame.generateRounds(gameOptions.numRounds!);
+        await newGame.generateRounds();
         return newGame;
     }
 
@@ -70,12 +71,11 @@ export class Game {
     /**
      * Shuffles the tracks in the playlist and looks for preview URLs.
      * Attempts to find desiredNumRounds preview URLs. 
-     * Adds AT MOST desiredNumRounds tracks to this.rounds.
+     * If unable to find enough previewURLs, repeats at random until reaching desired amount.
      * 
-     * @param desiredNumRounds The desired number of rounds for this game.
      * @returns The list of generated rounds
      */
-    public async generateRounds(desiredNumRounds: number) {
+    public async generateRounds() {
         //Clear selection
         this.rounds = [];
 
@@ -85,7 +85,7 @@ export class Game {
         //Pick the tracks from this playlist
         //Look through all the (shuffled) non-local tracks until enough tracks with previewURLs are found (or not).
         let chosenTracks: Set<Track> = new Set();
-        for (let trackNum = 0; chosenTracks.size < desiredNumRounds && trackNum < viableTracks.length; trackNum++) {
+        for (let trackNum = 0; chosenTracks.size < this.gameOptions.numRounds! && trackNum < viableTracks.length; trackNum++) {
             let chosenTrack = viableTracks[trackNum];
             chosenTrack.previewURL = await SpotifyAPI.getTrackPreviewURL(chosenTrack.id).catch((error) => {
                 console.error(`Unable to get preview URL for track ${chosenTrack.id}: `, error.message);
@@ -97,8 +97,36 @@ export class Game {
             }
         }
 
+        //Helper function to convert a track into a round for this game
+        function createRound(track: Track) {
+            //Generate choices (if needed)
+            let choices: TrackChoice[] | undefined;
+            if (this.type == GameType.CHOICES) {
+                choices = lodash.sampleSize(viableTracks, this.gameOptions.numChoices ?? 0).map((chosenTrack) => {
+                    return { id: chosenTrack.id, name: chosenTrack.name, artist: chosenTrack.artists.join(", ") }
+                });
+            }
+
+            //Determine round duration
+            let roundDuration = this.gameOptions.roundDuration! * 1000;
+
+            //Create and return the round
+            return new Round(track.id, track.previewURL ?? "", roundDuration, choices);
+        }
+
         //Convert chosen tracks set to list of Rounds
-        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", this.gameOptions.roundDuration! * 1000));
+        this.rounds = Array.from(chosenTracks).map(createRound);
+
+        //Repeat rounds at random until the desired number is reached
+        if (this.rounds.length > 0 && this.rounds.length < this.gameOptions.numRounds!) {
+            //This needs to be looped for the case where (desired num rounds - this.rounds.length) < this.rounds.length
+            while (this.rounds.length < this.gameOptions.numRounds!) {
+                this.rounds.push(...lodash.sampleSize(this.rounds, this.gameOptions.numRounds! - this.rounds.length)!);
+            }
+
+            //Re-shuffle the rounds
+            this.rounds = lodash.shuffle(this.rounds);
+        }
     }
 
 
@@ -318,7 +346,8 @@ export class Game {
         this.currentRound = {
             index: index,
             audioURL: this.rounds[index].previewURL,
-            duration: this.rounds[index].maxDuration
+            duration: this.rounds[index].maxDuration,
+            choices: this.rounds[index].choices
         };
 
         //Inform players
@@ -351,6 +380,8 @@ export class Game {
         //Build and return the state object
         return {
             id: this.id,
+            type: this.type,
+            visibility: this.visibility,
             status: this.status,
             playlist: {
                 id: this.playlist.id,
