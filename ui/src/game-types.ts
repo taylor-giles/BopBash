@@ -8,14 +8,14 @@ import { GameType, GameVisibility } from "../../shared/types"
 
 
 export type GameTypeMetadata = {name: string, description: string, icon: ComponentType}
-export const GameTypes: Record<GameType, GameTypeMetadata> = {
+export const GAME_TYPES: Record<GameType, GameTypeMetadata> = {
     [GameType.NORMAL]: {name: "Normal", description: "A high-speed song guessing game. Type the title to earn points!", icon: NormalIcon},
     [GameType.CHOICES]: {name: "Choices", description: "Lightning rounds with song choices. Be quick and click the right song choice to earn points!", icon: ChoicesIcon},
     [GameType.THEATER]: {name: "Theater", description: "In-person song guessing fun. Each player uses their device to guess the track, which plays from one device.", icon: TheaterIcon}
 }
 
 export type GameVisibilityMetadata = { name: string, description: string, icon: ComponentType}
-export const GameVisibilities: Record<GameVisibility, GameVisibilityMetadata> = {
+export const GAME_VISIBILITIES: Record<GameVisibility, GameVisibilityMetadata> = {
     [GameVisibility.PUBLIC]: {name: "Public", description: "Anyone can join this game from the Find Games page.", icon: PublicIcon},
     [GameVisibility.PRIVATE]: {name: "Private", description: "Only players with the Game ID will be able to join this game.", icon: PrivateIcon}
 }

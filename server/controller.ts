@@ -133,23 +133,25 @@ export async function findPlaylists(req: Request, res: Response) {
  * 
  * Request Body:
  *  - playlistId: string - The ID of the playlist to make a game for
+ *  - type: GameType - The type for this game
+ *  - visibility: GameVisibility - The visibility of this game
  *  - gameOptions: GameOptions - The options for this game
  * 
  * Response Body:
  *  - On Success:
  *      - gameId: string - The ID of the new game
- *      - numRounds: number - The actual number of rounds in the new game
- *      - playlistId: string - The ID of the playlist for this game (same as playlistId in req)
  *  - On Failure:
  *      - error: string - Error message
  */
 export async function makeNewGame(req: Request, res: Response) {
     let playlistId = req?.body?.playlistId;
+    let type = req?.body?.type;
+    let visibility = req?.body?.visibility;
     let gameOptions = req?.body?.gameOptions;
 
     //Ensure all needed information is provided
-    if (!playlistId || !gameOptions) {
-        return res.status(400).json({ error: "Both playlistId and gameOptions must be specified in request body." });
+    if (!playlistId || !gameOptions || type === undefined || visibility === undefined) {
+        return res.status(400).json({ error: "All of the following must be specified in request body: playlistId, gameOptions, type, visibility" });
     }
 
     console.log("Handling request to create new game for playlist: ", playlistId);
@@ -164,9 +166,9 @@ export async function makeNewGame(req: Request, res: Response) {
     }
 
     //Create the game and register it with game driver
-    GameManager.generateNewGame(playlist, gameOptions).then((game) => {
+    GameManager.generateNewGame(playlist, type, visibility, gameOptions).then((game) => {
         //Respond to sender with game ID
-        res.status(200).json({ gameId: game.id, numRounds: game.rounds.length, playlistId: playlistId });
+        res.status(200).json({ gameId: game.id });
     }).catch((error) => {
         console.error("Unable to create new game", error.message);
         res.status(500).json({ error: error.message });

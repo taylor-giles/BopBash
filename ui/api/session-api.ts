@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
-import type { GameOptions, GameState, Playlist, PlaylistMetadata } from '../../shared/types';
+import type { GameOptions, GameState, GameType, GameVisibility, Playlist, PlaylistMetadata } from '../../shared/types';
 import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
@@ -88,9 +88,11 @@ export async function getGames(): Promise<GameState[]> {
 }
 
 
-export async function createGame(playlistId: string, gameOptions: GameOptions): Promise<string | null> {
+export async function createGame(playlistId: string, type: GameType, visibility: GameVisibility, gameOptions: GameOptions): Promise<string | null> {
     return apiCaller.post('/newGame', {
         playlistId: playlistId,
+        type: type,
+        visibility: visibility,
         gameOptions: gameOptions
     }).then((res) => {
         if(res?.data?.error){
