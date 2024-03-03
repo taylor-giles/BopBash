@@ -18,7 +18,7 @@ export const GAME_VISIBILITY_OPTIONS = [
 //A list of the possible game options
 export type GameOption = { name: string, type: "number", default: number, min: number, max: number, gameTypes: GameType[] }
 export const ADVANCED_OPTIONS_DEFINITIONS: TransformKeys<GameOptions, GameOption> = {
-    numRounds: { name: "Number of Rounds", type: "number", default: 5, min: 1, max: 50, gameTypes: GAME_TYPE_OPTIONS },
+    numRounds: { name: "Number of Rounds", type: "number", default: 10, min: 1, max: 50, gameTypes: GAME_TYPE_OPTIONS },
     roundDuration: { name: "Round Duration", type: "number", default: 30, min: 10, max: 60, gameTypes: GAME_TYPE_OPTIONS },
     numChoices: { name: "Number of Choices", type: "number", default: 4, min: 2, max: 8, gameTypes: [GameType.CHOICES] }
 }
@@ -35,17 +35,25 @@ export enum GameStatus {
     ENDED = "Ended"
 }
 
+export type TrackChoice = {
+    id: string,
+    name: string,
+    artist: string
+}
+
 export class Round {
     trackId: string;
     previewURL: string;
     maxDuration: number;    //Maximum duration of this round, in milliseconds
     startTime: number;      //Maps player ID to the time that player started this round
+    choices?: {id: string, name: string, artist: string}[]; //The choices to be used in a choices-style game
 
-    public constructor(trackId: string, previewURL: string, maxDuration: number) {
+    public constructor(trackId: string, previewURL: string, maxDuration: number, choices?: TrackChoice[]) {
         this.trackId = trackId;
         this.previewURL = previewURL;
         this.maxDuration = maxDuration;
         this.startTime = 0;
+        this.choices = choices;
     }
 }
 
@@ -58,6 +66,8 @@ export type PlayerState = {
 
 export type GameState = {
     id: string,
+    type: GameType,
+    visibility: GameVisibility,
     players: Record<string, PlayerState>,
     playlist: {
         name: string,
@@ -70,6 +80,7 @@ export type GameState = {
         index: number,
         audioURL: string,
         duration: number,
+        choices?: TrackChoice[]
         trackId?: string
     }
     status: GameStatus,

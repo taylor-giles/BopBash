@@ -5,7 +5,7 @@ import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
     baseURL: API_ADDRESS,
-    timeout: 10000
+    timeout: 20000
 });
 
 
