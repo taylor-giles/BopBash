@@ -80,7 +80,7 @@ export class Game {
         this.rounds = [];
 
         //Remove local tracks and shuffle the remaining ones
-        let viableTracks: Track[] = lodash.shuffle(this.playlist.tracks.items.map((value) => value.track).filter((track) => !track.is_local));
+        let viableTracks: Track[] = lodash.shuffle(this.playlist.tracks.items.map((value) => value.track).filter((track) => !(track?.is_local ?? true)));
 
         //Pick the tracks from this playlist
         //Look through all the (shuffled) non-local tracks until enough tracks with previewURLs are found (or not).
@@ -98,13 +98,22 @@ export class Game {
         }
 
         //Helper function to convert a track into a round for this game
-        function createRound(track: Track) {
+        const createRound = (track: Track) => {
             //Generate choices (if needed)
             let choices: TrackChoice[] | undefined;
             if (this.type == GameType.CHOICES) {
-                choices = lodash.sampleSize(viableTracks, this.gameOptions.numChoices ?? 0).map((chosenTrack) => {
-                    return { id: chosenTrack.id, name: chosenTrack.name, artist: chosenTrack.artists.join(", ") }
+                let numChoices = this.gameOptions.numChoices ?? 1;
+                
+                //Remove correct answer by putting it first, removing all duplicates, then removing first element
+                let possibleChoices = lodash.uniqBy([track, ...viableTracks], "id").slice(1);
+
+                //Pick a random sample of incorrect answers and include the right answer
+                choices = [track, ...lodash.sampleSize(possibleChoices, numChoices - 1)].map((chosenTrack) => {
+                    return { id: chosenTrack.id, name: chosenTrack.name, artist: chosenTrack.artists.map((artist) => artist.name).join(", ") };
                 });
+
+                //Shuffle the choices
+                choices = lodash.shuffle(choices);
             }
 
             //Determine round duration
@@ -117,8 +126,13 @@ export class Game {
         //Convert chosen tracks set to list of Rounds
         this.rounds = Array.from(chosenTracks).map(createRound);
 
+        //Throw error if no rounds were generated
+        if (this.rounds.length <= 0) {
+            throw new Error("No valid rounds could be generated");
+        }
+
         //Repeat rounds at random until the desired number is reached
-        if (this.rounds.length > 0 && this.rounds.length < this.gameOptions.numRounds!) {
+        if (this.rounds.length < this.gameOptions.numRounds!) {
             //This needs to be looped for the case where (desired num rounds - this.rounds.length) < this.rounds.length
             while (this.rounds.length < this.gameOptions.numRounds!) {
                 this.rounds.push(...lodash.sampleSize(this.rounds, this.gameOptions.numRounds! - this.rounds.length)!);
