@@ -444,7 +444,7 @@
     }
 
     #share-modal-link {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         display: flex;
         flex-direction: row;
         gap: 5px;
