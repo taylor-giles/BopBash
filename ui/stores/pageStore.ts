@@ -11,6 +11,12 @@ export enum Page {
   CREATE = "Create"
 }
 
+export enum RoundPhase {
+  COUNTDOWN,
+  PLAYING,
+  CONCLUSION,
+}
+
 /**
  * A Svelte store that provides access to the currently active UI page
  */

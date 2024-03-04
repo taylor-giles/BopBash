@@ -1,26 +1,27 @@
 <script lang="ts">
-    import { onDestroy, onMount, tick } from "svelte";
+    import { onDestroy, tick } from "svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
     import { GameStore } from "../../stores/gameStore";
-    import AudioMotionAnalyzer, { type ConstructorOptions } from "audiomotion-analyzer";
-    import { GameStatus, type GuessResult } from "../../../shared/types";
+    import {
+        GameStatus,
+        GameType,
+        type GuessResult,
+    } from "../../../shared/types";
     import Scoreboard from "../components/Scoreboard.svelte";
     import { arraySum } from "../../../shared/utils";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import { fade } from "svelte/transition";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
-    import { CurrentPage, Page } from "../../stores/pageStore";
+    import { CurrentPage, Page, RoundPhase } from "../../stores/pageStore";
     import AudioControls from "../components/AudioControls.svelte";
     import GameplayForm from "../components/GameplayForm.svelte";
-    import RoundProgressBar from "../components/RoundProgressBar.svelte";
+    import TrackChoice from "../components/TrackChoice.svelte";
+    import GameplayVisualization from "../components/GameplayVisualization.svelte";
 
-    enum RoundPhase {
-        COUNTDOWN,
-        PLAYING,
-        CONCLUSION,
-    }
+    //Millis between numbers shown in countdown
+    const countdownInterval = 400;
 
     //Create audio context
     const audioContext = new AudioContext();
@@ -30,31 +31,9 @@
 
     //Create & connect beep sound node
     const beep = new Audio("/src/assets/beep.mp3");
-    audioContext.createMediaElementSource(beep).connect(audioContext.destination);
-
-    //Millis between numbers shown in countdown
-    const countdownInterval = 400;
-
-    //Audio visualization options
-    const visualizerOptions: ConstructorOptions = {
-        showScaleX: false,
-        roundBars: true,
-        overlay: true,
-        showBgColor: true,
-        bgAlpha: 0,
-        showPeaks: false,
-        mode: 8,
-        barSpace: 0.1,
-        height: 200,
-        width: 200,
-        maxFreq: 15000,
-        smoothing: 0.95,
-        reflexAlpha: 1,
-        reflexRatio: 0.5,
-        colorMode: "bar-level",
-        weightingFilter: "B",
-        alphaBars: true,
-    };
+    audioContext
+        .createMediaElementSource(beep)
+        .connect(audioContext.destination);
 
     //Round & game variables
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
@@ -63,26 +42,25 @@
     let guessArtistId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
-    let showScoreboard: boolean = window.innerWidth > 700;
+    let showScoreboard: boolean = window.innerWidth > 800;
     let isModalOpen: boolean = false;
     let volumeLevel: number = 0.5;
     let currentRoundTime: number = 0;
+    let isVisualizerSmall = false;
 
     //HTML element references
     let audioElement: HTMLAudioElement = new Audio();
-    audioContext.createMediaElementSource(audioElement).connect(visualizerNode);
-    let audioAnalyzer: AudioMotionAnalyzer;
-    let countdownView: HTMLDivElement;
-    let visualizerView: HTMLDivElement;
+    let sourceNode = audioContext.createMediaElementSource(audioElement);
+    sourceNode.connect(visualizerNode);
+    sourceNode.connect(audioContext.destination);
     let correctTrackEmbed: HTMLIFrameElement;
+    let visualization: GameplayVisualization;
+    let choicesContainer: HTMLDivElement;
 
     //Get colors from CSS
     const spotifyGreen = getComputedStyle(
         document.documentElement,
     ).getPropertyValue("--spotify-green");
-    const accent = getComputedStyle(document.documentElement).getPropertyValue(
-        "--accent",
-    );
     const red = getComputedStyle(document.documentElement).getPropertyValue(
         "--red",
     );
@@ -92,8 +70,11 @@
     $: currentRoundDuration =
         ($GameStore.currentRound?.duration ?? countdownInterval * 4) -
         countdownInterval * 3;
+    $: currentRoundChoices = $GameStore.currentRound?.choices ?? [];
     $: audioURL = $GameStore.currentRound?.audioURL;
     $: isGameDone = $GameStore.status === GameStatus.ENDED;
+
+    $: console.log(isVisualizerSmall);
 
     //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
@@ -109,7 +90,7 @@
 
     //When audio is ready, start the round
     $: if (audioLoaded) {
-        doCountdown().then(startPlayingPhase);
+        doCountdownPhase().then(startPlayingPhase);
     }
 
     //If the correct answer has been delivered to the player, display the conclusion
@@ -119,11 +100,23 @@
     }
 
     /**
+     * Starts countdown phase and returns promise that resolves when countdown phase is complete
+     */
+    async function doCountdownPhase() {
+        currentPhase = RoundPhase.COUNTDOWN;
+        isVisualizerSmall = false;
+        await tick();
+        isVisualizerSmall =
+            choicesContainer?.scrollHeight > choicesContainer?.clientHeight;
+        await visualization.doCountdown();
+    }
+
+    /**
      * Prepares the next round by loading the audio
      */
     async function loadRound() {
         //Destroy audio analyzer
-        audioAnalyzer?.destroy();
+        visualization?.destroyAnalyzer();
 
         //Reset round variables
         guessResult = undefined;
@@ -131,7 +124,7 @@
         guessTrackId = "";
         guessArtistId = "";
         currentRoundTime = 0;
-        
+
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
         audioElement.oncanplaythrough = () => {
@@ -140,49 +133,18 @@
         audioElement.ontimeupdate = () => {
             timestamp = audioElement.currentTime;
         };
-        
+
         //Start re-loading of audio element
         audioLoaded = false;
         audioElement.load();
     }
 
     /**
-     * Display a pre-round-start countdown
-     */
-    async function doCountdown(): Promise<void> {
-        //Set phase
-        currentPhase = RoundPhase.COUNTDOWN;
-
-        //Wait for all stage changes to complete
-        await tick();
-
-        //Return a promise that will resolve when the countdown is done
-        return new Promise(async (resolve) => {
-            //Set up timeouts to perform the countdown
-            for (let i = 3; i >= 0; i--) {
-                setTimeout(
-                    () => {
-                        if (currentPhase === RoundPhase.COUNTDOWN) {
-                            countdownView.innerHTML = `${i}`;
-                            beep.play();
-
-                            if (i == 0) {
-                                resolve();
-                            }
-                        }
-                    },
-                    (3 - i) * countdownInterval,
-                );
-            }
-        });
-    }
-
-    /**
      * Begins the playing phase
      */
     async function startPlayingPhase() {
-        if (!audioAnalyzer || audioAnalyzer.isDestroyed) {
-            //Set phase
+        if (visualization.isDestroyed()) {
+            //Set the phase
             currentPhase = RoundPhase.PLAYING;
             await tick();
 
@@ -190,43 +152,15 @@
             audioElement.play();
             audioElement.loop = true;
 
-            //Generate an audio visualizer
-            audioAnalyzer = new AudioMotionAnalyzer(visualizerView, {
-                //Set source
-                source: visualizerNode,
-
-                //Set options
-                ...visualizerOptions,
-            });
-
-            //Make and use audio visualizer gradient
-            audioAnalyzer.registerGradient("spotify-accent", {
-                bgColor: "transparent",
-                dir: 'h',
-                colorStops: [
-                    { color: "#1db954", level: 1 },
-                    { color: "#1bb468", level: 0.9 },
-                    { color: "#18ae7b", level: 0.85 },
-                    { color: "#16a98e", level: 0.8 },
-                    { color: "#14a39f", level: 0.75 },
-                    { color: "#128d9e", level: 0.7 },
-                    { color: "#107398", level: 0.65 },
-                    { color: "#0f5a92", level: 0.6 },
-                    { color: "#0d428c", level: 0.55 },
-                    { color: "#0b2c86", level: 0.5 },
-                    { color: "#1d0773", level: 0.45 },
-                    { color: "#2a066d", level: 0.4 },
-                    { color: "#360566", level: 0.3 },
-                ],
-            });
-            audioAnalyzer.gradient = "spotify-accent";
+            //Start the visualization
+            visualization.start();
         }
     }
 
     /**
-     * Votes to skip the rest of this round
+     * Skips the rest of this round
      */
-    async function voteSkip(e: Event) {
+    async function skipRound(e: Event) {
         guessTrackId = "";
         handleSubmit(e);
     }
@@ -234,8 +168,8 @@
     /**
      * Submit the guess
      */
-    async function handleSubmit(e: Event) {
-        e.preventDefault();
+    async function handleSubmit(e?: Event) {
+        e?.preventDefault();
 
         //Submit the guess
         let result = await GameAPI.submitGuess(currentRoundNum, guessTrackId);
@@ -268,15 +202,9 @@
             uri: `spotify:track:${correctTrackId}`,
             height: "100%",
         };
-        let callback = (EmbedController: any) => {
-            console.log("EmbedController: ", EmbedController);
-            EmbedController.addListener("ready", () => {
-                //TODO: Determine if there is something to be done here (autoplay, etc)
-            });
-        };
 
         //Make the embed
-        $IFrameAPI.createController(correctTrackEmbed, iframeOptions, callback);
+        $IFrameAPI.createController(correctTrackEmbed, iframeOptions, () => {});
     }
 
     /**
@@ -291,7 +219,7 @@
     //Handle destruction
     onDestroy(() => {
         //Destroy audio analyzer
-        audioAnalyzer?.destroy();
+        visualization?.destroyAnalyzer();
     });
 </script>
 
@@ -352,40 +280,66 @@
                             </div>
                         {/if}
                     </div>
+
                     <div id="center-display">
-                        {#if currentPhase === RoundPhase.COUNTDOWN}
-                            <!-- Container for countdown display -->
-                            <div id="countdown" bind:this={countdownView}></div>
-                        {:else if currentPhase === RoundPhase.PLAYING}
-                            <!-- Container for audio visualization -->
-                            <div
-                                id="visualizer-view"
-                                bind:this={visualizerView}
-                            ></div>
-
-                            <div id="song-timer-view">
-                                <RoundProgressBar
-                                    progress={1}
-                                    duration={currentRoundDuration}
-                                    gradientColors={[spotifyGreen, red]}
-                                    gradientPositions={[0.7, 1]}
-                                    baseThickness={2}
-                                    easing={(t) => t}
-                                />
-                            </div>
-                        {/if}
+                        <GameplayVisualization
+                            bind:this={visualization}
+                            bind:currentPhase
+                            {countdownInterval}
+                            {visualizerNode}
+                            {beep}
+                            {currentRoundDuration}
+                            progressGradientColors={[spotifyGreen, red]}
+                            isSmall={isVisualizerSmall}
+                        />
                     </div>
+                    <div id="submission-section">
+                        <div id="submission-panel">
+                            {#if $GameStore.type === GameType.CHOICES}
+                                <!-- Choices -->
+                                <div
+                                    id="choices-wrapper"
+                                    bind:this={choicesContainer}
+                                >
+                                    {#each currentRoundChoices as choice (choice.id)}
+                                        <div class="choice-wrapper">
+                                            <TrackChoice
+                                                on:click={() => {
+                                                    guessTrackId = choice.id;
+                                                    handleSubmit();
+                                                }}
+                                                {choice}
+                                                --title-size={isVisualizerSmall
+                                                    ? "1.1rem"
+                                                    : "1.3rem"}
+                                            />
+                                        </div>
+                                    {/each}
+                                </div>
+                            {:else}
+                                <!-- Form for entering guesses -->
+                                <div id="form-wrapper">
+                                    <GameplayForm
+                                        bind:guessTrackId
+                                        bind:guessArtistId
+                                        disabled={currentPhase !==
+                                            RoundPhase.PLAYING}
+                                        on:submit={handleSubmit}
+                                        on:skip={skipRound}
+                                    />
 
-                    <div id="submission-panel">
-                        <div id="form-wrapper">
-                            <!-- Form for entering guesses -->
-                            <GameplayForm
-                                bind:guessTrackId
-                                bind:guessArtistId
-                                disabled={currentPhase !== RoundPhase.PLAYING}
-                                on:submit={handleSubmit}
-                                on:skip={voteSkip}
-                            />
+                                    <!-- "Get Ready" overlay display
+                                    {#if currentPhase !== RoundPhase.PLAYING}
+                                        <div
+                                            id="get-ready-overlay"
+                                            class="header-text"
+                                            transition:fade={{ duration: 150 }}
+                                        >
+                                            Get ready!
+                                        </div>
+                                    {/if} -->
+                                </div>
+                            {/if}
 
                             <!-- "Get Ready" overlay display -->
                             {#if currentPhase !== RoundPhase.PLAYING}
@@ -453,9 +407,8 @@
     main {
         display: flex;
         flex-direction: column;
-        height: 100%;
         gap: 10px;
-        flex-wrap: wrap;
+        height: 100%;
     }
 
     #header,
@@ -472,6 +425,7 @@
         gap: 36px;
         flex: 1;
         width: 100%;
+        height: 0px;
     }
 
     #gameplay-content {
@@ -485,11 +439,11 @@
     }
 
     #center-display {
-        flex: 1;
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 2rem;
+        height: max-content;
     }
 
     #scoreboard-container {
@@ -505,7 +459,7 @@
         align-items: center;
         gap: 10px;
     }
-    @media (max-width: 700px) {
+    @media (max-width: 800px) {
         #scoreboard-container {
             position: absolute;
             left: 0;
@@ -515,32 +469,23 @@
         }
     }
 
-    #countdown {
-        font-size: 14rem;
-        max-height: 11.5rem;
+    #submission-section {
+        flex: 1;
+        height: 0px;
         display: flex;
-        flex-direction: row;
         align-items: center;
     }
 
-    #visualizer-view {
-        height: 11.5rem;
-        width: 11.5rem;
-    }
-    #song-timer-view {
-        position: absolute;
-        width: 17rem;
-        height: 17rem;
-    }
-
     #submission-panel {
-        flex: 1;
-        height: max-content;
+        position: relative;
         display: flex;
-        width: 100%;
-        justify-content: center;
-        flex-direction: row;
+        align-items: center;
+        flex-direction: column;
         gap: 20px;
+        height: max-content;
+        max-height: 100%;
+        flex: 1;
+        overflow: hidden;
     }
 
     #form-wrapper {
@@ -549,14 +494,38 @@
         width: 100%;
         max-width: 700px;
         min-width: 260px;
+        padding: 2rem;
+    }
+
+    #choices-wrapper {
+        width: 100%;
+        height: max-content;
+        max-height: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        flex-wrap: wrap;
+        max-width: 95%;
+        min-width: 260px;
+        overflow-y: auto;
+    }
+
+    .choice-wrapper {
+        min-width: 18rem;
+        flex: 1;
+        padding: 5px;
     }
 
     #get-ready-overlay {
         position: absolute;
-        top: -5%;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        /* top: -5%;
         left: -5%;
         height: 115%;
-        width: 110%;
+        width: 110%; */
         background-color: rgba(0, 0, 0, 0.95);
         border-radius: 4px;
         border: 1px solid gray;
@@ -605,7 +574,7 @@
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        font-size: 300px;
+        font-size: 30px;
     }
 
     #show-scoreboard-btn {
