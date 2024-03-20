@@ -5,6 +5,9 @@ import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
+import { Readable } from "stream";
+import AudioStream from "./AudioStream";
+import { COUNTDOWN_INTERVAL } from "../shared/constants";
 
 const POST_ROUND_WAIT_TIME = 10000;
 
@@ -20,6 +23,7 @@ export class Game {
     players: ObservableMap<string, Player>;
     rounds: Round[];
     status: GameStatus;
+    audioStream: AudioStream;
     currentRound?: {
         index: number,
         audioURL: string,
@@ -40,6 +44,7 @@ export class Game {
         this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
+        this.audioStream = new AudioStream();
 
         //Check gameOptions bounds and set defaults if needed - ensure that all game options are defined
         this.gameOptions = gameOptions;
@@ -331,6 +336,9 @@ export class Game {
                 //Start round and wait for it to finish
                 await this.startRound(i);
 
+                //Set the stream audio back to silence
+                this.audioStream.setSilence();
+
                 //End the round by readying all players and sending the correct track ID
                 this.currentRound!.trackId = this.rounds[i].trackId;
                 for (let player of this.players.values()) {
@@ -355,6 +363,9 @@ export class Game {
     private async startRound(index: number): Promise<void> {
         //Unready all players
         this.players.forEach((player) => player.activeGameInfo!.isReady = false);
+        
+        //Set the stream audio
+        this.audioStream.setMP3(this.rounds[index].previewURL);
 
         //Set the currentRound variable
         this.currentRound = {

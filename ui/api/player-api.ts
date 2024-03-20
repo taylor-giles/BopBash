@@ -86,6 +86,15 @@ export async function submitGuess(roundNum: number, trackId: string): Promise<Gu
 
 
 /**
+ * Obtains the audio stream for this player's currently active game
+ * @returns The audio stream from the server
+ */
+export async function getAudioStream() {
+    return (await apiCaller.get('/audioStream')).data.stream();
+}
+
+
+/**
  * Informs the server that this player is READY
  */
 export async function readyPlayer() {

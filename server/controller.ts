@@ -10,6 +10,7 @@ import * as GameManager from "./GameManager";
 import { PlayerConnection } from "./types";
 import { getToken, verifyToken } from "./auth";
 import { MAX_USERNAME_LENGTH } from "../shared/constants";
+import { Readable } from "stream";
 
 type PlayerRequest = Request & { playerId?: string }
 
@@ -47,6 +48,25 @@ export async function authenticate(req: PlayerRequest, res: Response, next: Next
     }
 
     next();
+}
+
+
+
+export async function audioStream(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId; //Guaranteed by middleware
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    
+    //Get the active game and submit the guess
+    try {
+        let game = GameManager.getPlayerActiveGame(playerId!);
+        let stream = game.audioStream;
+        stream.pipe(res);
+    } catch (error: any) {
+        console.error(`Unable to connect audio stream for player ${playerId}.`, error.message);
+        return res.status(500).json({ error: error.message });
+    }
 }
 
 

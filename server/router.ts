@@ -11,6 +11,7 @@ const router = express.Router();
 router.get('/getPlaylistData/:id', Controller.ensureId, Controller.getPlaylistData);
 router.get('/findPlaylists/:query', Controller.findPlaylists);
 router.get('/getGames', Controller.getGames);
+router.get('/audioStream', Controller.authenticate, Controller.audioStream);
 router.post('/newGame', Controller.makeNewGame);
 router.post('/registerNewPlayer', Controller.registerNewPlayer);
 router.post('/joinGame/:id', Controller.authenticate, Controller.ensureId, Controller.joinGame);

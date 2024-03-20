@@ -15,6 +15,7 @@
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
     import Modal from "../components/Modal.svelte";
+    import { API_ADDRESS } from "../../../shared/constants";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -49,11 +50,24 @@
      * Toggle player's ready state
      */
     function toggleReady() {
-        console.log(myPlayerState);
         if (myPlayerState.isReady) {
             GameAPI.unreadyPlayer();
         } else {
             GameAPI.readyPlayer();
+
+            //Create the audio context
+            const audioContext = new AudioContext();
+
+            //Obtain stream and convert it to a MediaSource
+            GameAPI.getAudioStream().then((stream) => {
+                let source = audioContext.createMediaElementSource(stream);
+                source.connect(audioContext.destination);
+                console.log(source);
+                console.log(stream);
+            });
+
+            //Create the buffer
+            // const audioBuffer = audioContext.createBuffer(2, 30*44100, 44100);
         }
     }
 
