@@ -14,7 +14,7 @@
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
-    import Modal from "../components/Modal.svelte";
+    import Modal from "../components/modals/Modal.svelte";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
