@@ -9,7 +9,7 @@
     import { GameStatus, type GameState } from "../../shared/types";
     import GameDiscoveryPage from "./pages/GameDiscoveryPage.svelte";
     import GameAPI from "../api/api";
-    import ErrorModal from "./components/ErrorModal.svelte";
+    import ErrorModal from "./components/modals/ErrorModal.svelte";
     import GameCreationPage from "./pages/GameCreationPage.svelte";
 
     const PAGES: Record<Page, ComponentType> = {
