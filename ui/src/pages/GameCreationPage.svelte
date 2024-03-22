@@ -21,6 +21,7 @@
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import ConfirmationModal from "../components/ConfirmationModal.svelte";
     import { GAME_TYPES, GAME_VISIBILITIES } from "../game-types";
+    import LoadingModal from "../components/modals/LoadingModal.svelte";
 
     const SEARCH_LIMIT = 10;
     const DEFAULT_SEARCH = "Top 50";
@@ -37,6 +38,7 @@
     let showAdvancedOptions = false;
     let expandAll = false;
     let nextOffset = 0;
+    let isLoadingSearchResults = false;
     let isLoading = false;
 
     let selectedGameType: GameType = GameType.NORMAL;
@@ -45,8 +47,13 @@
 
     let embed: HTMLIFrameElement;
 
+    //Get color from CSS
+    const spotifyGreen = getComputedStyle(
+        document.documentElement,
+    ).getPropertyValue("--accent-light");
+
     //Flag to indicate if current search can be performed
-    $: canSearch = !isLoading && nextOffset >= 0;
+    $: canSearch = !isLoadingSearchResults && nextOffset >= 0;
 
     //Flag to indicate if the game can be created
     $: isComplete =
@@ -75,7 +82,7 @@
 
         //Do the search if not loading and not at end of results
         if (canSearch) {
-            isLoading = true;
+            isLoadingSearchResults = true;
 
             //Make search request
             let searchOutput = await GameAPI.findPlaylists(
@@ -89,7 +96,7 @@
             results = Array.from(
                 new Set([...results, ...searchOutput.results]),
             );
-            isLoading = false;
+            isLoadingSearchResults = false;
         }
     }
 
@@ -117,7 +124,7 @@
         lastQuery = " ";
         results = [];
         nextOffset = 0;
-        isLoading = true;
+        isLoadingSearchResults = true;
         await tick();
 
         //Extract playlist ID
@@ -128,7 +135,7 @@
             ErrorMessage.set("Please provide a valid Spotify playlist URL.");
         }
 
-        isLoading = false;
+        isLoadingSearchResults = false;
     }
 
     /**
@@ -151,6 +158,8 @@
      * Perform input checks and create the game
      */
     async function handleFinish() {
+        isLoading = true;
+
         //Fall back to default values when chosen values are out of bounds for advanced options
         for (let [key, option] of ADVANCED_OPTIONS_ENTRIES) {
             let value = advancedOptions[key as keyof GameOptions];
@@ -175,14 +184,15 @@
         }
 
         console.log(advancedOptions);
-        //Create and join the game
-        GameAPI.createGame(selectedPlaylistId, selectedGameType, selectedVisibility, advancedOptions).then(
-            (gameId) => {
-                if (gameId) {
-                    GameAPI.joinGame(gameId);
-                }
-            },
-        );
+
+        //Create the game
+        let gameId = await GameAPI.createGame(selectedPlaylistId, selectedGameType, selectedVisibility, advancedOptions);
+        isLoading = false;
+
+        //Join the game
+        if (gameId) {
+            GameAPI.joinGame(gameId);
+        }
     }
 
     async function setAdvancedOption(
@@ -402,7 +412,7 @@
                             {/if}
                             results. Try another search!
                         </div>
-                    {:else if isLoading}
+                    {:else if isLoadingSearchResults}
                         <div id="loading">Loading...</div>
                     {:else if results.length > 0}
                         <button
@@ -430,7 +440,7 @@
         <button
             class="footer-btn"
             on:click={handleFinish}
-            disabled={!isComplete}
+            disabled={!isComplete || isLoading}
         >
             Finish
         </button>
@@ -444,6 +454,10 @@
         on:yes={() => CurrentPage.set(Page.HOME)}
         on:no={() => (showCancelModal = false)}
     />
+{/if}
+
+{#if isLoading}
+    <LoadingModal message="Creating game" color={spotifyGreen}/>
 {/if}
 
 <style>
