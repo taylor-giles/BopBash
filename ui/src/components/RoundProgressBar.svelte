@@ -57,7 +57,10 @@
      * @param startAngle The angle to start the arc at, in degrees
      * @param endAngle The angle to end the arc at, in degrees
      */
-    async function buildArc(startAngle: number, endAngle: number): Promise<string> {
+    async function buildArc(
+        startAngle: number,
+        endAngle: number,
+    ): Promise<string> {
         await tick();
         startAngle = startAngle > 360 ? startAngle % 360 : startAngle;
         endAngle = endAngle > 360 ? endAngle % 360 : endAngle;
@@ -83,26 +86,29 @@
 </script>
 
 <main bind:clientWidth={width} bind:clientHeight={height}>
-    <svg id="base-ring">
-        {#await buildArc(0, 360) then d}
-            <path
-                {d}
-                stroke={baseColor}
-                stroke-width={baseThickness}
-                fill="none"
-            />
-        {/await}
-    </svg>
-    <svg id="progress-ring">
-        {#await buildArc(0, progressAngle) then d}
-            <path
-                d={d}
-                stroke={color}
-                stroke-width={thickness}
-                fill="none"
-            />
-        {/await}
-    </svg>
+    <!-- Rerender whenever dimensions change (to redraw SVGs at the correct location) -->
+    {#key [width, height]}
+        <svg id="base-ring">
+            {#await buildArc(0, 360) then d}
+                <path
+                    {d}
+                    stroke={baseColor}
+                    stroke-width={baseThickness}
+                    fill="none"
+                />
+            {/await}
+        </svg>
+        <svg id="progress-ring">
+            {#await buildArc(0, progressAngle) then d}
+                <path
+                    {d}
+                    stroke={color}
+                    stroke-width={thickness}
+                    fill="none"
+                />
+            {/await}
+        </svg>
+    {/key}
 </main>
 
 <style>
