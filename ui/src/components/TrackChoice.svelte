@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import type { TrackChoice } from "../../../shared/types";
 
     export let choice: TrackChoice;
-
 </script>
 
 <button on:click>
@@ -10,9 +10,7 @@
         {choice.name}
     </div>
     <div class="artist">
-        <div>
-            by
-        </div>
+        <div>by</div>
         <b>{choice.artist}</b>
     </div>
 </button>
@@ -31,12 +29,14 @@
         justify-content: center;
         align-items: center;
         gap: 0.35rem;
-        transition: 0.35s;
+        transition: 0.2s;
     }
-    button:hover {
-        background-color: var(--spotify-green);
-        color: var(--accent-dark);
-        border-color: var(--accent);
+    @media (hover: hover) {
+        button:hover {
+            background-color: var(--spotify-green);
+            color: var(--accent-dark);
+            border-color: var(--accent-light);
+        }
     }
 
     .title {

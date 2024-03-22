@@ -19,9 +19,7 @@
     import GameplayForm from "../components/GameplayForm.svelte";
     import TrackChoice from "../components/TrackChoice.svelte";
     import GameplayVisualization from "../components/GameplayVisualization.svelte";
-
-    //Millis between numbers shown in countdown
-    const countdownInterval = 400;
+    import { COUNTDOWN_INTERVAL } from "../../../shared/constants";
 
     //Create audio context
     const audioContext = new AudioContext();
@@ -68,8 +66,8 @@
     //Maintain round & game variables
     $: currentRoundNum = $GameStore.currentRound?.index ?? -1;
     $: currentRoundDuration =
-        ($GameStore.currentRound?.duration ?? countdownInterval * 4) -
-        countdownInterval * 3;
+        ($GameStore.currentRound?.duration ?? COUNTDOWN_INTERVAL * 4) -
+        COUNTDOWN_INTERVAL * 3;
     $: currentRoundChoices = $GameStore.currentRound?.choices ?? [];
     $: audioURL = $GameStore.currentRound?.audioURL;
     $: isGameDone = $GameStore.status === GameStatus.ENDED;
@@ -161,12 +159,13 @@
      * Skips the rest of this round
      */
     async function skipRound(e: Event) {
+        e?.preventDefault();
         guessTrackId = "";
         handleSubmit(e);
     }
 
     /**
-     * Submit the guess
+     * Submits the guess
      */
     async function handleSubmit(e?: Event) {
         e?.preventDefault();
@@ -281,11 +280,11 @@
                         {/if}
                     </div>
 
-                    <div id="center-display">
+                    <div id="center-display" class:condensed={isVisualizerSmall}>
                         <GameplayVisualization
                             bind:this={visualization}
                             bind:currentPhase
-                            {countdownInterval}
+                            countdownInterval={COUNTDOWN_INTERVAL}
                             {visualizerNode}
                             {beep}
                             {currentRoundDuration}
@@ -316,6 +315,17 @@
                                         </div>
                                     {/each}
                                 </div>
+
+                                <!-- "Get Ready" overlay display -->
+                                {#if currentPhase !== RoundPhase.PLAYING}
+                                    <div
+                                        id="get-ready-overlay"
+                                        class="header-text"
+                                        transition:fade={{ duration: 150 }}
+                                    >
+                                        Get ready!
+                                    </div>
+                                {/if}
                             {:else}
                                 <!-- Form for entering guesses -->
                                 <div id="form-wrapper">
@@ -328,7 +338,7 @@
                                         on:skip={skipRound}
                                     />
 
-                                    <!-- "Get Ready" overlay display
+                                    <!-- "Get Ready" overlay display -->
                                     {#if currentPhase !== RoundPhase.PLAYING}
                                         <div
                                             id="get-ready-overlay"
@@ -337,18 +347,7 @@
                                         >
                                             Get ready!
                                         </div>
-                                    {/if} -->
-                                </div>
-                            {/if}
-
-                            <!-- "Get Ready" overlay display -->
-                            {#if currentPhase !== RoundPhase.PLAYING}
-                                <div
-                                    id="get-ready-overlay"
-                                    class="header-text"
-                                    transition:fade={{ duration: 150 }}
-                                >
-                                    Get ready!
+                                    {/if}
                                 </div>
                             {/if}
                         </div>
@@ -383,11 +382,7 @@
                     on:click={() => (showScoreboard = !showScoreboard)}
                 >
                     <PodiumIcon />
-                    {#if showScoreboard}
-                        Hide
-                    {:else}
-                        Show
-                    {/if}
+                    {showScoreboard ? "Hide" : "Show"}
                 </button>
             {/if}
         </div>
@@ -444,6 +439,10 @@
         justify-content: center;
         align-items: center;
         height: max-content;
+        flex-grow: 1;
+    }
+    #center-display.condensed {
+        flex-grow: 0;
     }
 
     #scoreboard-container {
@@ -470,7 +469,7 @@
     }
 
     #submission-section {
-        flex: 1;
+        flex: 5;
         height: 0px;
         display: flex;
         align-items: center;
@@ -511,7 +510,7 @@
     }
 
     .choice-wrapper {
-        min-width: 18rem;
+        min-width: calc(max(18rem, 50%));
         flex: 1;
         padding: 5px;
     }
@@ -522,10 +521,6 @@
         left: 0;
         height: 100%;
         width: 100%;
-        /* top: -5%;
-        left: -5%;
-        height: 115%;
-        width: 110%; */
         background-color: rgba(0, 0, 0, 0.95);
         border-radius: 4px;
         border: 1px solid gray;
