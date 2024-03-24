@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import type { TrackChoice } from "../../../shared/types";
 
     export let choice: TrackChoice;
@@ -31,6 +30,8 @@
         gap: 0.35rem;
         transition: 0.2s;
     }
+
+    /* Set hover only on devices that support it to avoid iPhone ghost hover bug */
     @media (hover: hover) {
         button:hover {
             background-color: var(--spotify-green);

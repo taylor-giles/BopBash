@@ -99,7 +99,6 @@
                         if (currentPhase === RoundPhase.COUNTDOWN) {
                             countdownView.innerHTML = `${i}`;
                             beep?.play();
-
                             if (i == 0) {
                                 resolve();
                             }
