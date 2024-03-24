@@ -2,7 +2,6 @@
     export let title: string;
     export let description: string = "";
     export let instruction: string = "";
-
 </script>
 
 <button on:click>

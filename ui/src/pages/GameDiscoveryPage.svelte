@@ -4,7 +4,7 @@
     import type { GameState } from "../../../shared/types";
     import GameAPI from "../../api/api";
     import { joinGame } from "../../api/player-api";
-    import { CurrentPage, Page } from "../../pageStore";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     import GameCard from "../components/GameCard.svelte";
 
     //"Refreshing" indicator is shown iff this is true
@@ -34,10 +34,10 @@
 
 <main>
     <div id="button-container">
-        <button class="header-btn" on:click={handleBackClick}>
+        <button class="header-btn text-button" on:click={handleBackClick}>
             <BackIcon /> Back
         </button>
-        <button class="header-btn" on:click={refresh}>
+        <button class="header-btn text-button" on:click={refresh}>
             <RefreshIcon /> Refresh
         </button>
     </div>
@@ -55,7 +55,8 @@
                 {/each}
             </div>
         {:else}
-            No games available. Make a new one!
+            <div>No public games available.</div>
+            <button id="new-game-btn" class="text-button" on:click={()=> CurrentPage.set(Page.CREATE)}> Make a new game </button>
         {/if}
     </div>
 </main>
@@ -76,9 +77,11 @@
         width: 100%;
         flex: 1;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         overflow-y: auto;
+        gap: 20px;
     }
 
     #games-container {
@@ -102,6 +105,15 @@
         width: 100%;
     }
 
+    #new-game-btn {
+        border: 1px solid var(--primary-light);
+        padding: 0.5rem;
+        padding-inline: 1rem;
+    }
+    #new-game-btn:hover{
+        border-color: var(--spotify-green);
+    }
+
     .card-wrapper {
         flex: 1;
         max-width: 600px;
@@ -110,19 +122,13 @@
     }
 
     .header-btn {
-        background-color: transparent;
-        border: none;
         color: white;
-        padding: 0px;
-        outline: none;
         display: flex;
         flex-direction: row;
         align-items: center;
         gap: 5px;
     }
     .header-btn:hover {
-        background-color: transparent;
         color: var(--spotify-green);
-        border: 0px;
     }
 </style>

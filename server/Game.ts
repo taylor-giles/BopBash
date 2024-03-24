@@ -1,5 +1,5 @@
 import { PlayerConnection } from "./types";
-import { GuessResult, Playlist, Track } from "../shared/types";
+import { ADVANCED_OPTIONS_DEFINITIONS, GameOptions, GameType, GameVisibility, GuessResult, Playlist, Track, TrackChoice } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
@@ -13,13 +13,18 @@ const POST_ROUND_WAIT_TIME = 10000;
  */
 export class Game {
     id: string;
+    type: GameType;
+    visibility: GameVisibility;
     playlist: Playlist;
+    gameOptions: GameOptions;
     players: ObservableMap<string, Player>;
     rounds: Round[];
     status: GameStatus;
     currentRound?: {
         index: number,
-        audioURL: string
+        audioURL: string,
+        duration: number,
+        choices?: { id: string, name: string, artist: string }[]
         trackId?: string
     }
 
@@ -27,12 +32,23 @@ export class Game {
     private endCurrentRound: (value: void | PromiseLike<void>) => void = () => { };
 
     //Constructor
-    private constructor(id: string, playlist: Playlist) {
+    private constructor(id: string, playlist: Playlist, type: GameType, visibility: GameVisibility, gameOptions: GameOptions) {
         this.id = id;
+        this.type = type;
+        this.visibility = visibility;
         this.playlist = playlist;
         this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
+
+        //Check gameOptions bounds and set defaults if needed - ensure that all game options are defined
+        this.gameOptions = gameOptions;
+        for (let [key, option] of Object.entries(ADVANCED_OPTIONS_DEFINITIONS)) {
+            let currentValue = this.gameOptions[key as keyof GameOptions];
+            if (currentValue === undefined || currentValue < option.min || currentValue > option.max) {
+                this.gameOptions[key as keyof GameOptions] = option.default;
+            }
+        }
     }
 
 
@@ -41,11 +57,13 @@ export class Game {
      * (Async replacement for a constructor)
      * @param id The ID of the new game
      * @param playlist The playlist that this game will be played on
-     * @param desiredNumRounds The desired number of rounds for this game
+     * @param type The type of this game
+     * @param visibility The visibility of this game
+     * @param gameOptions The desired parameters for this game
      */
-    public static async newInstance(id: string, playlist: Playlist, desiredNumRounds: number): Promise<Game> {
-        let newGame = new Game(id, playlist);
-        await newGame.generateRounds(desiredNumRounds);
+    public static async newInstance(id: string, playlist: Playlist, type: GameType, visibility: GameVisibility, gameOptions: GameOptions): Promise<Game> {
+        let newGame = new Game(id, playlist, type, visibility, gameOptions);
+        await newGame.generateRounds();
         return newGame;
     }
 
@@ -53,22 +71,21 @@ export class Game {
     /**
      * Shuffles the tracks in the playlist and looks for preview URLs.
      * Attempts to find desiredNumRounds preview URLs. 
-     * Adds AT MOST desiredNumRounds tracks to this.rounds.
+     * If unable to find enough previewURLs, repeats at random until reaching desired amount.
      * 
-     * @param desiredNumRounds The desired number of rounds for this game.
      * @returns The list of generated rounds
      */
-    public async generateRounds(desiredNumRounds: number) {
+    public async generateRounds() {
         //Clear selection
         this.rounds = [];
 
         //Remove local tracks and shuffle the remaining ones
-        let viableTracks: Track[] = lodash.shuffle(this.playlist.tracks.items.map((value) => value.track).filter((track) => !track.is_local));
+        let viableTracks: Track[] = lodash.shuffle(this.playlist.tracks.items.map((value) => value.track).filter((track) => !(track?.is_local ?? true)));
 
         //Pick the tracks from this playlist
         //Look through all the (shuffled) non-local tracks until enough tracks with previewURLs are found (or not).
         let chosenTracks: Set<Track> = new Set();
-        for (let trackNum = 0; chosenTracks.size < desiredNumRounds && trackNum < viableTracks.length; trackNum++) {
+        for (let trackNum = 0; chosenTracks.size < this.gameOptions.numRounds! && trackNum < viableTracks.length; trackNum++) {
             let chosenTrack = viableTracks[trackNum];
             chosenTrack.previewURL = await SpotifyAPI.getTrackPreviewURL(chosenTrack.id).catch((error) => {
                 console.error(`Unable to get preview URL for track ${chosenTrack.id}: `, error.message);
@@ -80,8 +97,50 @@ export class Game {
             }
         }
 
+        //Helper function to convert a track into a round for this game
+        const createRound = (track: Track) => {
+            //Generate choices (if needed)
+            let choices: TrackChoice[] | undefined;
+            if (this.type == GameType.CHOICES) {
+                let numChoices = this.gameOptions.numChoices ?? 1;
+                
+                //Remove correct answer by putting it first, removing all duplicates, then removing first element
+                let possibleChoices = lodash.uniqBy([track, ...viableTracks], "id").slice(1);
+
+                //Pick a random sample of incorrect answers and include the right answer
+                choices = [track, ...lodash.sampleSize(possibleChoices, numChoices - 1)].map((chosenTrack) => {
+                    return { id: chosenTrack.id, name: chosenTrack.name, artist: chosenTrack.artists.map((artist) => artist.name).join(", ") };
+                });
+
+                //Shuffle the choices
+                choices = lodash.shuffle(choices);
+            }
+
+            //Determine round duration
+            let roundDuration = this.gameOptions.roundDuration! * 1000;
+
+            //Create and return the round
+            return new Round(track.id, track.previewURL ?? "", roundDuration, choices);
+        }
+
         //Convert chosen tracks set to list of Rounds
-        this.rounds = Array.from(chosenTracks).map((track) => new Round(track.id, track.previewURL ?? "", 30000));
+        this.rounds = Array.from(chosenTracks).map(createRound);
+
+        //Throw error if no rounds were generated
+        if (this.rounds.length <= 0) {
+            throw new Error("No valid rounds could be generated");
+        }
+
+        //Repeat rounds at random until the desired number is reached
+        if (this.rounds.length < this.gameOptions.numRounds!) {
+            //This needs to be looped for the case where (desired num rounds - this.rounds.length) < this.rounds.length
+            while (this.rounds.length < this.gameOptions.numRounds!) {
+                this.rounds.push(...lodash.sampleSize(this.rounds, this.gameOptions.numRounds! - this.rounds.length)!);
+            }
+
+            //Re-shuffle the rounds
+            this.rounds = lodash.shuffle(this.rounds);
+        }
     }
 
 
@@ -203,7 +262,7 @@ export class Game {
         let player = this.getPlayer(playerId);
 
         //Do not accept the guess if the player is already ready for round to end
-        if(player.activeGameInfo!.isReady){
+        if (player.activeGameInfo!.isReady) {
             throw new Error("Player is already ready for round end.");
         }
 
@@ -273,7 +332,7 @@ export class Game {
                 await this.startRound(i);
 
                 //End the round by readying all players and sending the correct track ID
-                this.currentRound!.trackId = this.rounds[i].trackId; 
+                this.currentRound!.trackId = this.rounds[i].trackId;
                 for (let player of this.players.values()) {
                     player.activeGameInfo!.isReady = true;
                 }
@@ -283,7 +342,7 @@ export class Game {
                 await new Promise((resolve) => setTimeout(resolve, POST_ROUND_WAIT_TIME));
             }
         }
-        
+
         //End the game
         this.end();
     }
@@ -300,7 +359,9 @@ export class Game {
         //Set the currentRound variable
         this.currentRound = {
             index: index,
-            audioURL: this.rounds[index].previewURL
+            audioURL: this.rounds[index].previewURL,
+            duration: this.rounds[index].maxDuration,
+            choices: this.rounds[index].choices
         };
 
         //Inform players
@@ -333,6 +394,8 @@ export class Game {
         //Build and return the state object
         return {
             id: this.id,
+            type: this.type,
+            visibility: this.visibility,
             status: this.status,
             playlist: {
                 id: this.playlist.id,

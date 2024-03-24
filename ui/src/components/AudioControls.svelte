@@ -12,15 +12,24 @@
     let newVolumeOpen: boolean = true; //Used to avoid button press immediately undoing the effects of on:blur
     let isPaused: boolean = true;
 
+    /**
+     * Plays/pauses audio playback
+     */
     function togglePlay() {
         audio.paused ? audio.play() : audio.pause();
     }
 
+    /**
+     * Rewinds audio playback by 5 seconds
+     */
     function handleSeekBack() {
         audio.currentTime = Math.max(0, audio.currentTime - 5);
         audio.play();
     }
 
+    /**
+     * Fast-forwards audio playback by 5 seconds
+     */
     function handleSeekForward() {
         audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
         audio.play();
