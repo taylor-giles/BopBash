@@ -12,3 +12,6 @@ export const GAME_ID_REGEX = /^[0-9A-Fa-f]{6}$/;
 
 //Time (in millis) to wait after requesting to join a game
 export const JOIN_GAME_TIMEOUT = 5000;
+
+//Time (in millis) between each number in the countdown
+export const COUNTDOWN_INTERVAL = 400;

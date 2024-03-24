@@ -29,13 +29,12 @@
         </div>
     </div>
 
-    <div id="footer" >
+    <div id="footer">
         <div id="game-id" class="header-text">
             {game.id}
         </div>
         <button on:click> Join Game </button>
     </div>
-
 </main>
 
 <style>
@@ -77,6 +76,7 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
+        word-break: break-word;
     }
     #description-label {
         font-weight: 500;

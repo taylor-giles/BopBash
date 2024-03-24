@@ -1,6 +1,6 @@
 <script lang="ts">
     import GameAPI from "../../api/api";
-    import { CurrentPage, Page } from "../../pageStore";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     import GameIdForm from "../components/GameIDForm.svelte";
     import SelectionButton from "../components/SelectionButton.svelte";
 </script>
@@ -10,12 +10,13 @@
         <div style="flex: 1;">
             <GameIdForm />
         </div>
-        <div style="text-align: center;">-OR-</div>
+        <div id="separator">-OR-</div>
         <div id="selection-buttons-container">
             <div style="width: 100%; box-sizing:border-box;">
                 <SelectionButton
                     title="Create Game"
                     description="Start a new game from any playlist"
+                    on:click={() => CurrentPage.set(Page.CREATE)}
                 />
             </div>
 
@@ -60,5 +61,14 @@
         flex-direction: column;
         justify-content: center;
         gap: 25px;
+    }
+
+    #separator {
+        text-align: center;
+    }
+    @media(max-width: 860px) {
+        #separator {
+            width: 100%;
+        }
     }
 </style>

@@ -55,10 +55,7 @@ export async function authenticate(req: PlayerRequest, res: Response, next: Next
  * Returns information about the requested playlist
  * 
  * Request Params:
- *  - id: The ID of the playlist
- * 
- * Request Body:
- *  - None
+ *  - id: string - The ID of the playlist
  * 
  * Response Body:
  *  - On Success:
@@ -86,6 +83,48 @@ export async function getPlaylistData(req: Request, res: Response) {
 
 
 /**
+ * GET /findPlaylists
+ * Returns a set of metadata for each playlist matching the query
+ * 
+ * Request Params:
+ *  - query: string - The search query
+ * 
+ * Request Query Parameters:
+ *  - limit: number - The max number of results to include. Max is 50
+ *  - offset: number - The index of search results to start query at
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - nextOffset: number - The offset to use to search the next "page" of results
+ *      - results: PlaylistMetadata[] - List of playlists matching query
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function findPlaylists(req: Request, res: Response) {
+    let query = req.params.query;
+    let limit: number | undefined = parseInt(req?.query?.limit as string);
+    let offset: number | undefined = parseInt(req?.query?.offset as string);
+
+    //Make limit and offset undefined if they are NaN (so default values will be used)
+    limit = isNaN(limit) ? undefined : limit;
+    offset = isNaN(offset) ? undefined : offset;
+
+    //Ensure query is provided and is not only whitespace
+    if (!query || query.replace(/\s/g, '').length <= 0) {
+        return res.status(400).json({ error: "Query must be provided" });
+    }
+
+    //Use Spotify API to search for playlist
+    SpotifyAPI.searchPlaylist(query, offset, limit).then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        console.error(`Unable to perform playlist search for query: ${query}`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
+
+
+/**
  * POST /newGame
  * Generates a new game and returns its ID
  * 
@@ -94,23 +133,25 @@ export async function getPlaylistData(req: Request, res: Response) {
  * 
  * Request Body:
  *  - playlistId: string - The ID of the playlist to make a game for
- *  - numRounds: number - The desired number of rounds for this game
+ *  - type: GameType - The type for this game
+ *  - visibility: GameVisibility - The visibility of this game
+ *  - gameOptions: GameOptions - The options for this game
  * 
  * Response Body:
  *  - On Success:
  *      - gameId: string - The ID of the new game
- *      - numRounds: number - The actual number of rounds in the new game
- *      - playlistId: string - The ID of the playlist for this game (same as playlistId in req)
  *  - On Failure:
  *      - error: string - Error message
  */
 export async function makeNewGame(req: Request, res: Response) {
     let playlistId = req?.body?.playlistId;
-    let numRounds = req?.body?.numRounds;
+    let type = req?.body?.type;
+    let visibility = req?.body?.visibility;
+    let gameOptions = req?.body?.gameOptions;
 
     //Ensure all needed information is provided
-    if (!playlistId || !numRounds) {
-        return res.status(400).json({ error: "Both playlistId and numRounds must be specified in request body." });
+    if (!playlistId || !gameOptions || type === undefined || visibility === undefined) {
+        return res.status(400).json({ error: "All of the following must be specified in request body: playlistId, gameOptions, type, visibility" });
     }
 
     console.log("Handling request to create new game for playlist: ", playlistId);
@@ -125,9 +166,9 @@ export async function makeNewGame(req: Request, res: Response) {
     }
 
     //Create the game and register it with game driver
-    GameManager.generateNewGame(playlist, numRounds).then((game) => {
+    GameManager.generateNewGame(playlist, type, visibility, gameOptions).then((game) => {
         //Respond to sender with game ID
-        res.status(200).json({ id: game.id, numRounds: game.rounds.length, playlistId: playlistId });
+        res.status(200).json({ gameId: game.id });
     }).catch((error) => {
         console.error("Unable to create new game", error.message);
         res.status(500).json({ error: error.message });

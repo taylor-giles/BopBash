@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { flip } from "svelte/animate";
+  import { flip } from "svelte/animate";
   import type { PlayerState } from "../../../shared/types";
-  import { GameConnection, GameStore } from "../../gameStore";
+  import { GameConnection, GameStore } from "../../stores/gameStore";
   import PlayerScoreCard from "./PlayerScoreCard.svelte";
 
   export let players: PlayerState[];

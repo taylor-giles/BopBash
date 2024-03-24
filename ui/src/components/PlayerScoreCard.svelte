@@ -2,7 +2,7 @@
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import WaitingIcon from "svelte-material-icons/ProgressClock.svelte";
     import type { PlayerState } from "../../../shared/types";
-    import { GameStore } from "../../gameStore";
+    import { GameStore } from "../../stores/gameStore";
     import { arraySum } from "../../../shared/utils";
 
     export let player: PlayerState;
