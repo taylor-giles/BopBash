@@ -75,9 +75,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:hover:enabled {
-  background-color: var(--spotify-green);
-  color: black;
+@media(hover: hover){
+  button:hover:enabled {
+    background-color: var(--spotify-green);
+    color: black;
+  }
 }
 
 button:focus,
