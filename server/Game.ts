@@ -223,7 +223,7 @@ export class Game {
                 //If all players are ready during pending stage, the game is ready to start
                 this.start();
             } else if (this.status === GameStatus.ACTIVE) {
-                //If all players are "ready" during the game, they have all voted to skip to next round
+                //If all players are "ready" during the game, they are all ready for next round
                 this.endCurrentRound();
             }
         }

@@ -11,7 +11,7 @@
     import GameAPI from "../../api/api";
     import PlayerCard from "../components/PlayerCard.svelte";
     import { CurrentPage, Page } from "../../stores/pageStore";
-    import ConfirmationModal from "../components/ConfirmationModal.svelte";
+    import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
     import Modal from "../components/modals/Modal.svelte";
@@ -187,6 +187,7 @@
             <div style="width: 100%; margin-bottom: -20px;">
                 <button
                     class="text-button"
+                    style="color: black;"
                     on:click={() => (isSharingModalOpen = false)}
                 >
                     <CloseIcon />
