@@ -118,7 +118,7 @@
         flex: 1;
         max-width: 600px;
         min-width: 20rem;
-        height: 19rem;
+        height: 22rem;
     }
 
     .header-btn {

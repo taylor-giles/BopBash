@@ -6,7 +6,7 @@ import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
 
-const POST_ROUND_WAIT_TIME = 10000;
+const POST_ROUND_WAIT_TIME = 8000;
 
 /**
  * Class to represent the server-side view of a game
@@ -223,7 +223,7 @@ export class Game {
                 //If all players are ready during pending stage, the game is ready to start
                 this.start();
             } else if (this.status === GameStatus.ACTIVE) {
-                //If all players are "ready" during the game, they have all voted to skip to next round
+                //If all players are "ready" during the game, they are all ready for next round
                 this.endCurrentRound();
             }
         }
@@ -405,8 +405,8 @@ export class Game {
                 numTracks: this.playlist.tracks.total
             },
             players: playerStates,
-            numRounds: this.rounds.length,
-            currentRound: this.currentRound
+            currentRound: this.currentRound,
+            options: this.gameOptions
         }
     }
 

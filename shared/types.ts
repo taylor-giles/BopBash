@@ -84,7 +84,7 @@ export type GameState = {
         trackId?: string
     }
     status: GameStatus,
-    numRounds: number,
+    options: GameOptions
 }
 
 export type GuessResult = {
