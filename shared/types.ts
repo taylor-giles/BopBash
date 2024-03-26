@@ -15,18 +15,19 @@ export const GAME_VISIBILITY_OPTIONS = [
     GameVisibility.PRIVATE,
 ];
 
-//A list of the possible game options
-export type GameOption = { name: string, type: "number", default: number, min: number, max: number, gameTypes: GameType[] }
-export const ADVANCED_OPTIONS_DEFINITIONS: TransformKeys<GameOptions, GameOption> = {
-    numRounds: { name: "Number of Rounds", type: "number", default: 10, min: 1, max: 50, gameTypes: GAME_TYPE_OPTIONS },
-    roundDuration: { name: "Round Duration", type: "number", default: 30, min: 10, max: 60, gameTypes: GAME_TYPE_OPTIONS },
-    numChoices: { name: "Number of Choices", type: "number", default: 4, min: 2, max: 8, gameTypes: [GameType.CHOICES] }
-}
-
 export interface GameOptions {
     numRounds?: number,
     roundDuration?: number,
     numChoices?: number
+}
+
+
+//A list of the possible game options
+export type GameOptionMetadata = { key: keyof(GameOptions), name: string, label: string, type: "number", default: number, min: number, max: number, gameTypes: GameType[] }
+export const ADVANCED_OPTIONS_DEFINITIONS: TransformKeys<GameOptions, GameOptionMetadata> = {
+    numRounds: { key: "numRounds", name: "Number of Rounds", label: " Rounds", type: "number", default: 10, min: 1, max: 50, gameTypes: GAME_TYPE_OPTIONS },
+    roundDuration: { key: "roundDuration", name: "Round Duration", label: "s Rounds", type: "number", default: 30, min: 10, max: 60, gameTypes: GAME_TYPE_OPTIONS },
+    numChoices: { key: "numChoices", name: "Number of Choices", label: " Choices", type: "number", default: 4, min: 2, max: 8, gameTypes: [GameType.CHOICES] }
 }
 
 export enum GameStatus {

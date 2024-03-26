@@ -1,19 +1,21 @@
 <script lang="ts">
     import PeopleIcon from "svelte-material-icons/AccountMultiple.svelte";
-    import DurationIcon from "svelte-material-icons/TimerMusic.svelte";
-    import RoundsIcon from "svelte-material-icons/Music.svelte";
     import { GameType, type GameState } from "../../../shared/types";
-    import { GAME_TYPES } from "../game-types";
-    const ChoicesIcon = GAME_TYPES[GameType.CHOICES].icon;
+    import {
+        ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
+        GAME_TYPES,
+    } from "../game-types";
 
     export let game: GameState;
 </script>
 
 <main>
+    <!-- Title -->
     <div id="title" class="header-text">
         {game.playlist.name}
     </div>
 
+    <!-- Game type and player count -->
     <div id="subtitle-container">
         <div id="game-type-label">
             <svelte:component this={GAME_TYPES[game.type].icon} />
@@ -25,7 +27,7 @@
         </div>
     </div>
 
-
+    <!-- Description -->
     <div id="description-container">
         <div id="description-label">Playlist Description:</div>
         {#if game.playlist.description.length > 0}
@@ -37,23 +39,21 @@
         {/if}
     </div>
 
+    <!-- Advanced options displays -->
     <div class="container">
-        <div class="property-display body-text">
-            <RoundsIcon />
-            <b>{game.options.numRounds}</b> Rounds
-        </div>
-        <div class="property-display body-text">
-            <DurationIcon />
-            <b>{game.options.roundDuration}s</b> Rounds
-        </div>
-        {#if game.type == GameType.CHOICES}
-            <div class="property-display body-text">
-                <ChoicesIcon />
-                <b>{game.options.numChoices}</b> Choices
-            </div>
-        {/if}
+        {#each Object.values(ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS) as option}
+            {#if option.gameTypes.includes(game.type)}
+                <div class="property-display body-text">
+                    <svelte:component this={option.icon} />
+                    <div>
+                        <b>{game.options[option.key]}</b>{option.label}
+                    </div>
+                </div>
+            {/if}
+        {/each}
     </div>
 
+    <!-- Game ID and Join Game button -->
     <div id="footer">
         <div id="game-id" class="header-text">
             {game.id}
