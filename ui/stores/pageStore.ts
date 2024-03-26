@@ -14,8 +14,7 @@ export enum Page {
 export enum RoundPhase {
   COUNTDOWN,
   PLAYING,
-  CONCLUSION,
-  END
+  CONCLUSION
 }
 
 /**
