@@ -400,7 +400,6 @@
         position: relative;
         display: flex;
         flex-direction: row;
-        gap: 36px;
         flex: 1;
         width: 100%;
         height: 0px;
@@ -435,11 +434,15 @@
         width: 0px;
         height: 100%;
         gap: 5px;
-        transition: width 300ms ease-out;
         max-width: 100%;
+        margin-left: 0px;
+        transition-property: width, margin-left;
+        transition-duration: 300ms;
+        transition-timing-function: ease-out;
     }
     #scoreboard-section.shown{
         width: 350px;
+        margin-left: 2rem;
     }
     #scoreboard-title {
         text-align: center;
@@ -477,6 +480,7 @@
             transition: opacity 150ms ease;
         }
         #scoreboard-section.shown {
+            margin: 0px;
             opacity: 100;
             pointer-events: inherit;
             width: 100%;
