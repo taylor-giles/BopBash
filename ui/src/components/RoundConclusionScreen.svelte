@@ -3,7 +3,7 @@
     import { tick } from "svelte";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import type { GuessResult } from "../../../shared/types";
-    import { GameStore, GameConnection } from "../../stores/gameStore";
+    import { GameStore } from "../../stores/gameStore";
     import { arraySum } from "../../../shared/utils";
     import Scoreboard from "./Scoreboard.svelte";
     import Modal from "./modals/Modal.svelte";
@@ -226,5 +226,6 @@
     #scoreboard-title {
         font-size: 1.7rem;
         font-weight: 700;
+        margin-top: -10px;
     }
 </style>

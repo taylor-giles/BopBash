@@ -1,10 +1,11 @@
 <script lang="ts">
   import { flip } from "svelte/animate";
   import type { PlayerState } from "../../../shared/types";
-  import { GameConnection, GameStore } from "../../stores/gameStore";
+  import { GameConnection } from "../../stores/gameStore";
   import PlayerScoreCard from "./PlayerScoreCard.svelte";
 
   export let players: PlayerState[];
+  export let showScoreChange: boolean = true;
 
   //Expose the current round score of the active player. This is read-only - setting it has no effect.
   export let currentRoundScore: number | null | undefined = undefined;
@@ -20,9 +21,10 @@
           {player}
           highlight={true}
           position={index + 1}
+          {showScoreChange}
         />
       {:else}
-        <PlayerScoreCard {player} highlight={false} position={index + 1} />
+        <PlayerScoreCard {player} highlight={false} position={index + 1} {showScoreChange} />
       {/if}
     </div>
   {/each}

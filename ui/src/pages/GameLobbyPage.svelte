@@ -291,7 +291,7 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        border: 1px solid gray;
+        border: 2px solid gray;
         border-radius: 12px;
         padding: 1rem;
         padding-inline: 0.5rem;
