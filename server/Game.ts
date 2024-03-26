@@ -6,7 +6,7 @@ import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
 
-const POST_ROUND_WAIT_TIME = 10000;
+const POST_ROUND_WAIT_TIME = 8000;
 
 /**
  * Class to represent the server-side view of a game
@@ -405,8 +405,8 @@ export class Game {
                 numTracks: this.playlist.tracks.total
             },
             players: playerStates,
-            numRounds: this.rounds.length,
-            currentRound: this.currentRound
+            currentRound: this.currentRound,
+            options: this.gameOptions
         }
     }
 
