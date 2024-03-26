@@ -106,7 +106,7 @@
     }
 
     #name-display{
-        font-size: 1.4rem;
+        font-size: 1.25rem;
         font-weight: 700;
     }
     #name-container{
@@ -122,7 +122,7 @@
     }
 
     #score-display {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
     }
 
