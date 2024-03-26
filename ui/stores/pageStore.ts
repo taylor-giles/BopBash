@@ -15,6 +15,7 @@ export enum RoundPhase {
   COUNTDOWN,
   PLAYING,
   CONCLUSION,
+  END
 }
 
 /**
