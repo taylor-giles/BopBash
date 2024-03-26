@@ -11,15 +11,15 @@
     } from "../../../shared/types";
     import Scoreboard from "../components/Scoreboard.svelte";
     import { arraySum } from "../../../shared/utils";
-    import { IFrameAPI } from "../../stores/IFrameAPI";
-    import { fade } from "svelte/transition";
-    import ConfirmationModal from "../components/ConfirmationModal.svelte";
+    import { fade, blur } from "svelte/transition";
+    import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { CurrentPage, Page, RoundPhase } from "../../stores/pageStore";
     import AudioControls from "../components/AudioControls.svelte";
     import GameplayForm from "../components/GameplayForm.svelte";
     import TrackChoice from "../components/TrackChoice.svelte";
     import GameplayVisualization from "../components/GameplayVisualization.svelte";
     import { COUNTDOWN_INTERVAL } from "../../../shared/constants";
+    import ConclusionScreen from "../components/ConclusionScreen.svelte";
 
     //Create audio context
     const audioContext = new AudioContext();
@@ -51,7 +51,6 @@
     let sourceNode = audioContext.createMediaElementSource(audioElement);
     sourceNode.connect(visualizerNode);
     sourceNode.connect(audioContext.destination);
-    let correctTrackEmbed: HTMLIFrameElement;
     let visualization: GameplayVisualization;
     let choicesContainer: HTMLDivElement;
 
@@ -72,10 +71,9 @@
     $: audioURL = $GameStore.currentRound?.audioURL;
     $: isGameDone = $GameStore.status === GameStatus.ENDED;
 
-    $: console.log(isVisualizerSmall);
-
     //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
+        currentPhase = RoundPhase.COUNTDOWN;
         audioElement.src = audioURL;
         loadRound();
     }
@@ -114,7 +112,7 @@
      */
     async function loadRound() {
         //Destroy audio analyzer
-        visualization?.destroyAnalyzer();
+        visualization?.destroyAnalyzer?.();
 
         //Reset round variables
         guessResult = undefined;
@@ -195,15 +193,6 @@
         audioElement.pause();
         currentPhase = RoundPhase.CONCLUSION;
         await tick();
-
-        //Construct IFrameAPI request
-        let iframeOptions = {
-            uri: `spotify:track:${correctTrackId}`,
-            height: "100%",
-        };
-
-        //Make the embed
-        $IFrameAPI.createController(correctTrackEmbed, iframeOptions, () => {});
     }
 
     /**
@@ -220,6 +209,8 @@
         //Destroy audio analyzer
         visualization?.destroyAnalyzer();
     });
+
+    $: console.log(currentPhase);
 </script>
 
 <main>
@@ -228,39 +219,7 @@
     {:else}
         <div id="main-content">
             {#if currentPhase === RoundPhase.CONCLUSION}
-                <div id="conclusion-content">
-                    <!-- Round results, including iframe -->
-                    <div id="conclusion-results-container">
-                        <div
-                            id="conclusion-title"
-                            style={`color: ${
-                                guessResult?.isCorrect
-                                    ? "var(--spotify-green)"
-                                    : "var(--red)"
-                            }`}
-                        >
-                            {guessResult?.isCorrect
-                                ? "Nice job!"
-                                : "Aww, shucks :("}
-                        </div>
-                        <iframe
-                            title="View track on Spotify"
-                            bind:this={correctTrackEmbed}
-                        >
-                            Loading...
-                        </iframe>
-                    </div>
-
-                    <!-- Scoreboard in conclusion screen -->
-                    <div id="conclusion-scoreboard-container">
-                        <Scoreboard
-                            players={Object.values($GameStore.players).toSorted(
-                                (a, b) =>
-                                    arraySum(b.scores) - arraySum(a.scores),
-                            )}
-                        />
-                    </div>
-                </div>
+                <ConclusionScreen {correctTrackId} {guessResult} />
             {:else}
                 <div id="gameplay-content">
                     <!-- Header -->
@@ -280,7 +239,10 @@
                         {/if}
                     </div>
 
-                    <div id="center-display" class:condensed={isVisualizerSmall}>
+                    <div
+                        id="center-display"
+                        class:condensed={isVisualizerSmall}
+                    >
                         <GameplayVisualization
                             bind:this={visualization}
                             bind:currentPhase
@@ -343,7 +305,7 @@
                                         <div
                                             id="get-ready-overlay"
                                             class="header-text"
-                                            transition:fade={{ duration: 150 }}
+                                            transition:blur={{ duration: 150 }}
                                         >
                                             Get ready!
                                         </div>
@@ -355,16 +317,21 @@
                 </div>
 
                 <!-- Scoreboard -->
-                {#if showScoreboard}
+                <div id="scoreboard-section" class:shown={showScoreboard}>
+                    <div id="scoreboard-title" class="header-text">
+                        Game Leaderboard
+                    </div>
                     <div id="scoreboard-container">
                         <Scoreboard
-                            players={Object.values($GameStore.players).toSorted(
+                            players={Object.values(
+                                $GameStore.players,
+                            ).toSorted(
                                 (a, b) =>
                                     arraySum(b.scores) - arraySum(a.scores),
                             )}
                         />
                     </div>
-                {/if}
+                </div>
             {/if}
         </div>
 
@@ -384,6 +351,15 @@
                     <PodiumIcon />
                     {showScoreboard ? "Hide" : "Show"}
                 </button>
+            {:else}
+                <div id="next-round-timer-container">
+                    <div>
+                        Next Round:
+                    </div>
+                    <div id="next-round-container" class="header-text">
+                        {Object.values($GameStore.players).every((player) => player.isReady) ? "STARTING SOON" : "WAITING FOR OTHER PLAYERS"}
+                    </div>
+                </div>
             {/if}
         </div>
     {/if}
@@ -412,15 +388,22 @@
         flex-direction: row;
         justify-content: space-between;
     }
+    #footer {
+        min-height: 42px;
+    }
+
+    #title {
+        font-size: 1.2rem;
+    }
 
     #main-content {
         position: relative;
         display: flex;
         flex-direction: row;
-        gap: 36px;
         flex: 1;
         width: 100%;
         height: 0px;
+        overflow-x: hidden;
     }
 
     #gameplay-content {
@@ -439,12 +422,34 @@
         justify-content: center;
         align-items: center;
         height: max-content;
-        flex-grow: 1;
+        padding-top: 1rem;
     }
     #center-display.condensed {
-        flex-grow: 0;
+        padding-top: 0px;
     }
 
+    #scoreboard-section {
+        display: flex;
+        flex-direction: column;
+        width: 0px;
+        height: 100%;
+        gap: 5px;
+        max-width: 100%;
+        margin-left: 0px;
+        transition-property: width, margin-left;
+        transition-duration: 300ms;
+        transition-timing-function: ease-out;
+    }
+    #scoreboard-section.shown{
+        width: 350px;
+        margin-left: 2rem;
+    }
+    #scoreboard-title {
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
     #scoreboard-container {
         flex: 1;
         height: 100%;
@@ -457,14 +462,31 @@
         justify-content: space-between;
         align-items: center;
         gap: 10px;
+        font-size: 0.5rem;
     }
     @media (max-width: 800px) {
-        #scoreboard-container {
+        #scoreboard-section {
             position: absolute;
             left: 0;
             top: 0;
             right: 0;
             bottom: 0;
+            margin: 0px;
+            background-color: rgba(0, 0, 0, 0.9);
+            border-radius: 5px;
+            pointer-events: none;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 150ms ease;
+        }
+        #scoreboard-section.shown {
+            margin: 0px;
+            opacity: 100;
+            pointer-events: inherit;
+            width: 100%;
+        }
+        #scoreboard-container{
+            background-color: transparent;
         }
     }
 
@@ -531,39 +553,6 @@
         align-items: center;
     }
 
-    #conclusion-content {
-        flex: 1;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 36px;
-    }
-
-    #conclusion-results-container {
-        flex: 1;
-        min-width: 260px;
-        white-space: nowrap;
-        overflow: hidden;
-    }
-
-    #conclusion-title {
-        font-weight: 700;
-        font-size: 2rem;
-    }
-
-    #conclusion-scoreboard-container {
-        flex: 1;
-        background-color: rgba(0, 0, 0, 0.8);
-        border: 2px solid var(--primary-light);
-        border-radius: 5px;
-        min-width: 260px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-    }
-
     #done-screen {
         position: fixed;
         left: 50%;
@@ -579,6 +568,14 @@
         border: 1px solid gray;
         font-size: 0.9rem;
         width: max-content;
+    }
+
+    #next-round-timer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 42px;
+        font-size: 0.9rem;
     }
 
     #leave-btn {

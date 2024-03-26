@@ -1,5 +1,10 @@
 <script lang="ts">
-    import type { GameState } from "../../../shared/types";
+    import PeopleIcon from "svelte-material-icons/AccountMultiple.svelte";
+    import DurationIcon from "svelte-material-icons/TimerMusic.svelte";
+    import RoundsIcon from "svelte-material-icons/Music.svelte";
+    import { GameType, type GameState } from "../../../shared/types";
+    import { GAME_TYPES } from "../game-types";
+    const ChoicesIcon = GAME_TYPES[GameType.CHOICES].icon;
 
     export let game: GameState;
 </script>
@@ -8,6 +13,18 @@
     <div id="title" class="header-text">
         {game.playlist.name}
     </div>
+
+    <div id="subtitle-container">
+        <div id="game-type-label">
+            <svelte:component this={GAME_TYPES[game.type].icon} />
+            {GAME_TYPES[game.type].name}
+        </div>
+        <div class="property-display body-text">
+            <PeopleIcon />
+            Players: <b>{Object.values(game.players ?? {}).length}</b>
+        </div>
+    </div>
+
 
     <div id="description-container">
         <div id="description-label">Playlist Description:</div>
@@ -22,11 +39,19 @@
 
     <div class="container">
         <div class="property-display body-text">
-            Rounds: {game.numRounds}
+            <RoundsIcon />
+            <b>{game.options.numRounds}</b> Rounds
         </div>
         <div class="property-display body-text">
-            Players: {Object.values(game.players ?? {}).length}
+            <DurationIcon />
+            <b>{game.options.roundDuration}s</b> Rounds
         </div>
+        {#if game.type == GameType.CHOICES}
+            <div class="property-display body-text">
+                <ChoicesIcon />
+                <b>{game.options.numChoices}</b> Choices
+            </div>
+        {/if}
     </div>
 
     <div id="footer">
@@ -63,6 +88,22 @@
         overflow: clip;
     }
 
+    #subtitle-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+        margin-top: -15px;
+    }
+
+    #game-type-label {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+    }
+
     #description-container {
         display: flex;
         flex-direction: column;
@@ -83,8 +124,13 @@
         display: inline-block;
     }
     .property-display {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
         font-size: 1rem;
         font-weight: 400;
+        margin-inline: 10px;
     }
 
     #footer {
@@ -113,8 +159,10 @@
         font-size: 0.9rem;
         display: flex;
         flex-direction: row;
-        gap: 25px;
+        gap: 10px;
         align-items: center;
         text-align: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
     }
 </style>

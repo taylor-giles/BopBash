@@ -5,16 +5,25 @@
   import PlayerScoreCard from "./PlayerScoreCard.svelte";
 
   export let players: PlayerState[];
+
+  //Expose the current round score of the active player. This is read-only - setting it has no effect.
+  export let currentRoundScore: number | null | undefined = undefined;
 </script>
 
 <main>
   {#each players as player, index (player.id)}
     <div class="score-card-container" animate:flip={{ duration: 200 }}>
-      <PlayerScoreCard
-        {player}
-        highlight={player.id === $GameConnection.playerId}
-        position={index + 1}
-      />
+      <!-- If this is the card for the active player, export the computed current round score -->
+      {#if player.id === $GameConnection.playerId}
+        <PlayerScoreCard
+          bind:currentRoundScore
+          {player}
+          highlight={true}
+          position={index + 1}
+        />
+      {:else}
+        <PlayerScoreCard {player} highlight={false} position={index + 1} />
+      {/if}
     </div>
   {/each}
 </main>

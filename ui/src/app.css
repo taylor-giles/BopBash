@@ -44,7 +44,7 @@ h1 {
   top: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -75,9 +75,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:hover:enabled {
-  background-color: var(--spotify-green);
-  color: black;
+@media(hover: hover){
+  button:hover:enabled {
+    background-color: var(--spotify-green);
+    color: black;
+  }
 }
 
 button:focus,

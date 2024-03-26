@@ -8,6 +8,7 @@
     export let player: PlayerState;
     export let highlight: boolean = false;
     export let position: number = 0;
+    export let currentRoundScore: number | null | undefined = 0;
 
     // Update currentRoundScore every time it changes
     $: currentRoundIndex = $GameStore?.currentRound?.index;
@@ -64,11 +65,12 @@
         flex-direction: row;
         align-items: center;
         gap: 1rem;
-        padding: 10px;
+        padding: 0.8rem;
         background-color: var(--primary-dark);
         border-radius: 1px;
         color: var(--primary-light);
         border: 1px solid gray;
+        white-space: nowrap;
     }
     main.highlighted {
         color: var(--spotify-green);
@@ -103,11 +105,16 @@
         color: white;
     }
 
-    #name-display,
-    #position-label {
-        font-size: 1.3em;
+    #name-display{
+        font-size: 1.25rem;
         font-weight: 700;
-        margin-bottom: -5px;
+    }
+    #name-container{
+        margin-bottom: -2px;
+    }
+    #position-label {
+        font-size: 1.4rem;
+        font-weight: 700;
     }
 
     #position-label {
@@ -115,10 +122,12 @@
     }
 
     #score-display {
-        font-size: 0.9em;
+        font-size: 1rem;
+        font-weight: 600;
     }
 
     #score-change-display {
-        font-size: 0.6em;
+        font-size: 0.9rem;
+        font-weight: 400;
     }
 </style>

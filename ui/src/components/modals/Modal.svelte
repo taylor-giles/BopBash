@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
+    import { blur } from "svelte/transition";
     const dispatch = createEventDispatcher();
 
     //Determines whether or not the modal should close when the user clicks outside of its content
@@ -20,7 +21,7 @@
     }
 </script>
 
-<div class="modal">
+<div class="modal" transition:blur={{duration: 100}}>
     <!-- svelte-ignore a11y-autofocus -->
     <div id="modal-content-wrapper" style="outline: none;" tabindex="-1" autofocus on:blur={handleBlur}>
         <slot />
