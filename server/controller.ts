@@ -319,13 +319,12 @@ export async function submitGuess(req: PlayerRequest, res: Response) {
         return res.status(400).json({ error: "roundNum and trackId must be specified" });
     }
 
-    console.log(`Handling request to submit guess ${trackId} for round ${roundNum} for player ${playerId}`);
+    // console.log(`Handling request to submit guess ${trackId} for round ${roundNum} for player ${playerId}`);
 
     //Get the active game and submit the guess
     try {
         let game = GameManager.getPlayerActiveGame(playerId);
         let result = await game.submitPlayerGuess(playerId, roundNum, trackId);
-        console.log(`Submitted guess "${trackId}" for game ${game.id} (${game.playlist.name}) round ${roundNum} for player ${playerId}. Result: ${JSON.stringify(result)}`);
         return res.status(200).json(result);
     } catch (error: any) {
         console.error(`Unable to submit guess ${trackId} for round ${roundNum} for player ${playerId}.`, error.message);
