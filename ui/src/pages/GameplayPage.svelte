@@ -19,7 +19,8 @@
     import TrackChoice from "../components/TrackChoice.svelte";
     import GameplayVisualization from "../components/GameplayVisualization.svelte";
     import { COUNTDOWN_INTERVAL } from "../../../shared/constants";
-    import ConclusionScreen from "../components/ConclusionScreen.svelte";
+    import RoundConclusionScreen from "../components/RoundConclusionScreen.svelte";
+    import GameEndScreen from "../components/GameEndScreen.svelte";
 
     //Create audio context
     const audioContext = new AudioContext();
@@ -69,7 +70,6 @@
         COUNTDOWN_INTERVAL * 3;
     $: currentRoundChoices = $GameStore.currentRound?.choices ?? [];
     $: audioURL = $GameStore.currentRound?.audioURL;
-    $: isGameDone = $GameStore.status === GameStatus.ENDED;
 
     //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
@@ -209,17 +209,15 @@
         //Destroy audio analyzer
         visualization?.destroyAnalyzer();
     });
-
-    $: console.log(currentPhase);
 </script>
 
 <main>
-    {#if isGameDone}
-        <div id="done-screen">Done!</div>
+    {#if $GameStore.status === GameStatus.ENDED}
+        <GameEndScreen />
     {:else}
         <div id="main-content">
             {#if currentPhase === RoundPhase.CONCLUSION}
-                <ConclusionScreen {correctTrackId} {guessResult} />
+                <RoundConclusionScreen {correctTrackId} {guessResult} />
             {:else}
                 <div id="gameplay-content">
                     <!-- Header -->
@@ -239,6 +237,7 @@
                         {/if}
                     </div>
 
+                    <!-- Visualization (and countdown) -->
                     <div
                         id="center-display"
                         class:condensed={isVisualizerSmall}
@@ -254,6 +253,8 @@
                             isSmall={isVisualizerSmall}
                         />
                     </div>
+
+                    <!-- Guess submission section -->
                     <div id="submission-section">
                         <div id="submission-panel">
                             {#if $GameStore.type === GameType.CHOICES}
@@ -323,9 +324,7 @@
                     </div>
                     <div id="scoreboard-container">
                         <Scoreboard
-                            players={Object.values(
-                                $GameStore.players,
-                            ).toSorted(
+                            players={Object.values($GameStore.players).toSorted(
                                 (a, b) =>
                                     arraySum(b.scores) - arraySum(a.scores),
                             )}
@@ -334,35 +333,40 @@
                 </div>
             {/if}
         </div>
-
-        <!-- Footer -->
-        <div id="footer">
-            <button id="leave-btn" on:click={() => (isModalOpen = true)}>
-                <BackIcon />
-                Leave Game
-            </button>
-
-            <!-- Button to show scoreboard -->
-            {#if currentPhase !== RoundPhase.CONCLUSION}
-                <button
-                    id="show-scoreboard-btn"
-                    on:click={() => (showScoreboard = !showScoreboard)}
-                >
-                    <PodiumIcon />
-                    {showScoreboard ? "Hide" : "Show"}
-                </button>
-            {:else}
-                <div id="next-round-timer-container">
-                    <div>
-                        Next Round:
-                    </div>
-                    <div id="next-round-container" class="header-text">
-                        {Object.values($GameStore.players).every((player) => player.isReady) ? "STARTING SOON" : "WAITING FOR OTHER PLAYERS"}
-                    </div>
-                </div>
-            {/if}
-        </div>
     {/if}
+
+    <!-- Footer -->
+    <div id="footer">
+        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+            <BackIcon />
+            Leave Game
+        </button>
+
+        {#if $GameStore.status === GameStatus.ENDED}
+            <div></div>
+        {:else if currentPhase === RoundPhase.COUNTDOWN || currentPhase === RoundPhase.PLAYING}
+            <!-- Button to show scoreboard -->
+            <button
+                id="show-scoreboard-btn"
+                on:click={() => (showScoreboard = !showScoreboard)}
+            >
+                <PodiumIcon />
+                {showScoreboard ? "Hide" : "Show"}
+            </button>
+        {:else if currentPhase === RoundPhase.CONCLUSION}
+            <!-- Display for when next round will start -->
+            <div id="next-round-timer-container">
+                <div>Next Round:</div>
+                <div id="next-round-container" class="header-text">
+                    {Object.values($GameStore.players).every(
+                        (player) => player.isReady,
+                    )
+                        ? "STARTING SOON"
+                        : "WAITING FOR OTHER PLAYERS"}
+                </div>
+            </div>
+        {/if}
+    </div>
 </main>
 
 <!-- Confirmation modal for leaving game -->
@@ -440,7 +444,7 @@
         transition-duration: 300ms;
         transition-timing-function: ease-out;
     }
-    #scoreboard-section.shown{
+    #scoreboard-section.shown {
         width: 350px;
         margin-left: 2rem;
     }
@@ -485,7 +489,7 @@
             pointer-events: inherit;
             width: 100%;
         }
-        #scoreboard-container{
+        #scoreboard-container {
             background-color: transparent;
         }
     }
@@ -551,14 +555,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    #done-screen {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 30px;
     }
 
     #show-scoreboard-btn {

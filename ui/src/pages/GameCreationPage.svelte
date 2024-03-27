@@ -8,7 +8,7 @@
     import {
         GameType,
         GameVisibility,
-        type GameOption,
+        type GameOptionMetadata,
         type GameOptions,
         type PlaylistMetadata,
         ADVANCED_OPTIONS_DEFINITIONS,
@@ -27,7 +27,7 @@
     const DEFAULT_SEARCH = "Rock";
 
     //A typed iterator representation of the advanced options definitions
-    const ADVANCED_OPTIONS_ENTRIES: [keyof GameOptions, GameOption][] =
+    const ADVANCED_OPTIONS_ENTRIES: [keyof GameOptions, GameOptionMetadata][] =
         Object.entries(ADVANCED_OPTIONS_DEFINITIONS).map(([key, value]) => [key as keyof GameOptions, value]);
 
     let searchQuery = "";

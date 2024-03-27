@@ -8,6 +8,7 @@
     export let player: PlayerState;
     export let highlight: boolean = false;
     export let position: number = 0;
+    export let showScoreChange: boolean = true;
     export let currentRoundScore: number | null | undefined = 0;
 
     // Update currentRoundScore every time it changes
@@ -47,13 +48,15 @@
             <div id="score-display" class="header-text">
                 {arraySum(player.scores).toString().padStart(6, "0")}
             </div>
-            <div id="score-change-display">
-                {#if currentRoundScore !== undefined && currentRoundScore !== null}
-                    ({currentRoundScore < 0 ? "" : "+"}{currentRoundScore})
-                {:else}
-                    (No Answer)
-                {/if}
-            </div>
+            {#if showScoreChange}
+                <div id="score-change-display">
+                    {#if currentRoundScore !== undefined && currentRoundScore !== null}
+                        ({currentRoundScore < 0 ? "" : "+"}{currentRoundScore})
+                    {:else}
+                        (No Answer)
+                    {/if}
+                </div>
+            {/if}
         </div>
     </div>
 </main>
@@ -105,11 +108,11 @@
         color: white;
     }
 
-    #name-display{
+    #name-display {
         font-size: 1.25rem;
         font-weight: 700;
     }
-    #name-container{
+    #name-container {
         margin-bottom: -2px;
     }
     #position-label {
