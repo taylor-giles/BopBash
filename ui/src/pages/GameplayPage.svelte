@@ -445,7 +445,7 @@
         transition-timing-function: ease-out;
     }
     #scoreboard-section.shown {
-        width: 350px;
+        width: 380px;
         margin-left: 2rem;
     }
     #scoreboard-title {

@@ -15,15 +15,15 @@ import { v4 as uuidv4 } from 'uuid';
 //Maximum amount of time a game is allowed to exist as an "active game"
 const MAX_GAME_LIFETIME = 60 * 60 * 1000; //One hour
 
-//If a game is empty for this long after creation, it will be deleted.
-const MAX_EMPTY_GAME_LIFETIME = 5 * 60 * 1000; //5 minutes
-
-// Maps for storing currently active games/players by ID
+//Maps for storing currently active games/players by ID
 let activeGames = new ObservableMap<string, Game>();
 let activePlayers = new ObservableMap<string, Player>();
 
 //Maps player ID to the ID of the player's active game
 let playerGames = new ObservableMap<string, string>();
+
+//Maps game ID to the timeout set to destroy it if active for too long
+let gameTimeouts = new ObservableMap<string, NodeJS.Timeout>();
 
 
 /**
@@ -161,12 +161,9 @@ export async function generateNewGame(playlist: Playlist, type: GameType, visibi
     activeGames.set(newGame.id, newGame);
 
     //Set up timeout to end this game if it is active for too long
-    setTimeout(() => {
-        console.log(`Stopping game ${newGame.id} (${playlist.name}) due to being active for too long`);
-        stopGame(newGame.id).catch((error) => {
-            console.error(`Failed to stop game ${newGame.id} (${newGame.playlist.name}) due to being active for too long:`, error.message);
-        });
-    }, MAX_GAME_LIFETIME);
+    gameTimeouts.set(newGame.id, setTimeout(() => {
+        stopGame(newGame.id).then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to being active for too long`); });
+    }, MAX_GAME_LIFETIME));
 
     //Return game object
     console.log(`Created game ${newGame.id} for playlist ${playlist.id} (${playlist.name})`);
@@ -219,6 +216,7 @@ export async function removePlayerFromGame(playerId: string) {
 
         //Stop the game if it is now empty
         if (game.players.size <= 0) {
+            console.log(`Ending game ${game.id} (${game.playlist.name}) due to the last player leaving`);
             stopGame(game.id);
         }
     }
@@ -243,6 +241,10 @@ export async function stopGame(gameId: string) {
 
     //Remove this game from the activeGames list
     activeGames.delete(gameId);
+
+    //Clear timeout and remove the timeout from the list of timeouts
+    clearTimeout(gameTimeouts.get(gameId));
+    gameTimeouts.delete(gameId);
 
     console.log(`Removed game ${gameId}`);
 }

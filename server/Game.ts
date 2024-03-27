@@ -37,6 +37,7 @@ export class Game {
         this.type = type;
         this.visibility = visibility;
         this.playlist = playlist;
+
         this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
@@ -83,7 +84,7 @@ export class Game {
         let viableTracks: Track[] = lodash.shuffle(this.playlist.tracks.items.map((value) => value.track).filter((track) => !(track?.is_local ?? true)));
 
         //Pick the tracks from this playlist
-        //Look through all the (shuffled) non-local tracks until enough tracks with previewURLs are found (or not).
+        //Look through all the (shuffled) non-local tracks until enough tracks with previewURLs are found (or all options are exhausted).
         let chosenTracks: Set<Track> = new Set();
         for (let trackNum = 0; chosenTracks.size < this.gameOptions.numRounds! && trackNum < viableTracks.length; trackNum++) {
             let chosenTrack = viableTracks[trackNum];
@@ -103,7 +104,7 @@ export class Game {
             let choices: TrackChoice[] | undefined;
             if (this.type == GameType.CHOICES) {
                 let numChoices = this.gameOptions.numChoices ?? 1;
-                
+
                 //Remove correct answer by putting it first, removing all duplicates, then removing first element
                 let possibleChoices = lodash.uniqBy([track, ...viableTracks], "id").slice(1);
 
@@ -212,7 +213,7 @@ export class Game {
         //Set player status to ready
         player.activeGameInfo!.isReady = true;
 
-        console.log(`Readied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
+        // console.log(`Readied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
 
         //Update all players
         this.broadcastUpdate();
@@ -244,7 +245,7 @@ export class Game {
         //Update all players
         this.broadcastUpdate();
 
-        console.log(`Unreadied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
+        // console.log(`Unreadied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
     }
 
 
@@ -257,19 +258,28 @@ export class Game {
      * @throws Error if player or round does not exist, or if player is already ready for round end
      */
     public async submitPlayerGuess(playerId: string, roundNum: number, trackId: string): Promise<GuessResult> {
-        //TODO: Reject guess if roundNum does not match current round index
         //Get the player
         let player = this.getPlayer(playerId);
 
-        //Do not accept the guess if the player is already ready for round to end
+        //Reject the guess if the player is already ready for round to end
         if (player.activeGameInfo!.isReady) {
-            throw new Error("Player is already ready for round end.");
+            throw new Error(`Player ${player.id} (${player.name}) is already ready for round end.`);
+        }
+
+        //Reject the guess if the roundNum does not match the index of the round currently being played
+        if (roundNum !== this.currentRound?.index ?? -1) {
+            throw new Error("Provided round index does not match current round index.");
         }
 
         //Get the round
         let round = this.rounds?.[roundNum];
         if (!round) {
             throw new Error(`Round ${roundNum} does not exist in game ${this.id} (${this.playlist.name})`);
+        }
+
+        //Reject the guess if the player has already submitted a guess for this round
+        if (player.activeGameInfo!.scores[roundNum] !== null) {
+            throw new Error(`Player ${player.id} (${player.name}) has already submitted a guess for round ${roundNum}.`)
         }
 
         //Determine the number of points for this guess
@@ -286,7 +296,12 @@ export class Game {
         //Update all players
         this.broadcastUpdate();
 
-        return { isCorrect: isCorrect, score: numPoints, correctTrackId: round.trackId };
+        //Build result object
+        let result = { isCorrect: isCorrect, score: numPoints, correctTrackId: round.trackId }
+
+        // console.log(`Submitted guess "${trackId}" for game ${game.id} (${game.playlist.name}) round ${roundNum} for player ${playerId}. Result: ${JSON.stringify(result)}`);
+
+        return result;
     }
 
 
@@ -303,10 +318,12 @@ export class Game {
      * Ends the game
      */
     public async end() {
-        //Inform all players that the game has ended
-        this.status = GameStatus.ENDED;
-        this.broadcastUpdate();
-        console.log(`Stopped game ${this.id} (${this.playlist.name})`);
+        if (this.status !== GameStatus.ENDED) {
+            //Inform all players that the game has ended
+            this.status = GameStatus.ENDED;
+            this.broadcastUpdate();
+            console.log(`Ended game ${this.id} (${this.playlist.name})`);
+        }
     }
 
 
