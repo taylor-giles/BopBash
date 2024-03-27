@@ -15,6 +15,7 @@
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
     import Modal from "../components/modals/Modal.svelte";
+    import { ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS, GAME_TYPES } from "../game-types";
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -118,8 +119,41 @@
             Invite friends
         </button>
     </div>
+
     <div id="content">
+        <!-- Left section with game info and playlist -->
         <div id="embed-section">
+            <!-- Game info -->
+            <div id="game-info-section">
+                <div class="section-title header-text">
+                    Game Info
+                </div>
+                <div id="game-info-container">
+                    <div id="game-type-display">
+                        <div class="property-display">
+                            <svelte:component this={GAME_TYPES[gameState.type].icon}/>
+                            {GAME_TYPES[gameState.type].name}
+                        </div>
+                        <div id="game-type-description">
+                            {GAME_TYPES[gameState.type].description}
+                        </div>
+                    </div>
+                    <div id="options-display-container">
+                        {#each Object.values(ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS) as option}
+                            {#if option.gameTypes.includes(gameState.type)}
+                                <div class="property-display body-text">
+                                    <svelte:component this={option.icon} />
+                                    <div>
+                                        <b>{gameState.options[option.key]}</b>{option.label}
+                                    </div>
+                                </div>
+                            {/if}
+                        {/each}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Playlist -->
             <div class="section-title">
                 <div class="label body-text">Game Playlist:</div>
                 <div class="title header-text">
@@ -133,6 +167,8 @@
                 />
             </div>
         </div>
+
+        <!-- Players section -->
         <div id="players-section">
             <div class="section-title header-text">
                 Players ({numReadyPlayers}/{playerList.length} Ready)
@@ -151,6 +187,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Ready button -->
     <div id="ready-btn-wrapper">
         <button
             id="ready-btn"
@@ -249,6 +287,48 @@
         gap: 0.8rem;
     }
 
+    #game-info-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border: 2px solid gray;
+        border-radius: 12px;
+        padding: 1rem;
+        padding-inline: 0.5rem;
+        margin-bottom: 1.2rem;
+    }
+
+    #game-type-display{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.05rem;
+    }
+
+    #game-type-description {
+        text-align: center;
+        font-weight: 300;
+        font-size: 0.85rem;
+    }
+
+    #options-display-container{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .property-display {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+        margin-inline: 10px;
+    }
+
     #content {
         width: 100%;
         flex-grow: 1;
@@ -256,6 +336,7 @@
         flex-direction: row;
         gap: 20px;
         height: 0px;
+        overflow-y: auto;
     }
     #embed-section {
         display: flex;
@@ -276,7 +357,6 @@
     @media (max-width: 700px) {
         #content {
             flex-direction: column;
-            gap: 0px;
         }
 
         #embed-section {
@@ -292,7 +372,7 @@
         font-size: 0.9rem;
         color: white;
         font-weight: 200;
-        margin-bottom: -6px;
+        margin-bottom: -4px;
     }
 
     .section-title {
@@ -300,14 +380,12 @@
         font-size: 1.3rem;
         font-weight: 600;
         padding-bottom: 5px;
-        height: 3.6rem;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
     }
 
     .title {
-        font-size: 1.5rem;
         color: white;
         font-weight: 700;
     }
@@ -324,6 +402,7 @@
         border-radius: 0.75rem;
         flex: 1;
         width: 100%;
+        min-height: 300px;
         overflow-y: auto;
     }
 
