@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
 import { GameConnection, type PlayerConnection } from '../stores/gameStore';
 import { WebSocketRoute, type WebSocketRequest } from "../../shared/ws-routes"
-import type { GuessResult } from '../../shared/types';
+import type { GuessResult, Track } from '../../shared/types';
 import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
@@ -62,6 +62,22 @@ export async function joinGame(gameId: string): Promise<string | void> {
     }).catch((error) => {
         setError(`Failed to join game '${gameId}'. Please try again.`, error);
         return error.message;
+    });
+}
+
+
+/**
+ * Requests a Spotify search for game track guess options using the provided query
+ * @param query Search query
+ * @param offset The index of results to start query at
+ * @param limit The max number of results to return
+ */
+export async function findGuessOptions(query: string, offset:number=0, limit:number=5): Promise<Track[]> {
+    return apiCaller.get(`/findGuessOptions/${query}`, { params: {offset: offset, limit: limit }}).then((res) => {
+        return res.data;
+    }).catch((error) => {
+        setError("Unable to perform search. Please try again.", error);
+        return [];
     });
 }
 
