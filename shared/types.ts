@@ -23,7 +23,7 @@ export interface GameOptions {
 
 
 //A list of the possible game options
-export type GameOptionMetadata = { key: keyof(GameOptions), name: string, label: string, type: "number", default: number, min: number, max: number, gameTypes: GameType[] }
+export type GameOptionMetadata = { key: keyof (GameOptions), name: string, label: string, type: "number", default: number, min: number, max: number, gameTypes: GameType[] }
 export const ADVANCED_OPTIONS_DEFINITIONS: TransformKeys<GameOptions, GameOptionMetadata> = {
     numRounds: { key: "numRounds", name: "Number of Rounds", label: " Rounds", type: "number", default: 10, min: 1, max: 50, gameTypes: GAME_TYPE_OPTIONS },
     roundDuration: { key: "roundDuration", name: "Round Duration", label: "s Rounds", type: "number", default: 30, min: 10, max: 60, gameTypes: GAME_TYPE_OPTIONS },
@@ -47,7 +47,7 @@ export class Round {
     previewURL: string;
     maxDuration: number;    //Maximum duration of this round, in milliseconds
     startTime: number;      //Maps player ID to the time that player started this round
-    choices?: {id: string, name: string, artist: string}[]; //The choices to be used in a choices-style game
+    choices?: { id: string, name: string, artist: string }[]; //The choices to be used in a choices-style game
 
     public constructor(trackId: string, previewURL: string, maxDuration: number, choices?: TrackChoice[]) {
         this.trackId = trackId;
@@ -94,13 +94,22 @@ export type GuessResult = {
     correctTrackId: string,
 }
 
+export type Artist = {
+    name: string;
+}
+
+export type Album = {
+    name: string, 
+    images: { url: string, height: number | null, width: number | null }[]
+}
+
 export type Track = {
     id: string,
     uri: string,
     is_local: boolean,
     name: string,
-    album: { name: string, images: { url: string, height: number | null, width: number | null }[] },
-    artists: { name: string }[],
+    album: Album,
+    artists: Artist[],
     previewURL?: string
 }
 
@@ -120,5 +129,31 @@ export type Playlist = PlaylistMetadata & {
     tracks: {
         total: number,
         items: { track: Track }[]
+    }
+}
+
+//Helper type to describe the information given in a component of a Spotify search result.
+type SpotifySearchResultComponent = {
+    href: string;
+    limit: number;
+    next: string;
+    offset: number;
+    previous: string;
+    total: number;
+}
+
+//Type to describe the results of a Spotify search. Includes only relevant properties.
+export type SpotifySearchResult = {
+    tracks: SpotifySearchResultComponent & {
+        items: Track[];
+    },
+    artists: SpotifySearchResultComponent & {
+        items: Artist[];
+    },
+    albums: SpotifySearchResultComponent & {
+        items: Album[];
+    },
+    playlists: SpotifySearchResultComponent & {
+        items: PlaylistMetadata[];
     }
 }

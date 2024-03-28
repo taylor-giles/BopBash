@@ -83,6 +83,39 @@ export async function getPlaylistData(req: Request, res: Response) {
 
 
 /**
+ * Helper function to centralize the logic for searching for a Spotify resource
+ * @param type The type of the search request
+ */
+async function searchSpotify(req: Request, res: Response, type: "playlist" | "track" | "artist" | "album") {
+    let query = req.params.query;
+    let limit: number | undefined = parseInt(req?.query?.limit as string);
+    let offset: number | undefined = parseInt(req?.query?.offset as string);
+
+    //Make limit and offset undefined if they are NaN (so default values will be used)
+    limit = isNaN(limit) ? undefined : limit;
+    offset = isNaN(offset) ? undefined : offset;
+
+    //Ensure query is provided and is not only whitespace
+    if (!query || query.replace(/\s/g, '').length <= 0) {
+        return res.status(400).json({ error: "Query must be provided" });
+    }
+
+    //Use Spotify API to search for playlists
+    SpotifyAPI.search(type, query, offset, limit).then((result) => {
+        //Extract the next offset from the provided next URL
+        let nextURL = result?.playlists?.next;
+        let nextOffset = nextURL ? parseInt(new URLSearchParams((new URL(nextURL)).search).get("offset") ?? "") : -1;
+
+        //Return list of results
+        return res.status(200).json({ nextOffset: nextOffset, results: (result as any)[type + "s"]?.items ?? [] });
+    }).catch((error) => {
+        console.error(`Unable to perform ${type} search for query: ${query}`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
+
+
+/**
  * GET /findPlaylists
  * Returns a set of metadata for each playlist matching the query
  * 
@@ -101,26 +134,30 @@ export async function getPlaylistData(req: Request, res: Response) {
  *      - error: string - Error message
  */
 export async function findPlaylists(req: Request, res: Response) {
-    let query = req.params.query;
-    let limit: number | undefined = parseInt(req?.query?.limit as string);
-    let offset: number | undefined = parseInt(req?.query?.offset as string);
+    return searchSpotify(req, res, "playlist");
+}
 
-    //Make limit and offset undefined if they are NaN (so default values will be used)
-    limit = isNaN(limit) ? undefined : limit;
-    offset = isNaN(offset) ? undefined : offset;
 
-    //Ensure query is provided and is not only whitespace
-    if (!query || query.replace(/\s/g, '').length <= 0) {
-        return res.status(400).json({ error: "Query must be provided" });
-    }
-
-    //Use Spotify API to search for playlist
-    SpotifyAPI.searchPlaylist(query, offset, limit).then((result) => {
-        return res.status(200).json(result);
-    }).catch((error) => {
-        console.error(`Unable to perform playlist search for query: ${query}`, error.message);
-        return res.status(500).json({ error: error.message });
-    });
+/**
+ * GET /findTracks
+ * Returns a set of metadata for each track matching the query
+ * 
+ * Request Params:
+ *  - query: string - The search query
+ * 
+ * Request Query Parameters:
+ *  - limit: number - The max number of results to include. Max is 50
+ *  - offset: number - The index of search results to start query at
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - nextOffset: number - The offset to use to search the next "page" of results
+ *      - results: Track[] - List of tracks matching query
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function findTracks(req: Request, res: Response) {
+    return searchSpotify(req, res, "track");
 }
 
 
