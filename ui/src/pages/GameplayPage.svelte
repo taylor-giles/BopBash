@@ -38,6 +38,7 @@
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
     let audioLoaded: boolean = false;
     let guessTrackId: string = "";
+    let guessQuery: string = "";
     let guessArtistId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
@@ -118,6 +119,7 @@
         guessResult = undefined;
         correctTrackId = undefined;
         guessTrackId = "";
+        guessQuery = "";
         guessArtistId = "";
         currentRoundTime = 0;
 
@@ -159,6 +161,7 @@
     async function skipRound(e: Event) {
         e?.preventDefault();
         guessTrackId = "";
+        guessQuery = "";
         handleSubmit(e);
     }
 
@@ -175,6 +178,7 @@
         if (result) {
             //Reset guess value
             guessTrackId = "";
+            guessQuery = "";
 
             //Extract values from result
             guessResult = { ...result };
@@ -293,8 +297,8 @@
                                 <!-- Form for entering guesses -->
                                 <div id="form-wrapper">
                                     <GameplayForm
+                                        bind:guessQuery
                                         bind:guessTrackId
-                                        bind:guessArtistId
                                         disabled={currentPhase !==
                                             RoundPhase.PLAYING}
                                         on:submit={handleSubmit}
@@ -510,7 +514,6 @@
         height: max-content;
         max-height: 100%;
         flex: 1;
-        overflow: hidden;
     }
 
     #form-wrapper {
