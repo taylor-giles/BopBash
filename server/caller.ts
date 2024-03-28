@@ -301,6 +301,7 @@ export async function search(type: "playlist"|"track"|"artist"|"album", query: s
     //Configure callbacks
     let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
         console.error(result.error);
+        throw result.error;
     }
 
     //Make request

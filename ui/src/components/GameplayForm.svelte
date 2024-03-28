@@ -29,8 +29,7 @@
         clearTimeout(searchTimeout);
         if (guessQuery.length > 3) {
             searchTimeout = setTimeout(async () => {
-                trackOptions = (await GameAPI.findTracks(guessQuery, 0, 5))
-                    .results;
+                trackOptions = (await GameAPI.findGuessOptions(guessQuery, 0, 5));
             }, SEARCH_DELAY);
         }
     }

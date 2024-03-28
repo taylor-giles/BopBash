@@ -46,23 +46,7 @@ export async function findPlaylists(query: string, offset?: number, limit?: numb
         return res.data;
     }).catch((error) => {
         setError("Unable to perform search. Please try again.", error);
-        return [];
-    });
-}
-
-
-/**
- * Requests a Spotify search for tracks using the provided query
- * @param query Search query
- * @param offset The index of results to start query at
- * @param limit The max number of results to return
- */
-export async function findTracks(query: string, offset:number=0, limit:number=5): Promise<{nextOffset: number, results: Track[]}> {
-    return apiCaller.get(`/findTracks/${query}`, { params: {offset: offset, limit: limit }}).then((res) => {
-        return res.data;
-    }).catch((error) => {
-        setError("Unable to perform search. Please try again.", error);
-        return [];
+        return {nextOffset: -1, results: []};
     });
 }
 

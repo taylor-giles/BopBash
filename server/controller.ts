@@ -10,6 +10,7 @@ import * as GameManager from "./GameManager";
 import { PlayerConnection } from "./types";
 import { getToken, verifyToken } from "./auth";
 import { MAX_USERNAME_LENGTH } from "../shared/constants";
+import { Track } from "../shared/types";
 
 type PlayerRequest = Request & { playerId?: string }
 
@@ -86,7 +87,7 @@ export async function getPlaylistData(req: Request, res: Response) {
  * Helper function to centralize the logic for searching for a Spotify resource
  * @param type The type of the search request
  */
-async function searchSpotify(req: Request, res: Response, type: "playlist" | "track" | "artist" | "album") {
+async function searchSpotify(req: Request, type: "playlist" | "track" | "artist" | "album") {
     let query = req.params.query;
     let limit: number | undefined = parseInt(req?.query?.limit as string);
     let offset: number | undefined = parseInt(req?.query?.offset as string);
@@ -97,20 +98,20 @@ async function searchSpotify(req: Request, res: Response, type: "playlist" | "tr
 
     //Ensure query is provided and is not only whitespace
     if (!query || query.replace(/\s/g, '').length <= 0) {
-        return res.status(400).json({ error: "Query must be provided" });
+        throw new Error("Query must be provided");
     }
 
     //Use Spotify API to search for playlists
-    SpotifyAPI.search(type, query, offset, limit).then((result) => {
+    return await SpotifyAPI.search(type, query, offset, limit).then((result) => {
         //Extract the next offset from the provided next URL
         let nextURL = result?.playlists?.next;
         let nextOffset = nextURL ? parseInt(new URLSearchParams((new URL(nextURL)).search).get("offset") ?? "") : -1;
 
         //Return list of results
-        return res.status(200).json({ nextOffset: nextOffset, results: (result as any)[type + "s"]?.items ?? [] });
+        return { nextOffset: nextOffset, results: (result as any)[type + "s"]?.items ?? [] };
     }).catch((error) => {
         console.error(`Unable to perform ${type} search for query: ${query}`, error.message);
-        return res.status(500).json({ error: error.message });
+        throw new Error(error.message);
     });
 }
 
@@ -134,7 +135,11 @@ async function searchSpotify(req: Request, res: Response, type: "playlist" | "tr
  *      - error: string - Error message
  */
 export async function findPlaylists(req: Request, res: Response) {
-    return searchSpotify(req, res, "playlist");
+    return searchSpotify(req, "playlist").then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        return res.status(500).json({ error: error });
+    });
 }
 
 
@@ -157,7 +162,107 @@ export async function findPlaylists(req: Request, res: Response) {
  *      - error: string - Error message
  */
 export async function findTracks(req: Request, res: Response) {
-    return searchSpotify(req, res, "track");
+    return searchSpotify(req, "track").then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        return res.status(500).json({ error: error });
+    });
+}
+
+
+/**
+ * GET /findGuessOptions
+ * Returns a set of metadata for each track matching the query,
+ * with duplicates removed, taking into account the player's active round.
+ * 
+ * Request Params:
+ *  - query: string - The search query
+ * 
+ * Request Query Parameters:
+ *  - limit: number - The max number of results to include. Max is 50
+ *  - offset: number - The index of search results to start query at
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - Track[] List of tracks matching query
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function findGuessOptions(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId; //Guaranteed by middleware
+
+    //Ensure playerId is provided
+    if (!playerId) {
+        //Middleware should guarantee that this never happens
+        return res.status(400).json({ error: "playerId must be provided" })
+    }
+
+    try {
+        //Get active game and determine current round
+        let game = GameManager.getPlayerActiveGame(playerId);
+        let roundIndex = game.currentRound?.index;
+        if(roundIndex === undefined){
+            return res.status(400).json({ error: "Unable to find player's current round." });
+        }
+
+        //Determine current round's correct track ID
+        let correctId = game.rounds[roundIndex].trackId;
+        if (!correctId) {
+            return res.status(400).json({ error: "Unable to determine correct answer for current round." });
+        }
+
+        //Determine the desired limit
+        let limit: number | undefined = parseInt(req?.query?.limit as string);
+        limit = isNaN(limit) ? 5 : limit;
+
+        /**
+         * Two tracks are equal if they have the same name and have all the same artists, in the same order
+         * @param track1 The 1st track to compare
+         * @param track2 The 2nd track to compare
+         * @returns True if the tracks are equal, false otherwise
+         */
+        const areEqual = (track1: Track, track2: Track) => {
+            let str1 = track1.name + track1.artists.map((a)=>a.name).join(",");
+            let str2 = track2.name + track2.artists.map((a)=>a.name).join(",");
+            return str1 === str2;
+        }
+
+        let guessOptions: Track[] = [];
+        let resultsLength = limit;
+        let offset = limit;
+
+        //Keep searching until the desired number (limit) of results is found without duplicates
+        while (guessOptions.length < limit && resultsLength == limit) {
+            //Get next set of results
+            let result = await searchSpotify(req, "track");
+
+            //Determine length of results list
+            resultsLength = result.results.length;
+
+            //Determine if the correct track is in the results list
+            let correctTrack = (result.results as any[]).find((track) => (track.id === correctId));
+
+            //Add only non-duplicates to the options list
+            result.results.forEach((track: Track) => {
+                //Proceed if the correct track is not in the results, this is not a duplicate of the correct track, or this is the correct track
+                if(!correctTrack || !areEqual(track, correctTrack) || track.id === correctId){
+                    //Proceed if this is the first instance of this track
+                    if (!guessOptions.some(s => areEqual(s, track))) {
+                        //Add the track to the output
+                        guessOptions.push(track);
+                    }
+                }
+            });
+
+            //Update offset for next iteration
+            offset = result.nextOffset > 0 ? result.nextOffset : offset + limit;
+            req.query.offset = offset.toString();
+        }
+        guessOptions.splice(limit);
+        return res.status(200).json(guessOptions);
+    } catch (error: any) {
+        return res.status(500).json({error: error.message});
+    }
 }
 
 
