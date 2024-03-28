@@ -10,6 +10,7 @@ const router = express.Router();
  */
 router.get('/getPlaylistData/:id', Controller.ensureId, Controller.getPlaylistData);
 router.get('/findPlaylists/:query', Controller.findPlaylists);
+router.get('/findTracks/:query', Controller.findTracks);
 router.get('/getGames', Controller.getGames);
 router.post('/newGame', Controller.makeNewGame);
 router.post('/registerNewPlayer', Controller.registerNewPlayer);

@@ -3,7 +3,7 @@ import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
 import { load as cheerio } from "cheerio";
 import { playlistFields, tracksFields } from "./types";
-import { Playlist, PlaylistMetadata, Track } from "../shared/types";
+import { Playlist, PlaylistMetadata, SpotifySearchResult, Track } from "../shared/types";
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -285,16 +285,16 @@ export async function getTrackPreviewURL(id: string): Promise<string> {
 
 
 /**
- * Uses the Spotify API to search for playlists that match the given query
+ * Uses the Spotify API to perform a search for resources that match the given query
  * @param query The search query
  * @param offset Index to start query at
  * @param limit Max number of tracks to get in query. Max is 50.
- * @returns List of metadata objects for playlists in response
+ * @returns The search result as returned by the Spotify search API
  */
-export async function searchPlaylist(query: string, offset: number = 0, limit: number = 5): Promise<{nextOffset: number, results: PlaylistMetadata[]}> {
+export async function search(type: "playlist"|"track"|"artist"|"album", query: string, offset: number = 0, limit: number = 5): Promise<SpotifySearchResult> {
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
-        path: `/v1/search?q=${encodeURIComponent(query)}&type=playlist&offset=${offset}&limit=${Math.min(limit, 50)}`,
+        path: `/v1/search?q=${encodeURIComponent(query)}&type=${type}&offset=${offset}&limit=${Math.min(limit, 50)}`,
         method: "GET"
     }
 
@@ -307,12 +307,7 @@ export async function searchPlaylist(query: string, offset: number = 0, limit: n
     let result = await callAPI(requestOptions).catch(onFailure);
     let responseData = JSON.parse(result.responseData);
 
-    //Extract the next offset from the provided next URL
-    let nextURL = responseData?.playlists?.next;
-    let nextOffset = nextURL ? parseInt(new URLSearchParams((new URL(nextURL)).search).get("offset") ?? "") : -1;
-
-    //Return resulting list of playlists
-    return {nextOffset: nextOffset, results: responseData.playlists?.items ?? []};
+    return responseData;
 }
 
 
