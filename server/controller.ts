@@ -175,6 +175,12 @@ export async function findTracks(req: Request, res: Response) {
  * Returns a set of metadata for each track matching the query,
  * with duplicates removed, taking into account the player's active round.
  * 
+ * PRECONDITIONS: 
+ *  - Requester is authenticated
+ * 
+ * Headers:
+ *  - Authentication: Bearer <token>
+ * 
  * Request Params:
  *  - query: string - The search query
  * 
