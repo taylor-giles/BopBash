@@ -62,7 +62,7 @@
 </div>
 
 {#if isResultsModalShown}
-    <Modal on:close={() => (isResultsModalShown = false)}>
+    <Modal>
         <div
             id="results-modal"
             style="--border-color: {guessResult?.isCorrect
@@ -143,7 +143,7 @@
         height: calc(80vh);
 
         background-color: var(--accent-dark);
-        border: 1px solid var(--border-color);
+        border: 2px solid var(--border-color);
         border-radius: 12px;
         padding: 2rem;
     }
