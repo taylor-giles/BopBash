@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ADDRESS } from '../../shared/constants';
-import type { GameOptions, GameState, GameType, GameVisibility, Playlist, PlaylistMetadata } from '../../shared/types';
+import type { Artist, GameOptions, GameState, GameType, GameVisibility, Playlist, PlaylistMetadata, Track } from '../../shared/types';
 import { ErrorMessage } from '../stores/pageStore';
 
 const apiCaller = axios.create({
@@ -43,6 +43,37 @@ export async function getPlaylistData(id: string): Promise<Playlist> {
  */
 export async function findPlaylists(query: string, offset?: number, limit?: number) : Promise<{nextOffset: number, results: PlaylistMetadata[]}> {
     return apiCaller.get(`/findPlaylists/${query}`, { params: { offset: offset, limit: limit } }).then((res) => {
+        return res.data;
+    }).catch((error) => {
+        setError("Unable to perform search. Please try again.", error);
+        return {nextOffset: -1, results: []};
+    });
+}
+
+
+/**
+ * Requests a Spotify search for playlists using the provided query
+ * @param query Search query
+ * @param offset The index of results to start query at
+ * @param limit The max number of results to return
+ */
+export async function findArtists(query: string, offset?: number, limit?: number) : Promise<{nextOffset: number, results: Artist[]}> {
+    return apiCaller.get(`/findArtists/${query}`, { params: { offset: offset, limit: limit } }).then((res) => {
+        return res.data;
+    }).catch((error) => {
+        setError("Unable to perform search. Please try again.", error);
+        return {nextOffset: -1, results: []};
+    });
+}
+
+
+/**
+ * Obtains the top tracks for the specified artist
+ * @param id The ID of the artist
+ * @returns A list of the specified artist's top tracks 
+ */
+export async function getArtistTopTracks(id: string): Promise<Track[]> {
+    return apiCaller.get(`/getArtistTopTracks/${id}`).then((res) => {
         return res.data;
     }).catch((error) => {
         setError("Unable to perform search. Please try again.", error);

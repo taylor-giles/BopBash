@@ -38,6 +38,7 @@
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
     let audioLoaded: boolean = false;
     let guessTrackId: string = "";
+    let trackQuery: string = "";
     let guessArtistId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
@@ -46,6 +47,7 @@
     let volumeLevel: number = 0.5;
     let currentRoundTime: number = 0;
     let isVisualizerSmall = false;
+    let guessString: string;
 
     //HTML element references
     let audioElement: HTMLAudioElement = new Audio();
@@ -118,6 +120,7 @@
         guessResult = undefined;
         correctTrackId = undefined;
         guessTrackId = "";
+        trackQuery = "";
         guessArtistId = "";
         currentRoundTime = 0;
 
@@ -159,6 +162,7 @@
     async function skipRound(e: Event) {
         e?.preventDefault();
         guessTrackId = "";
+        trackQuery = "";
         handleSubmit(e);
     }
 
@@ -175,6 +179,7 @@
         if (result) {
             //Reset guess value
             guessTrackId = "";
+            trackQuery = "";
 
             //Extract values from result
             guessResult = { ...result };
@@ -217,7 +222,7 @@
     {:else}
         <div id="main-content">
             {#if currentPhase === RoundPhase.CONCLUSION}
-                <RoundConclusionScreen {correctTrackId} {guessResult} />
+                <RoundConclusionScreen {correctTrackId} {guessResult} {guessString}/>
             {:else}
                 <div id="gameplay-content">
                     <!-- Header -->
@@ -293,8 +298,9 @@
                                 <!-- Form for entering guesses -->
                                 <div id="form-wrapper">
                                     <GameplayForm
+                                        bind:guessString
+                                        bind:trackQuery
                                         bind:guessTrackId
-                                        bind:guessArtistId
                                         disabled={currentPhase !==
                                             RoundPhase.PLAYING}
                                         on:submit={handleSubmit}
@@ -510,7 +516,6 @@
         height: max-content;
         max-height: 100%;
         flex: 1;
-        overflow: hidden;
     }
 
     #form-wrapper {

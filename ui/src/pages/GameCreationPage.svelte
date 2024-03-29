@@ -183,8 +183,6 @@
             return;
         }
 
-        console.log(advancedOptions);
-
         //Create the game
         let gameId = await GameAPI.createGame(selectedPlaylistId, selectedGameType, selectedVisibility, advancedOptions);
         isLoading = false;
