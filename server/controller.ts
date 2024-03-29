@@ -84,6 +84,38 @@ export async function getPlaylistData(req: Request, res: Response) {
 
 
 /**
+ * GET /getArtistTopTracks
+ * Returns the top tracks by the specified artist
+ * 
+ * Request Params:
+ *  - id: string - The ID of the artist
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - Track[] list of the artist's top tracks
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function getArtistTopTracks(req: Request, res: Response) {
+    let id = req.params.id;
+    console.log("Handling request for artist's top tracks. ID: ", id);
+
+    //Ensure ID is provided
+    if (!id) {
+        return res.status(400).json({ error: "Artist ID must be provided" });
+    }
+
+    //Find and return tracks to client
+    SpotifyAPI.getArtistTopTracks(id).then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        console.error(`Unable to get top tracks for artist ${id}`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
+
+
+/**
  * Helper function to centralize the logic for searching for a Spotify resource
  * @param type The type of the search request
  */
@@ -136,6 +168,33 @@ async function searchSpotify(req: Request, type: "playlist" | "track" | "artist"
  */
 export async function findPlaylists(req: Request, res: Response) {
     return searchSpotify(req, "playlist").then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        return res.status(500).json({ error: error });
+    });
+}
+
+
+/**
+ * GET /findArtists
+ * Returns a set of metadata for each artist matching the query
+ * 
+ * Request Params:
+ *  - query: string - The search query
+ * 
+ * Request Query Parameters:
+ *  - limit: number - The max number of results to include. Max is 50
+ *  - offset: number - The index of search results to start query at
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - nextOffset: number - The offset to use to search the next "page" of results
+ *      - results: Artist[] - List of playlists matching query
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function findArtists(req: Request, res: Response) {
+    return searchSpotify(req, "artist").then((result) => {
         return res.status(200).json(result);
     }).catch((error) => {
         return res.status(500).json({ error: error });
@@ -246,12 +305,12 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
             resultsLength = result.results.length;
 
             //Determine if the correct track is in the results list
-            let correctTrack = (result.results as any[]).find((track) => (track.id === correctId));
+            let correctTrack = (result.results as Track[]).find((track) => (track.id === correctId));
 
             //Add only non-duplicates to the options list
             result.results.forEach((track: Track) => {
-                //Proceed if the correct track is not in the results, this is not a duplicate of the correct track, or this is the correct track
-                if(!correctTrack || !areEqual(track, correctTrack) || track.id === correctId){
+                //Proceed if the correct track is not in the results, this is the correct track, or this is not a duplicate of the correct track
+                if(!correctTrack || track.id === correctId || !areEqual(track, correctTrack)){
                     //Proceed if this is the first instance of this track
                     if (!guessOptions.some(s => areEqual(s, track))) {
                         //Add the track to the output

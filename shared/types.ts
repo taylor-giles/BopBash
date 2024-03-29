@@ -95,6 +95,7 @@ export type GuessResult = {
 }
 
 export type Artist = {
+    id: string;
     name: string;
 }
 

@@ -10,6 +10,7 @@
 
     export let correctTrackId: string | undefined;
     export let guessResult: GuessResult | undefined;
+    export let guessString: string;
     let correctTrackEmbed: HTMLIFrameElement;
     let isResultsModalShown = true;
     let currentRoundScore: number | null | undefined;
@@ -81,8 +82,12 @@
                 >
                     {guessResult?.isCorrect ? "Nice job!" : "Aww, shucks :("}
                 </div>
+                <div id="guess-display">
+                    <div class="label">Your Guess:</div>
+                    <div>{guessString}</div>
+                </div>
                 <div id="iframe-container">
-                    <div id="correct-track-label">Correct Track:</div>
+                    <div class="label">Correct Track:</div>
                     <iframe
                         title="View track on Spotify"
                         bind:this={correctTrackEmbed}
@@ -134,12 +139,12 @@
         align-items: center;
         justify-content: space-evenly;
         gap: 1rem;
-        min-width: 260px;
-        max-width: 900px;
+        min-width: 17rem;
+        max-width: 50rem;
         width: calc(90vw);
 
-        min-height: 200px;
-        max-height: 500px;
+        min-height: 24rem;
+        max-height: 30rem;
         height: calc(80vh);
 
         background-color: var(--accent-dark);
@@ -200,9 +205,13 @@
         font-size: 1.3rem;
     }
 
-    #correct-track-label {
+    .label {
         font-size: 1.4rem;
         font-weight: 500;
+    }
+
+    #guess-display {
+        width: 100%;
     }
 
     #iframe-container {

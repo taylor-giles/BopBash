@@ -3,7 +3,7 @@ import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
 import { load as cheerio } from "cheerio";
 import { playlistFields, tracksFields } from "./types";
-import { Playlist, PlaylistMetadata, SpotifySearchResult, Track } from "../shared/types";
+import { Playlist, SpotifySearchResult, Track } from "../shared/types";
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -281,6 +281,31 @@ export async function getTrackPreviewURL(id: string): Promise<string> {
     }
 
     return callAPI(requestOptions).then(onSuccess);
+}
+
+
+/**
+ * Uses the Spotify API to get the top tracks for an artist
+ * @param artistId ID of the playlist to query
+ * @returns List of the artist's top tracks
+ */
+export async function getArtistTopTracks(artistId: string): Promise<Track[]> {
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/artists/${artistId}/top-tracks`,
+        method: "GET"
+    }
+
+    //Configure callbacks
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+    }
+
+    //Make request
+    let result = await callAPI(requestOptions).catch(onFailure);
+
+    //Return resulting list of tracks
+    return JSON.parse(result.responseData).tracks ?? [];
 }
 
 
