@@ -232,6 +232,33 @@ export async function findPlaylistData(id: string): Promise<Playlist> {
 
 
 /**
+ * Uses the Spotify API to obtain information about a track
+ * @param id ID of the track to query
+ * @returns Object containing the track data
+ */
+export async function findTrackData(id: string): Promise<Track> {
+    //First get the information about the playlist itself, including number of tracks, then get track data
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/tracks/${id}`,
+        method: "GET",
+    }
+
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+    }
+
+    //Make request to get playlist data
+    let result = await callAPI(requestOptions).catch(onFailure);
+    if (!result) {
+        throw new Error("Track not found");
+    }
+
+    return JSON.parse(result?.responseData);
+}
+
+
+/**
  * Uses the Spotify API to get information about at most 100 tracks in a playlist
  * Note: This does NOT include preview URL for each track, to avoid excessive requests.
  * @param playlistId ID of the playlist to query

@@ -304,18 +304,20 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
             //Determine length of results list
             resultsLength = result.results.length;
 
-            //Determine if the correct track is in the results list
-            let correctTrack = (result.results as Track[]).find((track) => (track.id === correctId));
+            //Get correct track
+            let correctTrack = await SpotifyAPI.findTrackData(correctId);
 
             //Add only non-duplicates to the options list
             result.results.forEach((track: Track) => {
-                //Proceed if the correct track is not in the results, this is the correct track, or this is not a duplicate of the correct track
-                if(!correctTrack || track.id === correctId || !areEqual(track, correctTrack)){
-                    //Proceed if this is the first instance of this track
-                    if (!guessOptions.some(s => areEqual(s, track))) {
-                        //Add the track to the output
-                        guessOptions.push(track);
+                //Proceed if this is the first instance of this track
+                if (!guessOptions.some(s => areEqual(s, track))) {
+                    //If this track is the same as the correct track, add the correct track instead
+                    if(areEqual(track, correctTrack)){
+                        track = correctTrack;
                     }
+
+                    //Add the track to the output
+                    guessOptions.push(track);
                 }
             });
 
