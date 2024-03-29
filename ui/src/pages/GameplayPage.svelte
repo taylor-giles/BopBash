@@ -38,7 +38,7 @@
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
     let audioLoaded: boolean = false;
     let guessTrackId: string = "";
-    let guessQuery: string = "";
+    let trackQuery: string = "";
     let guessArtistId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
@@ -47,6 +47,7 @@
     let volumeLevel: number = 0.5;
     let currentRoundTime: number = 0;
     let isVisualizerSmall = false;
+    let guessString: string;
 
     //HTML element references
     let audioElement: HTMLAudioElement = new Audio();
@@ -119,7 +120,7 @@
         guessResult = undefined;
         correctTrackId = undefined;
         guessTrackId = "";
-        guessQuery = "";
+        trackQuery = "";
         guessArtistId = "";
         currentRoundTime = 0;
 
@@ -161,7 +162,7 @@
     async function skipRound(e: Event) {
         e?.preventDefault();
         guessTrackId = "";
-        guessQuery = "";
+        trackQuery = "";
         handleSubmit(e);
     }
 
@@ -178,7 +179,7 @@
         if (result) {
             //Reset guess value
             guessTrackId = "";
-            guessQuery = "";
+            trackQuery = "";
 
             //Extract values from result
             guessResult = { ...result };
@@ -221,7 +222,7 @@
     {:else}
         <div id="main-content">
             {#if currentPhase === RoundPhase.CONCLUSION}
-                <RoundConclusionScreen {correctTrackId} {guessResult} />
+                <RoundConclusionScreen {correctTrackId} {guessResult} {guessString}/>
             {:else}
                 <div id="gameplay-content">
                     <!-- Header -->
@@ -297,7 +298,8 @@
                                 <!-- Form for entering guesses -->
                                 <div id="form-wrapper">
                                     <GameplayForm
-                                        bind:guessQuery
+                                        bind:guessString
+                                        bind:trackQuery
                                         bind:guessTrackId
                                         disabled={currentPhase !==
                                             RoundPhase.PLAYING}
