@@ -17,7 +17,7 @@
     //Progress bar variables
     export let currentRoundDuration: number;
     export let progressGradientColors: string[] = ["lime", "red"];
-    export let progressGradientPositions: number[] = [0.7, 1];
+    export let progressGradientPositions: number[] = [0.5, 1];
 
     //Millis between numbers shown in countdown
     export let countdownInterval = 400;

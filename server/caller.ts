@@ -3,7 +3,7 @@ import { request, RequestOptions } from "https";
 import querystring, { ParsedUrlQueryInput } from 'querystring';
 import { load as cheerio } from "cheerio";
 import { playlistFields, tracksFields } from "./types";
-import { Playlist, PlaylistMetadata, Track } from "../shared/types";
+import { Playlist, SpotifySearchResult, Track } from "../shared/types";
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -232,6 +232,33 @@ export async function findPlaylistData(id: string): Promise<Playlist> {
 
 
 /**
+ * Uses the Spotify API to obtain information about a track
+ * @param id ID of the track to query
+ * @returns Object containing the track data
+ */
+export async function findTrackData(id: string): Promise<Track> {
+    //First get the information about the playlist itself, including number of tracks, then get track data
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/tracks/${id}`,
+        method: "GET",
+    }
+
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+    }
+
+    //Make request to get playlist data
+    let result = await callAPI(requestOptions).catch(onFailure);
+    if (!result) {
+        throw new Error("Track not found");
+    }
+
+    return JSON.parse(result?.responseData);
+}
+
+
+/**
  * Uses the Spotify API to get information about at most 100 tracks in a playlist
  * Note: This does NOT include preview URL for each track, to avoid excessive requests.
  * @param playlistId ID of the playlist to query
@@ -285,16 +312,14 @@ export async function getTrackPreviewURL(id: string): Promise<string> {
 
 
 /**
- * Uses the Spotify API to search for playlists that match the given query
- * @param query The search query
- * @param offset Index to start query at
- * @param limit Max number of tracks to get in query. Max is 50.
- * @returns List of metadata objects for playlists in response
+ * Uses the Spotify API to get the top tracks for an artist
+ * @param artistId ID of the playlist to query
+ * @returns List of the artist's top tracks
  */
-export async function searchPlaylist(query: string, offset: number = 0, limit: number = 5): Promise<{nextOffset: number, results: PlaylistMetadata[]}> {
+export async function getArtistTopTracks(artistId: string): Promise<Track[]> {
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
-        path: `/v1/search?q=${encodeURIComponent(query)}&type=playlist&offset=${offset}&limit=${Math.min(limit, 50)}`,
+        path: `/v1/artists/${artistId}/top-tracks`,
         method: "GET"
     }
 
@@ -305,14 +330,37 @@ export async function searchPlaylist(query: string, offset: number = 0, limit: n
 
     //Make request
     let result = await callAPI(requestOptions).catch(onFailure);
+
+    //Return resulting list of tracks
+    return JSON.parse(result.responseData).tracks ?? [];
+}
+
+
+/**
+ * Uses the Spotify API to perform a search for resources that match the given query
+ * @param query The search query
+ * @param offset Index to start query at
+ * @param limit Max number of tracks to get in query. Max is 50.
+ * @returns The search result as returned by the Spotify search API
+ */
+export async function search(type: "playlist"|"track"|"artist"|"album", query: string, offset: number = 0, limit: number = 5): Promise<SpotifySearchResult> {
+    let requestOptions: RequestOptions = {
+        hostname: "api.spotify.com",
+        path: `/v1/search?q=${encodeURIComponent(query)}&type=${type}&offset=${offset}&limit=${Math.min(limit, 50)}`,
+        method: "GET"
+    }
+
+    //Configure callbacks
+    let onFailure: FailedAPICallback = (result: FailedAPIResult) => {
+        console.error(result.error);
+        throw result.error;
+    }
+
+    //Make request
+    let result = await callAPI(requestOptions).catch(onFailure);
     let responseData = JSON.parse(result.responseData);
 
-    //Extract the next offset from the provided next URL
-    let nextURL = responseData?.playlists?.next;
-    let nextOffset = nextURL ? parseInt(new URLSearchParams((new URL(nextURL)).search).get("offset") ?? "") : -1;
-
-    //Return resulting list of playlists
-    return {nextOffset: nextOffset, results: responseData.playlists?.items ?? []};
+    return responseData;
 }
 
 
