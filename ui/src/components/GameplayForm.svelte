@@ -29,7 +29,6 @@
     let trackGuessDisplay: HTMLInputElement;
     let trackGuessInput: HTMLInputElement;
     let artistInput: HTMLInputElement;
-    let form: HTMLFormElement;
 
     //Maintain string representation of the selected track
     $: guessName = trackOptions?.[selectedOptionIndex]?.name
@@ -145,7 +144,7 @@
     }
 </script>
 
-<form on:submit bind:this={form}>
+<form on:submit>
     <!-- Track search -->
     <div class="input-container">
         <label for="track-input" class="body-text"> Search by Title </label>
