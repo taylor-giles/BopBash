@@ -15,8 +15,8 @@
     export let disabled: boolean;
     export let guessString: string = "";
 
-
     let artistQuery: string = "";
+    let artistName: string = "";
 
     const accent = getComputedStyle(document.documentElement).getPropertyValue(
         "--accent",
@@ -24,16 +24,21 @@
 
     let trackOptions: Track[] | null = null;
     let artistOptions: Artist[] | null = null;
+    let showingArtistSongs: boolean = false;
     let selectedOptionIndex: number = -1;
     let searchTimeout: NodeJS.Timeout;
-    let trackGuessDisplay: HTMLInputElement;
     let trackGuessInput: HTMLInputElement;
     let artistInput: HTMLInputElement;
 
     //Maintain string representation of the selected track
-    $: guessName = trackOptions?.[selectedOptionIndex]?.name
-    $: guessArtists = trackOptions?.[selectedOptionIndex]?.artists?.map((artist) => artist.name).join(", ")
-    $: guessString = guessTrackId?.length > 0 && guessName && guessArtists ? `${guessName} - ${guessArtists}` : "(No Answer)";
+    $: guessName = trackOptions?.[selectedOptionIndex]?.name;
+    $: guessArtists = trackOptions?.[selectedOptionIndex]?.artists
+        ?.map((artist) => artist.name)
+        .join(", ");
+    $: guessString =
+        guessTrackId?.length > 0 && guessName && guessArtists
+            ? `${guessName} - ${guessArtists}`
+            : "(No Answer)";
 
     //Reset options
     $: if (trackQuery.length < 3) {
@@ -53,9 +58,14 @@
         snapTo(artistInput);
     }
 
+    /**
+     * Callback which fires when the track input field receives input
+     */
     async function onTrackInput() {
         clearTimeout(searchTimeout);
-        if (trackQuery.length > 3) {
+        if (trackQuery.length > 0 && trackQuery.length % 8 == 0) {
+            trackOptions = await GameAPI.findGuessOptions(trackQuery, 0, 5);
+        } else if (trackQuery.length > 3) {
             searchTimeout = setTimeout(async () => {
                 trackOptions = await GameAPI.findGuessOptions(trackQuery, 0, 5);
             }, SEARCH_DELAY);
@@ -63,9 +73,15 @@
         artistQuery = "";
     }
 
+    /**
+     * Callback which fires when the artist input field receives input
+     */
     async function onArtistInput() {
         clearTimeout(searchTimeout);
-        if (artistQuery.length > 3) {
+        if (artistQuery.length > 0 && artistQuery.length % 10 == 0) {
+            artistOptions = (await GameAPI.findArtists(artistQuery, 0, 5))
+                .results;
+        } else if (artistQuery.length > 3) {
             searchTimeout = setTimeout(async () => {
                 artistOptions = (await GameAPI.findArtists(artistQuery, 0, 5))
                     .results;
@@ -74,49 +90,73 @@
         trackQuery = "";
     }
 
+    /**
+     * Helper function for analyzing keyboard input for search fields
+     * @param event The keyboard event that caused the callback to be fired
+     * @param numOptions The number of options to search through
+     */
     async function onInputKeydown(
         event: KeyboardEvent,
-        options: Track[] | Artist[] | null,
-    ): Promise<string | undefined> {
-        if (options?.length ?? 0 > 0) {
+        numOptions: number,
+    ): Promise<number | undefined> {
+        if (numOptions > 0) {
             if (event.key === "ArrowUp") {
-                event.preventDefault(); // Prevent the default behavior of the up arrow key
+                //Prevent default behavior
+                event.preventDefault();
 
                 //Loop selected track index backwards
-                let optionsLength = options?.length ?? -1;
+                let optionsLength = numOptions;
                 selectedOptionIndex =
                     optionsLength > 0
                         ? (selectedOptionIndex - 1 + optionsLength) %
                           optionsLength
                         : -1;
             } else if (event.key === "ArrowDown") {
+                //Prevent default behavior
                 event.preventDefault();
 
                 //Loop selected track index forwards
-                selectedOptionIndex =
-                    (selectedOptionIndex + 1) % (options?.length ?? 0);
+                selectedOptionIndex = (selectedOptionIndex + 1) % numOptions;
             } else if (event.key === "Enter") {
-                if ((options?.length ?? 0 > 0) && selectedOptionIndex >= 0) {
+                if (selectedOptionIndex >= 0) {
+                    //Prevent default behavior
                     event.preventDefault();
 
-                    //Return the selected option
-                    return options![selectedOptionIndex].id;
+                    //Return the index of the selected option
+                    return selectedOptionIndex;
                 }
             }
         }
     }
 
     async function onTrackInputKeydown(event: KeyboardEvent) {
-        let selectedTrackId = await onInputKeydown(event, trackOptions);
-        if (selectedTrackId) {
-            guessTrackId = selectedTrackId;
+        //If currently showing artist tracks, then reset the query
+        if (showingArtistSongs) {
+            showingArtistSongs = false;
+            trackQuery = "";
+        }
+
+        //Handle track selection by keyboard
+        let selectedTrackIndex = await onInputKeydown(
+            event,
+            trackOptions?.length ?? 0,
+        );
+        if (selectedTrackIndex !== undefined) {
+            guessTrackId = trackOptions![selectedTrackIndex].id;
         }
     }
 
     async function onArtistInputKeydown(event: KeyboardEvent) {
-        let selectedArtistId = await onInputKeydown(event, artistOptions);
-        if (selectedArtistId) {
-            artistId = selectedArtistId;
+        //Handle artist selection by keyboard
+        let selectedArtistIndex = await onInputKeydown(
+            event,
+            artistOptions?.length ?? 0,
+        );
+        if (selectedArtistIndex !== undefined) {
+            let selectedArtist = artistOptions![selectedArtistIndex];
+            artistName = selectedArtist.name;
+            artistId = selectedArtist.id;
+            doArtistSearch();
         }
     }
 
@@ -125,16 +165,10 @@
      */
     async function doArtistSearch() {
         trackOptions = (await GameAPI.getArtistTopTracks(artistId)).splice(5);
-    }
-
-    /**
-     * Callback to be fired when text in guess display is changed.
-     * Resets track ID and makes the display text into the new query.
-     */
-    async function changeGuess() {
-        trackQuery = trackGuessDisplay.value;
-        guessTrackId = "";
-        await tick();
+        trackQuery = `[Top Songs by ${artistName}]`;
+        artistQuery = "";
+        artistId = "";
+        showingArtistSongs = true;
         trackGuessInput.focus();
     }
 
@@ -148,19 +182,8 @@
     <!-- Track search -->
     <div class="input-container">
         <label for="track-input" class="body-text"> Search by Title </label>
-        <!-- {#if guessTrackId.length > 0}
-            <input
-                bind:this={trackGuessDisplay}
-                id="track-input"
-                class="header-text"
-                type="text"
-                autocomplete="off"
-                value={`${trackOptions?.[selectedTrackIndex].name} - ${trackOptions?.[selectedTrackIndex].artists.map((artist) => artist.name).join(", ")}`}
-                {disabled}
-                on:input={changeGuess}
-            />
-        {:else} -->
         <input
+            class:italics={showingArtistSongs}
             bind:this={trackGuessInput}
             id="track-input"
             class="header-text"
@@ -172,7 +195,6 @@
             on:input={onTrackInput}
             on:keydown={onTrackInputKeydown}
         />
-        <!-- {/if} -->
 
         {#if guessTrackId.length <= 0}
             <!-- Track guess options-->
@@ -239,6 +261,7 @@
                             highlighted={selectedOptionIndex == index}
                             on:click={() => {
                                 artistId = artist.id;
+                                artistName = artist.name;
                                 doArtistSearch();
                             }}
                             on:mouseover={() => (selectedOptionIndex = index)}
@@ -270,14 +293,6 @@
         >
             Skip Round
         </button>
-        <!-- <button
-            type="button"
-            id="submit-btn"
-            class="submission-btn"
-            disabled={disabled || guessTrackId.length <= 0}
-        >
-            Submit
-        </button> -->
     </div>
 </form>
 
@@ -310,10 +325,6 @@
         height: 1.8rem;
     }
 
-    .submission-btn {
-        /*width: 7rem;*/
-    }
-
     input {
         font-size: 1.1rem;
         font-weight: 700;
@@ -323,6 +334,10 @@
         height: 2.5rem;
         overflow-x: auto;
         background-color: var(--primary-light);
+    }
+    input.italics {
+        font-style: italic;
+        color: rgba(0, 0, 0, 0.8);
     }
 
     .suggestions-container {
