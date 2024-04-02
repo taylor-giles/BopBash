@@ -438,7 +438,7 @@
         <button
             class="footer-btn"
             on:click={handleFinish}
-            disabled={!isComplete || isLoading}
+            disabled={!isComplete || isLoading || isLoadingSearchResults}
         >
             Finish
         </button>
