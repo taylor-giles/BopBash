@@ -15,3 +15,6 @@ export const JOIN_GAME_TIMEOUT = 5000;
 
 //Time (in millis) between each number in the countdown
 export const COUNTDOWN_INTERVAL = 400;
+
+//Time (in millis) before rematch game begins after game end
+export const REMATCH_TIMEOUT = 20000;
