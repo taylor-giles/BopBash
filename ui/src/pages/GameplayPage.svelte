@@ -18,7 +18,7 @@
     import GameplayForm from "../components/GameplayForm.svelte";
     import TrackChoice from "../components/TrackChoice.svelte";
     import GameplayVisualization from "../components/GameplayVisualization.svelte";
-    import { COUNTDOWN_INTERVAL } from "../../../shared/constants";
+    import { COUNTDOWN_INTERVAL, REMATCH_TIMEOUT } from "../../../shared/constants";
     import RoundConclusionScreen from "../components/RoundConclusionScreen.svelte";
     import GameEndScreen from "../components/GameEndScreen.svelte";
 
@@ -48,6 +48,7 @@
     let currentRoundTime: number = 0;
     let isVisualizerSmall = false;
     let guessString: string;
+    let timeToRematch: number = REMATCH_TIMEOUT/1000;
 
     //HTML element references
     let audioElement: HTMLAudioElement = new Audio();
@@ -95,6 +96,16 @@
     $: if ($GameStore.currentRound?.trackId) {
         correctTrackId = $GameStore.currentRound?.trackId;
         startConclusionPhase();
+    }
+
+    //If the game has ended, start the rematch countdown timer
+    $: if($GameStore.status === GameStatus.ENDED && timeToRematch === REMATCH_TIMEOUT/1000){
+        let interval = setInterval(() => {
+            timeToRematch = timeToRematch-1;
+            if(timeToRematch <= 0){
+                clearInterval(interval);
+            }
+        }, 1000);
     }
 
     /**
@@ -349,7 +360,12 @@
         </button>
 
         {#if $GameStore.status === GameStatus.ENDED}
-            <div></div>
+            <div id="next-round-timer-container">
+                <div class="header-text">REMATCH</div>
+                <div id="next-round-container" class="header-text">
+                    {`STARTS IN ${timeToRematch}s`}
+                </div>
+            </div>
         {:else if currentPhase === RoundPhase.COUNTDOWN || currentPhase === RoundPhase.PLAYING}
             <!-- Button to show scoreboard -->
             <button
@@ -359,7 +375,7 @@
                 <PodiumIcon />
                 {showScoreboard ? "Hide" : "Show"}
             </button>
-        {:else if currentPhase === RoundPhase.CONCLUSION}
+        {:else if currentPhase === RoundPhase.CONCLUSION && currentRoundNum < ($GameStore.options.numRounds ?? 0)-1}
             <!-- Display for when next round will start -->
             <div id="next-round-timer-container">
                 <div>Next Round:</div>
