@@ -8,7 +8,7 @@
     import AudioMotionAnalyzer from "audiomotion-analyzer";
     import RoundProgressBar from "./RoundProgressBar.svelte";
 
-    //Set to activate small layout (horizontal progress bar vs. circular)
+    //Set to activate small layout
     export let isSmall: boolean = false;
 
     //The current phase of the round
