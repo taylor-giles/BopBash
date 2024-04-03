@@ -5,6 +5,7 @@ import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
+import { REMATCH_TIMEOUT } from "../shared/constants";
 
 const POST_ROUND_WAIT_TIME = 5000;
 
@@ -323,6 +324,26 @@ export class Game {
             this.status = GameStatus.ENDED;
             this.broadcastUpdate();
             console.log(`Ended game ${this.id} (${this.playlist.name})`);
+
+            //Set up rematch
+            setTimeout(async () => {
+                //Reset each player's activeGameInfo
+                this.players.forEach((player) =>
+                    player.activeGameInfo = {
+                        gameId: this.id,
+                        isReady: false,
+                        scores: Array.from(this.rounds, () => null)
+                    }
+                );
+
+                //Create new rounds
+                await this.generateRounds();
+
+                //Set the status to pending and inform players
+                this.status = GameStatus.PENDING;
+                this.broadcastUpdate();
+                console.log()
+            }, REMATCH_TIMEOUT);
         }
     }
 
