@@ -56,6 +56,7 @@
     sourceNode.connect(audioContext.destination);
     let visualization: GameplayVisualization;
     let choicesContainer: HTMLDivElement;
+    let mainContentDiv: HTMLDivElement;
 
     //Get colors from CSS
     const spotifyGreen = getComputedStyle(
@@ -105,7 +106,8 @@
         isVisualizerSmall = false;
         await tick();
         isVisualizerSmall =
-            choicesContainer?.scrollHeight > choicesContainer?.clientHeight;
+            choicesContainer?.scrollHeight > choicesContainer?.clientHeight ||
+            mainContentDiv?.scrollHeight > mainContentDiv?.clientHeight;
         await visualization.doCountdown();
     }
 
@@ -126,7 +128,7 @@
 
         //Set audio callbacks & properties
         audioElement.crossOrigin = "anonymous";
-        audioElement.oncanplaythrough = () => {
+        audioElement.oncanplay = () => {
             audioLoaded = true;
         };
         audioElement.ontimeupdate = () => {
@@ -220,7 +222,7 @@
     {#if $GameStore.status === GameStatus.ENDED}
         <GameEndScreen />
     {:else}
-        <div id="main-content">
+        <div id="main-content" bind:this={mainContentDiv}>
             {#if currentPhase === RoundPhase.CONCLUSION}
                 <RoundConclusionScreen {correctTrackId} {guessResult} {guessString}/>
             {:else}
