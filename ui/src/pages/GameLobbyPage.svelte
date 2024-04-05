@@ -80,8 +80,8 @@
         if (navigator.canShare?.()) {
             navigator.share({
                 url: shareLink,
-                title: "Beat Blitz",
-                text: "Join me for a thrilling song-based smackdown on Beat Blitz!",
+                title: "BopBash",
+                text: "Join me for a thrilling song-based smackdown on BopBash!",
             });
         }
     }
@@ -97,10 +97,15 @@
             uri: `spotify:playlist:${gameState.playlist.id}`,
             height: `100%`,
         };
-        let callback = (EmbedController: any) => {
-            EmbedController.addListener("ready", () => {
-                console.log("Embed controller is ready");
-            });
+        let callback = (controller: any) => {
+            //Make sure background music does not play while embedded element is playing
+            controller.onPlaybackUpdate = (playbackState: any) => {
+                if(playbackState.isPaused){
+                    $BG_AUDIO.play();
+                } else {
+                    $BG_AUDIO.pause();
+                }
+            };
         };
         $IFrameAPI.createController(embed, options, callback);
     }
