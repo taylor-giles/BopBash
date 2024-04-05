@@ -102,7 +102,7 @@
                             countdownView.innerHTML = `${i}`;
 
                             //Play beep sound effect
-                            $SFX_AUDIO.src = "/src/assets/beep.mp3";
+                            $SFX_AUDIO.src = "beep.mp3";
                             $SFX_AUDIO.play();
 
                             //Resolve promise when countdown is complete
