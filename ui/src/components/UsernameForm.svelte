@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { MAX_USERNAME_LENGTH } from "../../../shared/constants";
     import { connectAs } from "../../stores/gameStore";
+    import { initAudio } from "../../stores/audio";
 
     let username = "";
     let failed = false;
@@ -11,8 +11,13 @@
     /**
      * Submits the form by attempting to connect via API
      */
-    function handleSubmit(e: Event) {
-        e.preventDefault();
+    function handleStartClick(e?: Event) {
+        e?.preventDefault();
+
+        //Initialize audio
+        //This MUST be done in DIRECT response to a button press to enable autoplay on all platforms
+        initAudio();
+
         if (!failed) {
             //Establish the GameConnection
             connectAs(username);
@@ -36,7 +41,7 @@
 <main>
     <div id="username-label" class="header-text">Enter a Username</div>
 
-    <form on:submit={handleSubmit}>
+    <form>
         <input
             id="username-input"
             class="header-text"
@@ -57,7 +62,14 @@
             Rude or offensive names will not be tolerated.
         </div>
 
-        <button type="submit" id="submit-btn" disabled={!ready}> Start </button>
+        <button
+            on:click={handleStartClick}
+            type="button"
+            id="submit-btn"
+            disabled={!ready}
+        >
+            Start
+        </button>
     </form>
 </main>
 

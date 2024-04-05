@@ -2,6 +2,7 @@
     import type { ComponentType } from "svelte";
     import { GameConnection, GameStore } from "../stores/gameStore";
     import { Page, CurrentPage, ErrorMessage } from "../stores/pageStore";
+    import { BG_AUDIO } from "../stores/audio";
     import GameLobbyPage from "./pages/GameLobbyPage.svelte";
     import HomePage from "./pages/HomePage.svelte";
     import LoginPage from "./pages/LoginPage.svelte";
@@ -18,7 +19,7 @@
         [Page.LOBBY]: GameLobbyPage,
         [Page.FIND]: GameDiscoveryPage,
         [Page.GAME]: GameplayPage,
-        [Page.CREATE]: GameCreationPage
+        [Page.CREATE]: GameCreationPage,
     };
 
     //Obtain and remove game ID from URL if it exists
@@ -29,6 +30,10 @@
     GameConnection.subscribe((value) => {
         if (value) {
             CurrentPage.set(Page.HOME);
+
+            //Start background music
+            $BG_AUDIO.loop = true;
+            $BG_AUDIO.play();
 
             //Attempt to join
             if (gameToJoin) {
