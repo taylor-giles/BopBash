@@ -320,30 +320,35 @@ export class Game {
      */
     public async end() {
         if (this.status !== GameStatus.ENDED) {
+            //End the current round if it is ongoing
+            this.endCurrentRound();
+
             //Inform all players that the game has ended
             this.status = GameStatus.ENDED;
             this.broadcastUpdate();
             console.log(`Ended game ${this.id} (${this.playlist.name})`);
 
             //Set up rematch
-            setTimeout(async () => {
-                //Reset each player's activeGameInfo
-                this.players.forEach((player) =>
-                    player.activeGameInfo = {
-                        gameId: this.id,
-                        isReady: false,
-                        scores: Array.from(this.rounds, () => null)
-                    }
-                );
+            if (this.players.size > 0) {
+                setTimeout(async () => {
+                    //Reset each player's activeGameInfo
+                    this.players.forEach((player) =>
+                        player.activeGameInfo = {
+                            gameId: this.id,
+                            isReady: false,
+                            scores: Array.from(this.rounds, () => null)
+                        }
+                    );
 
-                //Create new rounds
-                await this.generateRounds();
+                    //Create new rounds
+                    await this.generateRounds();
 
-                //Set the status to pending and inform players
-                this.status = GameStatus.PENDING;
-                this.broadcastUpdate();
-                console.log(`Starting rematch for game ${this.id} (${this.playlist.name})`);
-            }, REMATCH_TIMEOUT);
+                    //Set the status to pending and inform players
+                    this.status = GameStatus.PENDING;
+                    this.broadcastUpdate();
+                    console.log(`Starting rematch for game ${this.id} (${this.playlist.name})`);
+                }, REMATCH_TIMEOUT);
+            }
         }
     }
 
