@@ -33,6 +33,7 @@
 
             //Start background music
             $BG_AUDIO.loop = true;
+            $BG_AUDIO.volume=0.5;
             $BG_AUDIO.play();
 
             //Attempt to join
@@ -57,7 +58,7 @@
 </script>
 
 <main>
-    <div id="appbar">Beat Blitz</div>
+    <div id="appbar">BopBash</div>
     <div id="page-content">
         <svelte:component this={PAGES[$CurrentPage]} />
     </div>
