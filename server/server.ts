@@ -26,11 +26,11 @@ const app = express();
 
 // Enable CORS
 //TODO: REMOVE THIS!! It is only here to allow for dev over SSH.
-app.use(cors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// app.use(cors({
+//     origin: '*',
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//     allowedHeaders: ['Content-Type', 'Authorization'],
+// }));
 
 app.use(express.json());
 app.listen(EXPRESS_PORT, () => {
@@ -110,7 +110,7 @@ SpotifyAPI.maintainAccessToken();
 
 
 // getTrackPreviewURL("02MiyVckOBtygUOEDnV7Pd")
-// getPreviewURL("https://open.spotify.com/track/02MiyVckOBtygUOEDnV7Pd?si=806f650e57ee4216")
+//SpotifyAPI.getTrackPreviewURL("02MiyVckOBtygUOEDnV7Pd?si=806f650e57ee4216").then(console.log)
 // getTrackEmbed("https://open.spotify.com/track/02MiyVckOBtygUOEDnV7Pd?si=806f650e57ee4216")
 // getPlaylistTrackURIs("5H25eIw19USrnyVRluSL5B");
 // getPlaylistData("5H25eIw19USrnyVRluSL5B").then((result) => console.log(JSON.stringify(result, null, 2)))
