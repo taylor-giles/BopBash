@@ -4,6 +4,7 @@
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
     import { GameStore } from "../../stores/gameStore";
+    import { MUSIC_AUDIO, BG_AUDIO, VISUALIZER_NODE } from "../../stores/audio";
     import {
         GameStatus,
         GameType,
@@ -18,21 +19,15 @@
     import GameplayForm from "../components/GameplayForm.svelte";
     import TrackChoice from "../components/TrackChoice.svelte";
     import GameplayVisualization from "../components/GameplayVisualization.svelte";
-    import { COUNTDOWN_INTERVAL, REMATCH_TIMEOUT } from "../../../shared/constants";
+    import {
+        COUNTDOWN_INTERVAL,
+        REMATCH_TIMEOUT,
+    } from "../../../shared/constants";
     import RoundConclusionScreen from "../components/RoundConclusionScreen.svelte";
     import GameEndScreen from "../components/GameEndScreen.svelte";
 
-    //Create audio context
-    const audioContext = new AudioContext();
-
-    //Create audio node to connect to visualizer
-    const visualizerNode = audioContext.createAnalyser();
-
-    //Create & connect beep sound node
-    const beep = new Audio("/src/assets/beep.mp3");
-    audioContext
-        .createMediaElementSource(beep)
-        .connect(audioContext.destination);
+    //Stop background music
+    $BG_AUDIO.pause();
 
     //Round & game variables
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
@@ -48,13 +43,9 @@
     let currentRoundTime: number = 0;
     let isVisualizerSmall = false;
     let guessString: string;
-    let timeToRematch: number = REMATCH_TIMEOUT/1000;
+    let timeToRematch: number = REMATCH_TIMEOUT / 1000;
 
     //HTML element references
-    let audioElement: HTMLAudioElement = new Audio();
-    let sourceNode = audioContext.createMediaElementSource(audioElement);
-    sourceNode.connect(visualizerNode);
-    sourceNode.connect(audioContext.destination);
     let visualization: GameplayVisualization;
     let choicesContainer: HTMLDivElement;
     let mainContentDiv: HTMLDivElement;
@@ -78,14 +69,14 @@
     //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
         currentPhase = RoundPhase.COUNTDOWN;
-        audioElement.src = audioURL;
+        $MUSIC_AUDIO.src = audioURL;
         loadRound();
     }
 
     //Keep track of how much time has passed in the audio
     let timestamp = -1;
-    $: if (audioElement) {
-        timestamp = audioElement.currentTime;
+    $: if ($MUSIC_AUDIO) {
+        timestamp = $MUSIC_AUDIO.currentTime;
     }
 
     //When audio is ready, start the round
@@ -100,10 +91,13 @@
     }
 
     //If the game has ended, start the rematch countdown timer
-    $: if($GameStore.status === GameStatus.ENDED && timeToRematch === REMATCH_TIMEOUT/1000){
+    $: if (
+        $GameStore.status === GameStatus.ENDED &&
+        timeToRematch === REMATCH_TIMEOUT / 1000
+    ) {
         let interval = setInterval(() => {
-            timeToRematch = timeToRematch-1;
-            if(timeToRematch <= 0){
+            timeToRematch = timeToRematch - 1;
+            if (timeToRematch <= 0) {
                 clearInterval(interval);
             }
         }, 1000);
@@ -138,17 +132,17 @@
         currentRoundTime = 0;
 
         //Set audio callbacks & properties
-        audioElement.crossOrigin = "anonymous";
-        audioElement.oncanplay = () => {
+        $MUSIC_AUDIO.crossOrigin = "anonymous";
+        $MUSIC_AUDIO.oncanplay = () => {
             audioLoaded = true;
         };
-        audioElement.ontimeupdate = () => {
-            timestamp = audioElement.currentTime;
-        };
+        // audioElement.ontimeupdate = () => {
+        //     timestamp = audioElement.currentTime;
+        // };
 
         //Start re-loading of audio element
         audioLoaded = false;
-        audioElement.load();
+        $MUSIC_AUDIO.load();
     }
 
     /**
@@ -161,8 +155,8 @@
             await tick();
 
             //Play the audio
-            audioElement.play();
-            audioElement.loop = true;
+            $MUSIC_AUDIO.play();
+            $MUSIC_AUDIO.loop = true;
 
             //Start the visualization
             visualization.start();
@@ -208,7 +202,7 @@
      */
     async function startConclusionPhase() {
         //Move to conclusion phase and wait for render updates
-        audioElement.pause();
+        $MUSIC_AUDIO.pause();
         currentPhase = RoundPhase.CONCLUSION;
         await tick();
     }
@@ -217,7 +211,7 @@
      * Removes this player from this game and leaves this page
      */
     function leave() {
-        audioElement.pause();
+        $MUSIC_AUDIO.pause();
         GameAPI.leaveGame();
         CurrentPage.set(Page.HOME);
     }
@@ -235,7 +229,11 @@
     {:else}
         <div id="main-content" bind:this={mainContentDiv}>
             {#if currentPhase === RoundPhase.CONCLUSION}
-                <RoundConclusionScreen {correctTrackId} {guessResult} {guessString}/>
+                <RoundConclusionScreen
+                    {correctTrackId}
+                    {guessResult}
+                    {guessString}
+                />
             {:else}
                 <div id="gameplay-content">
                     <!-- Header -->
@@ -248,7 +246,7 @@
                         {#if currentPhase === RoundPhase.PLAYING}
                             <div id="audio-controls-container">
                                 <AudioControls
-                                    bind:audio={audioElement}
+                                    bind:audio={$MUSIC_AUDIO}
                                     bind:volumeLevel
                                 />
                             </div>
@@ -264,8 +262,7 @@
                             bind:this={visualization}
                             bind:currentPhase
                             countdownInterval={COUNTDOWN_INTERVAL}
-                            {visualizerNode}
-                            {beep}
+                            visualizerNode={$VISUALIZER_NODE}
                             {currentRoundDuration}
                             progressGradientColors={[spotifyGreen, red]}
                             isSmall={isVisualizerSmall}
@@ -377,7 +374,7 @@
                 <PodiumIcon />
                 {showScoreboard ? "Hide" : "Show"}
             </button>
-        {:else if currentPhase === RoundPhase.CONCLUSION && currentRoundNum < ($GameStore.options.numRounds ?? 0)-1}
+        {:else if currentPhase === RoundPhase.CONCLUSION && currentRoundNum < ($GameStore.options.numRounds ?? 0) - 1}
             <!-- Display for when next round will start -->
             <div id="next-round-timer-container">
                 <div>Next Round:</div>

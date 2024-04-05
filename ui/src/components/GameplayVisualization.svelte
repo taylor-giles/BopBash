@@ -5,6 +5,7 @@
     } from "audiomotion-analyzer";
     import { RoundPhase } from "../../stores/pageStore";
     import { tick } from "svelte";
+    import { SFX_AUDIO } from "../../stores/audio";
     import AudioMotionAnalyzer from "audiomotion-analyzer";
     import RoundProgressBar from "./RoundProgressBar.svelte";
 
@@ -44,7 +45,6 @@
     };
 
     //Audio references
-    export let beep: HTMLAudioElement | undefined;
     export let visualizerNode: AnalyserNode;
 
     //Element references
@@ -85,6 +85,7 @@
 
     /**
      * Display a pre-round-start countdown
+     * @returns A promise that resolves when the countdown is complete
      */
     export async function doCountdown(): Promise<void> {
         //Wait for all stage changes to complete
@@ -97,8 +98,14 @@
                 setTimeout(
                     () => {
                         if (currentPhase === RoundPhase.COUNTDOWN) {
+                            //Set the display
                             countdownView.innerHTML = `${i}`;
-                            beep?.play();
+
+                            //Play beep sound effect
+                            $SFX_AUDIO.src = "/src/assets/beep.mp3";
+                            $SFX_AUDIO.play();
+
+                            //Resolve promise when countdown is complete
                             if (i == 0) {
                                 resolve();
                             }
