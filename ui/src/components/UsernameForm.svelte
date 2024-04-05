@@ -11,7 +11,7 @@
     /**
      * Submits the form by attempting to connect via API
      */
-    function handleStartClick(e?: Event) {
+    function handleSubmit(e?: Event) {
         e?.preventDefault();
 
         //Initialize audio
@@ -41,7 +41,7 @@
 <main>
     <div id="username-label" class="header-text">Enter a Username</div>
 
-    <form>
+    <form on:submit={handleSubmit}>
         <input
             id="username-input"
             class="header-text"
@@ -63,7 +63,7 @@
         </div>
 
         <button
-            on:click={handleStartClick}
+            on:click={handleSubmit}
             type="button"
             id="submit-btn"
             disabled={!ready}
