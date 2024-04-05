@@ -15,7 +15,14 @@
     import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
     import Modal from "../components/modals/Modal.svelte";
-    import { ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS, GAME_TYPES } from "../game-types";
+    import {
+        ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
+        GAME_TYPES,
+    } from "../game-types";
+    import { BG_AUDIO } from "../../stores/audio";
+
+    //Play background music
+    $BG_AUDIO.play();
 
     //Maintain a reference to the current state of the game
     let gameState: GameState;
@@ -125,13 +132,13 @@
         <div id="embed-section">
             <!-- Game info -->
             <div id="game-info-section">
-                <div class="section-title header-text">
-                    Game Info
-                </div>
+                <div class="section-title header-text">Game Info</div>
                 <div id="game-info-container">
                     <div id="game-type-display">
                         <div class="property-display">
-                            <svelte:component this={GAME_TYPES[gameState.type].icon}/>
+                            <svelte:component
+                                this={GAME_TYPES[gameState.type].icon}
+                            />
                             {GAME_TYPES[gameState.type].name}
                         </div>
                         <div id="game-type-description">
@@ -144,7 +151,8 @@
                                 <div class="property-display body-text">
                                     <svelte:component this={option.icon} />
                                     <div>
-                                        <b>{gameState.options[option.key]}</b>{option.label}
+                                        <b>{gameState.options[option.key]}</b
+                                        >{option.label}
                                     </div>
                                 </div>
                             {/if}
@@ -298,7 +306,7 @@
         margin-bottom: 1.2rem;
     }
 
-    #game-type-display{
+    #game-type-display {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -313,7 +321,7 @@
         font-size: 0.85rem;
     }
 
-    #options-display-container{
+    #options-display-container {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;

@@ -22,13 +22,20 @@
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { GAME_TYPES, GAME_VISIBILITIES } from "../game-types";
     import LoadingModal from "../components/modals/LoadingModal.svelte";
+    import { BG_AUDIO } from "../../stores/audio";
+
+    //Play background music
+    $BG_AUDIO.play();
 
     const SEARCH_LIMIT = 10;
     const DEFAULT_SEARCH = "Rock";
 
     //A typed iterator representation of the advanced options definitions
     const ADVANCED_OPTIONS_ENTRIES: [keyof GameOptions, GameOptionMetadata][] =
-        Object.entries(ADVANCED_OPTIONS_DEFINITIONS).map(([key, value]) => [key as keyof GameOptions, value]);
+        Object.entries(ADVANCED_OPTIONS_DEFINITIONS).map(([key, value]) => [
+            key as keyof GameOptions,
+            value,
+        ]);
 
     let searchQuery = "";
     let linkQuery = "";
@@ -184,7 +191,12 @@
         }
 
         //Create the game
-        let gameId = await GameAPI.createGame(selectedPlaylistId, selectedGameType, selectedVisibility, advancedOptions);
+        let gameId = await GameAPI.createGame(
+            selectedPlaylistId,
+            selectedGameType,
+            selectedVisibility,
+            advancedOptions,
+        );
         isLoading = false;
 
         //Join the game
@@ -455,7 +467,7 @@
 {/if}
 
 {#if isLoading}
-    <LoadingModal message="Creating game" color={spotifyGreen}/>
+    <LoadingModal message="Creating game" color={spotifyGreen} />
 {/if}
 
 <style>
