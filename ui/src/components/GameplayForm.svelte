@@ -143,6 +143,7 @@
         );
         if (selectedTrackIndex !== undefined) {
             guessTrackId = trackOptions![selectedTrackIndex].id;
+            dispatch("submit");
         }
     }
 
