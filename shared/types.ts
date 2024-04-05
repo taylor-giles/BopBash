@@ -1,9 +1,9 @@
 import type { TransformKeys } from "./utils";
 
 //A list of the possible game types
-export enum GameType { NORMAL, CHOICES, THEATER }
+export enum GameType { SEARCH, CHOICES, THEATER }
 export const GAME_TYPE_OPTIONS = [
-    GameType.NORMAL,
+    GameType.SEARCH,
     GameType.CHOICES,
     GameType.THEATER,
 ];

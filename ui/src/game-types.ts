@@ -1,5 +1,5 @@
 import type { ComponentType } from "svelte";
-import NormalIcon from "svelte-material-icons/MusicCircle.svelte"
+import SearchIcon from "svelte-material-icons/MusicCircle.svelte"
 import ChoicesIcon from "svelte-material-icons/MusicBoxMultiple.svelte"
 import TheaterIcon from "svelte-material-icons/Theater.svelte"
 import PublicIcon from "svelte-material-icons/Earth.svelte"
@@ -12,7 +12,7 @@ import type { TransformKeys } from "../../shared/utils";
 
 export type GameTypeMetadata = { name: string, description: string, icon: ComponentType }
 export const GAME_TYPES: Record<GameType, GameTypeMetadata> = {
-    [GameType.NORMAL]: { name: "Normal", description: "A high-speed guessing game. Find the right song to earn points!", icon: NormalIcon },
+    [GameType.SEARCH]: { name: "Search", description: "A high-speed guessing game. Find the right song to earn points!", icon: SearchIcon },
     [GameType.CHOICES]: { name: "Choices", description: "Lightning rounds with choices. Be quick and click the right song choice to earn points!", icon: ChoicesIcon },
     [GameType.THEATER]: { name: "Theater", description: "In-person song guessing fun. Each player uses their device to guess the track, which plays from one device.", icon: TheaterIcon }
 }
