@@ -6,6 +6,10 @@
     import { joinGame } from "../../api/player-api";
     import { CurrentPage, Page } from "../../stores/pageStore";
     import GameCard from "../components/GameCard.svelte";
+    import { BG_AUDIO } from "../../stores/audio";
+
+    //Play background music
+    $BG_AUDIO.play();
 
     //"Refreshing" indicator is shown iff this is true
     let isRefreshing = false;
@@ -56,7 +60,13 @@
             </div>
         {:else}
             <div>No public games available.</div>
-            <button id="new-game-btn" class="text-button" on:click={()=> CurrentPage.set(Page.CREATE)}> Make a new game </button>
+            <button
+                id="new-game-btn"
+                class="text-button"
+                on:click={() => CurrentPage.set(Page.CREATE)}
+            >
+                Make a new game
+            </button>
         {/if}
     </div>
 </main>
@@ -110,7 +120,7 @@
         padding: 0.5rem;
         padding-inline: 1rem;
     }
-    #new-game-btn:hover{
+    #new-game-btn:hover {
         border-color: var(--spotify-green);
     }
 
