@@ -342,7 +342,7 @@ export class Game {
                 //Set the status to pending and inform players
                 this.status = GameStatus.PENDING;
                 this.broadcastUpdate();
-                console.log()
+                console.log(`Starting rematch for game ${this.id} (${this.playlist.name})`);
             }, REMATCH_TIMEOUT);
         }
     }
