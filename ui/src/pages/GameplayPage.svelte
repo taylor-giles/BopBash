@@ -28,6 +28,7 @@
 
     //Stop background music
     $BG_AUDIO.pause();
+    $BG_AUDIO.currentTime = 0;
 
     //Round & game variables
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
@@ -71,12 +72,6 @@
         currentPhase = RoundPhase.COUNTDOWN;
         $MUSIC_AUDIO.src = audioURL;
         loadRound();
-    }
-
-    //Keep track of how much time has passed in the audio
-    let timestamp = -1;
-    $: if ($MUSIC_AUDIO) {
-        timestamp = $MUSIC_AUDIO.currentTime;
     }
 
     //When audio is ready, start the round
@@ -136,9 +131,6 @@
         $MUSIC_AUDIO.oncanplay = () => {
             audioLoaded = true;
         };
-        // audioElement.ontimeupdate = () => {
-        //     timestamp = audioElement.currentTime;
-        // };
 
         //Start re-loading of audio element
         audioLoaded = false;

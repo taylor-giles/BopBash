@@ -28,7 +28,7 @@
     $BG_AUDIO.play();
 
     const SEARCH_LIMIT = 10;
-    const DEFAULT_SEARCH = "Rock";
+    const DEFAULT_SEARCH = "Top 50 Spotify";
 
     //A typed iterator representation of the advanced options definitions
     const ADVANCED_OPTIONS_ENTRIES: [keyof GameOptions, GameOptionMetadata][] =
@@ -48,7 +48,7 @@
     let isLoadingSearchResults = false;
     let isLoading = false;
 
-    let selectedGameType: GameType = GameType.NORMAL;
+    let selectedGameType: GameType = GameType.SEARCH;
     let selectedVisibility: GameVisibility = GameVisibility.PUBLIC;
     let selectedPlaylistId: string;
 
@@ -158,7 +158,16 @@
             height: "100%",
             width: "100%",
         };
-        $IFrameAPI.createController(embed, options, () => {});
+        $IFrameAPI.createController(embed, options, (controller: any) => {
+            //Make sure background music does not play while embedded element is playing
+            controller.onPlaybackUpdate = (playbackState: any) => {
+                if(playbackState.isPaused){
+                    $BG_AUDIO.play();
+                } else {
+                    $BG_AUDIO.pause();
+                }
+            };
+        });
     }
 
     /**
