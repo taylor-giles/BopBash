@@ -124,6 +124,7 @@
         guessTrackId = "";
         trackQuery = "";
         guessArtistId = "";
+        guessString = "(No Answer)";
         currentRoundTime = 0;
 
         //Set audio callbacks & properties
@@ -275,6 +276,7 @@
                                             <TrackChoice
                                                 on:click={() => {
                                                     guessTrackId = choice.id;
+                                                    guessString = choice.name + " - " + choice.artist;
                                                     handleSubmit();
                                                 }}
                                                 {choice}
