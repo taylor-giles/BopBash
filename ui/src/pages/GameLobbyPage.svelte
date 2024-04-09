@@ -52,6 +52,11 @@
 
     //Generate share link for this game
     const shareLink = `${window.location.origin}?game=${$GameStore.id}`;
+    const shareData = {
+        url: shareLink,
+        title: "BopBash",
+        text: "Join me for a thrilling song-based smackdown on BopBash!",
+    };
 
     /**
      * Toggle player's ready state
@@ -77,12 +82,8 @@
      * Shares the game join information
      */
     function handleShare() {
-        if (navigator.canShare?.()) {
-            navigator.share({
-                url: shareLink,
-                title: "BopBash",
-                text: "Join me for a thrilling song-based smackdown on BopBash!",
-            });
+        if (navigator.canShare(shareData)) {
+            navigator.share(shareData);
         }
     }
 
@@ -100,7 +101,7 @@
         let callback = (controller: any) => {
             //Make sure background music does not play while embedded element is playing
             controller.onPlaybackUpdate = (playbackState: any) => {
-                if(playbackState.isPaused){
+                if (playbackState.isPaused) {
                     $BG_AUDIO.play();
                 } else {
                     $BG_AUDIO.pause();
@@ -279,7 +280,7 @@
             </div>
 
             <!-- Share button -->
-            {#if navigator.canShare?.()}
+            {#if navigator.canShare(shareData)}
                 <button id="share-btn" on:click={handleShare}>
                     <ShareIcon />
                     Share
