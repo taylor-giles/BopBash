@@ -130,12 +130,6 @@
     }
 
     async function onTrackInputKeydown(event: KeyboardEvent) {
-        //If currently showing artist tracks, then reset the query
-        if (showingArtistSongs) {
-            showingArtistSongs = false;
-            trackQuery = "";
-        }
-
         //Handle track selection by keyboard
         let selectedTrackIndex = await onInputKeydown(
             event,
@@ -170,7 +164,14 @@
         artistQuery = "";
         artistId = "";
         showingArtistSongs = true;
-        trackGuessInput.focus();
+        trackGuessInput.onfocus = () => {
+            //If currently showing artist tracks, then reset the query
+            if (showingArtistSongs) {
+                showingArtistSongs = false;
+                trackQuery = "";
+                trackGuessInput.onfocus = () => {}
+            }
+        };
     }
 
     async function snapTo(element: HTMLElement) {
