@@ -9,7 +9,7 @@
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import { GameStore, GameConnection } from "../../stores/gameStore";
     import GameAPI from "../../api/api";
-    import PlayerCard from "../components/PlayerCard.svelte";
+    import PlayerCard from "../components/cards/PlayerCard.svelte";
     import { CurrentPage, Page } from "../../stores/pageStore";
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { onMount, tick } from "svelte";

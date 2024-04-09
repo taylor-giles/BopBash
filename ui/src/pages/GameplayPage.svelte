@@ -16,8 +16,8 @@
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { CurrentPage, Page, RoundPhase } from "../../stores/pageStore";
     import AudioControls from "../components/AudioControls.svelte";
-    import GameplayForm from "../components/GameplayForm.svelte";
-    import TrackChoice from "../components/TrackChoice.svelte";
+    import GameplayForm from "../components/forms/GameplayForm.svelte";
+    import TrackChoice from "../components/cards/TrackChoice.svelte";
     import GameplayVisualization from "../components/GameplayVisualization.svelte";
     import {
         COUNTDOWN_INTERVAL,

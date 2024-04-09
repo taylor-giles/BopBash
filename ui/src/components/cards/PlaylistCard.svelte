@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { PlaylistMetadata } from "../../../shared/types";
+    import type { PlaylistMetadata } from "../../../../shared/types";
     import ExpandIcon from "svelte-material-icons/ChevronDown.svelte";
     import CollapseIcon from "svelte-material-icons/ChevronUp.svelte";
     import collapse from "svelte-collapse";

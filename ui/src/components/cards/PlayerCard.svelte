@@ -1,7 +1,7 @@
 <script lang="ts">
     import CheckIcon from "svelte-material-icons/CheckCircle.svelte";
     import WaitingIcon from "svelte-material-icons/ProgressClock.svelte";
-    import type { PlayerState } from "../../../shared/types";
+    import type { PlayerState } from "../../../../shared/types";
 
     export let player: PlayerState;
     export let highlight: boolean;

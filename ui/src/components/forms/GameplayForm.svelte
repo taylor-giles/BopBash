@@ -1,10 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher, tick } from "svelte";
     import { Stretch } from "svelte-loading-spinners";
-    import type { Artist, Track } from "../../../shared/types";
-    import TrackOptionCard from "./TrackOptionCard.svelte";
-    import GameAPI from "../../api/api";
-    import ArtistOptionCard from "./ArtistOptionCard.svelte";
+    import type { Artist, Track } from "../../../../shared/types";
+    import TrackOptionCard from "../cards/TrackOptionCard.svelte";
+    import GameAPI from "../../../api/api";
+    import ArtistOptionCard from "../cards/ArtistOptionCard.svelte";
     const dispatch = createEventDispatcher();
 
     const SEARCH_DELAY = 400;

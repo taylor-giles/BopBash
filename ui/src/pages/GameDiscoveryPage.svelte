@@ -5,7 +5,7 @@
     import GameAPI from "../../api/api";
     import { joinGame } from "../../api/player-api";
     import { CurrentPage, Page } from "../../stores/pageStore";
-    import GameCard from "../components/GameCard.svelte";
+    import GameCard from "../components/cards/GameCard.svelte";
     import { BG_AUDIO } from "../../stores/audio";
 
     //Play background music
