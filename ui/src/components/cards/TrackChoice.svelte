@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TrackChoice } from "../../../shared/types";
+    import type { TrackChoice } from "../../../../shared/types";
 
     export let choice: TrackChoice;
 </script>

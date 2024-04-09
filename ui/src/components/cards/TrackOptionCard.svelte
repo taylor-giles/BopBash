@@ -1,13 +1,16 @@
 <script lang="ts">
-    import type { Artist } from "../../../shared/types";
+    import type { Track } from "../../../../shared/types";
 
     export let highlighted: boolean = false;
-    export let artist: Artist;
+    export let track: Track;
 </script>
 
-<button type="button" class="text-button" class:highlighted on:click on:mouseover on:focus>
+<button type="button" class="text-button" class:highlighted on:mouseover on:click on:focus>
     <div id="title" class="body-text">
-        {artist.name}
+        {track.name}
+    </div>
+    <div id="artist" class="body-text">
+        by <b>{track.artists.map((artist) => artist.name).join(", ")}</b>
     </div>
 </button>
 
@@ -29,7 +32,7 @@
         color: var(--accent);
     }
 
-    #title {
+    #title, #artist {
         text-align: start;
         display: -webkit-box;
         -webkit-line-clamp: 1;
@@ -41,5 +44,12 @@
     #title {
         font-size: 1.05rem;
         font-weight: 700;
+    }
+    #artist{
+        font-size: 0.95rem;
+        font-weight: 300;
+    }
+    #artist > b {
+        font-weight: 600;
     }
 </style>

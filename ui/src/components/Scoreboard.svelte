@@ -2,7 +2,7 @@
   import { flip } from "svelte/animate";
   import type { PlayerState } from "../../../shared/types";
   import { GameConnection } from "../../stores/gameStore";
-  import PlayerScoreCard from "./PlayerScoreCard.svelte";
+  import PlayerScoreCard from "./cards/PlayerScoreCard.svelte";
 
   export let players: PlayerState[];
   export let showScoreChange: boolean = true;

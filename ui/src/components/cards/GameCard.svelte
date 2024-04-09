@@ -1,10 +1,10 @@
 <script lang="ts">
     import PeopleIcon from "svelte-material-icons/AccountMultiple.svelte";
-    import { GameType, type GameState } from "../../../shared/types";
+    import { GameType, type GameState } from "../../../../shared/types";
     import {
         ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
         GAME_TYPES,
-    } from "../game-types";
+    } from "../../game-types";
 
     export let game: GameState;
 </script>

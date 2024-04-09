@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { GAME_ID_REGEX } from "../../../shared/constants";
-    import GameAPI from "../../api/api";
+    import { GAME_ID_REGEX } from "../../../../shared/constants";
+    import GameAPI from "../../../api/api";
 
     let gameId = "";
     let failed = false;

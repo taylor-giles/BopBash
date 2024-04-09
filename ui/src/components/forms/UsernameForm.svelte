@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { MAX_USERNAME_LENGTH } from "../../../shared/constants";
-    import { connectAs } from "../../stores/gameStore";
-    import { initAudio } from "../../stores/audio";
+    import { MAX_USERNAME_LENGTH } from "../../../../shared/constants";
+    import { connectAs } from "../../../stores/gameStore";
+    import { initAudio } from "../../../stores/audio";
 
     let username = "";
     let failed = false;

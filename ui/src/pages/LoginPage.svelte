@@ -1,5 +1,5 @@
 <script lang="ts">
-    import UsernameForm from "../components/UsernameForm.svelte";
+    import UsernameForm from "../components/forms/UsernameForm.svelte";
 </script>
 
 <main>

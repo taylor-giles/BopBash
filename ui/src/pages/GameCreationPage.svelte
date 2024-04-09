@@ -16,7 +16,7 @@
         GAME_VISIBILITY_OPTIONS,
     } from "../../../shared/types";
     import GameAPI from "../../api/api";
-    import PlaylistCard from "../components/PlaylistCard.svelte";
+    import PlaylistCard from "../components/cards/PlaylistCard.svelte";
     import { CurrentPage, ErrorMessage, Page } from "../../stores/pageStore";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
