@@ -82,7 +82,7 @@
      * Shares the game join information
      */
     function handleShare() {
-        if (navigator.canShare(shareData)) {
+        if (navigator.canShare?.(shareData)) {
             navigator.share(shareData);
         }
     }
@@ -280,7 +280,7 @@
             </div>
 
             <!-- Share button -->
-            {#if navigator.canShare(shareData)}
+            {#if navigator.canShare?.(shareData)}
                 <button id="share-btn" on:click={handleShare}>
                     <ShareIcon />
                     Share
