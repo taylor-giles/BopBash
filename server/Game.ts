@@ -180,7 +180,7 @@ export class Game {
         this.broadcastUpdate();
 
         //Force this player to skip the current round if game is in progress
-        if(this.status === GameStatus.ACTIVE){
+        if (this.status === GameStatus.ACTIVE) {
             this.submitPlayerGuess(player.id, this.currentRound?.index ?? -1, "");
         }
     }
@@ -202,6 +202,9 @@ export class Game {
 
         //Update remaining players
         this.broadcastUpdate();
+
+        //Perform readiness check on remaining players
+        this.checkReadiness();
     }
 
 
@@ -222,15 +225,7 @@ export class Game {
         this.broadcastUpdate();
 
         //Check if all players are ready
-        if (Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)) {
-            if (this.status === GameStatus.PENDING) {
-                //If all players are ready during pending stage, the game is ready to start
-                this.start();
-            } else if (this.status === GameStatus.ACTIVE) {
-                //If all players are "ready" during the game, they are all ready for next round
-                this.endCurrentRound();
-            }
-        }
+        this.checkReadiness();
     }
 
 
@@ -249,6 +244,22 @@ export class Game {
         this.broadcastUpdate();
 
         // console.log(`Unreadied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
+    }
+
+
+    /**
+     * Checks if all players are ready, and if so, takes appropriate action based on current game status
+     */
+    public checkReadiness() {
+        if (Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)) {
+            if (this.status === GameStatus.PENDING) {
+                //If all players are ready during pending stage, the game is ready to start
+                this.start();
+            } else if (this.status === GameStatus.ACTIVE) {
+                //If all players are "ready" during the game, they are all ready for next round
+                this.endCurrentRound();
+            }
+        }
     }
 
 
