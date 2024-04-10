@@ -61,13 +61,13 @@
         align-items: center;
         justify-content: flex-start;
         background-color: var(--accent-dark);
-        padding: 1.5rem;
-        padding-top: 2rem;
+        padding: 2rem;
         border: 2px solid gray;
         border-radius: 12px;
         gap: 15px;
         width: 90dvw;
         height: 90dvh;
+        max-width: 1000px;
     }
 
     #title {
@@ -79,7 +79,6 @@
         -webkit-appearance: none;
         appearance: none;
         background-color: transparent;
-        max-width: 1000px;
         width: 100%;
         height: 48px;
     }
