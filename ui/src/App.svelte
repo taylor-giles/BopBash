@@ -12,6 +12,8 @@
     import GameAPI from "../api/api";
     import ErrorModal from "./components/modals/ErrorModal.svelte";
     import GameCreationPage from "./pages/GameCreationPage.svelte";
+    import Appbar from "./components/Appbar.svelte";
+    import SettingsModal from "./components/modals/SettingsModal.svelte";
 
     const PAGES: Record<Page, ComponentType> = {
         [Page.LOGIN]: LoginPage,
@@ -55,14 +57,22 @@
     } else if (gameState?.status == GameStatus.ACTIVE) {
         CurrentPage.set(Page.GAME);
     }
+
+    //Flag for toggling state of settings modal
+    let isSettingsModalOpen = false;
 </script>
 
 <main>
-    <div id="appbar">BopBash</div>
+    <Appbar on:settingsclick={()=>(isSettingsModalOpen=true)}/>
     <div id="page-content">
         <svelte:component this={PAGES[$CurrentPage]} />
     </div>
 </main>
+
+<!-- Settings Modal -->
+{#if isSettingsModalOpen}
+    <SettingsModal on:close={()=>(isSettingsModalOpen=false)}/>
+{/if}
 
 <!-- Error Modal (displays error message from store)-->
 {#if $ErrorMessage}
@@ -89,15 +99,5 @@
         overflow-y: auto;
         min-width: 320px;
         min-height: 500px;
-    }
-    #appbar {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        padding-inline: 15px;
-        background-color: var(--primary-dark);
-        height: 3rem;
-        font-size: 1.6rem;
     }
 </style>

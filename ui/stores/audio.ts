@@ -13,6 +13,11 @@ export const AUDIO_ELEMENTS = [MUSIC_AUDIO, SFX_AUDIO, BG_AUDIO];
 export const AUDIO_CONTEXT: Writable<AudioContext> = writable<AudioContext>();
 export const VISUALIZER_NODE: Writable<AnalyserNode> = writable<AnalyserNode>();
 
+/**
+ * Initializes all of the audio elements to be used in the app.
+ * This should be called as the direct result of a button press,
+ * to enable autoplay for each of the elements in most(?) browsers.
+ */
 export function initAudio() {
     //Initialize audio context
     AUDIO_CONTEXT.set(new AudioContext());
@@ -28,4 +33,9 @@ export function initAudio() {
         get(audio).play();
         get(audio).pause();
     }
+}
+
+export function playClickSFX() {
+    get(SFX_AUDIO).src = "click.mp3";
+    get(SFX_AUDIO)?.play();
 }
