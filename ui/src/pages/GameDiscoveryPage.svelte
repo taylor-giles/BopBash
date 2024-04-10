@@ -6,7 +6,7 @@
     import { joinGame } from "../../api/player-api";
     import { CurrentPage, Page } from "../../stores/pageStore";
     import GameCard from "../components/cards/GameCard.svelte";
-    import { BG_AUDIO } from "../../stores/audio";
+    import { BG_AUDIO, playClickSFX } from "../../stores/audio";
 
     //Play background music
     $BG_AUDIO.play();
@@ -38,10 +38,10 @@
 
 <main>
     <div id="button-container">
-        <button class="header-btn text-button" on:click={handleBackClick}>
+        <button class="header-btn text-button" on:click={handleBackClick} on:mouseup={playClickSFX}>
             <BackIcon /> Back
         </button>
-        <button class="header-btn text-button" on:click={refresh}>
+        <button class="header-btn text-button" on:click={refresh} on:mouseup={playClickSFX}>
             <RefreshIcon /> Refresh
         </button>
     </div>
@@ -64,6 +64,7 @@
                 id="new-game-btn"
                 class="text-button"
                 on:click={() => CurrentPage.set(Page.CREATE)}
+                on:mouseup={playClickSFX}
             >
                 Make a new game
             </button>

@@ -1,11 +1,12 @@
 <script lang="ts">
     import type { Track } from "../../../../shared/types";
+    import { playClickSFX } from "../../../stores/audio";
 
     export let highlighted: boolean = false;
     export let track: Track;
 </script>
 
-<button type="button" class="text-button" class:highlighted on:mouseover on:click on:focus>
+<button type="button" class="text-button" class:highlighted on:mouseover on:click on:focus on:mouseup={playClickSFX}>
     <div id="title" class="body-text">
         {track.name}
     </div>

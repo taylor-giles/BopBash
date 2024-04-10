@@ -5,6 +5,7 @@
         ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
         GAME_TYPES,
     } from "../../game-types";
+    import { playClickSFX } from "../../../stores/audio";
 
     export let game: GameState;
 </script>
@@ -58,7 +59,7 @@
         <div id="game-id" class="header-text">
             {game.id}
         </div>
-        <button on:click> Join Game </button>
+        <button on:click on:mouseup={playClickSFX}> Join Game </button>
     </div>
 </main>
 

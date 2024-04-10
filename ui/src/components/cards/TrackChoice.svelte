@@ -1,10 +1,11 @@
 <script lang="ts">
     import type { TrackChoice } from "../../../../shared/types";
+    import { playClickSFX } from "../../../stores/audio";
 
     export let choice: TrackChoice;
 </script>
 
-<button on:click>
+<button on:click on:mouseup={playClickSFX}>
     <div class="title">
         {choice.name}
     </div>

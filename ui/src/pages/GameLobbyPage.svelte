@@ -19,7 +19,7 @@
         ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
         GAME_TYPES,
     } from "../game-types";
-    import { BG_AUDIO } from "../../stores/audio";
+    import { BG_AUDIO, playClickSFX } from "../../stores/audio";
 
     //Play background music
     $BG_AUDIO.play();
@@ -119,6 +119,7 @@
             id="leave-btn"
             class="text-button"
             on:click={() => (isLeavingModalOpen = true)}
+            on:mouseup={playClickSFX}
         >
             <BackIcon /> Leave Game
         </button>
@@ -127,6 +128,7 @@
             id="open-share-btn"
             class="text-button"
             on:click={() => (isSharingModalOpen = true)}
+            on:mouseup={playClickSFX}
         >
             <AddFriendsIcon height="0.9rem" width="0.9rem" />
             Invite friends
@@ -208,6 +210,7 @@
             id="ready-btn"
             class:activated={myPlayerState?.isReady}
             on:click={toggleReady}
+            on:mouseup={playClickSFX}
         >
             {#if myPlayerState?.isReady}
                 <div class="ready-btn-display">
@@ -241,6 +244,7 @@
                     class="text-button"
                     style="color: black;"
                     on:click={() => (isSharingModalOpen = false)}
+                    on:mouseup={playClickSFX}
                 >
                     <CloseIcon />
                 </button>
@@ -281,7 +285,11 @@
 
             <!-- Share button -->
             {#if navigator.canShare?.(shareData)}
-                <button id="share-btn" on:click={handleShare}>
+                <button
+                    id="share-btn"
+                    on:click={handleShare}
+                    on:mouseup={playClickSFX}
+                >
                     <ShareIcon />
                     Share
                 </button>

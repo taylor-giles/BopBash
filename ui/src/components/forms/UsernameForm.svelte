@@ -1,7 +1,7 @@
 <script lang="ts">
     import { MAX_USERNAME_LENGTH } from "../../../../shared/constants";
     import { connectAs } from "../../../stores/gameStore";
-    import { initAudio } from "../../../stores/audio";
+    import { initAudio, playClickSFX } from "../../../stores/audio";
 
     let username = "";
     let failed = false;
@@ -67,6 +67,7 @@
             type="button"
             id="submit-btn"
             disabled={!ready}
+            on:mouseup={playClickSFX}
         >
             Start
         </button>

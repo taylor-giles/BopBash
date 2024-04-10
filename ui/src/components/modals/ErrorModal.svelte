@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
     import { createEventDispatcher } from "svelte";
     import Modal from "./Modal.svelte";
     import AlertIcon from "svelte-material-icons/AlertOutline.svelte";
+    import { playClickSFX } from "../../../stores/audio";
     const dispatch = createEventDispatcher();
 
     export let errorMsg = "";
@@ -18,7 +19,7 @@
             </div>
         </div>
 
-        <button on:click={() => dispatch("close")}> Close </button>
+        <button on:click={() => dispatch("close")} on:mouseup={playClickSFX}> Close </button>
     </main>
 </Modal>
 
