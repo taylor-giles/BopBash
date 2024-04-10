@@ -1,5 +1,6 @@
 <script lang="ts">
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
+    import { Stretch } from 'svelte-loading-spinners';
     import { tick } from "svelte";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import type { GuessResult } from "../../../shared/types";
@@ -20,10 +21,19 @@
     //  (The round shown on the conclusion screen should never change)
     let currentRoundIndex = $GameStore.currentRound?.index ?? -1;
 
-    //make sure correct track display stays updated
+    //Keep the border and text color of the results modal updated according to results
+    $: correctnessColor = !correctTrackId
+        ? "gray"
+        : guessResult?.isCorrect
+          ? "var(--spotify-green)"
+          : "var(--red)";
+
+    //Make sure correct track display stays updated
     $: if (correctTrackId && isResultsModalShown) {
         displayCorrectTrack();
     }
+
+    $: console.log(correctTrackId);
 
     /**
      * Updates the iFrame to display the embedded preview for this round's correct track
@@ -58,7 +68,11 @@
             )}
         />
     </div>
-    <button class="modal-btn" on:click={() => (isResultsModalShown = true)} on:mouseup={playClickSFX}>
+    <button
+        class="modal-btn"
+        on:click={() => (isResultsModalShown = true)}
+        on:mouseup={playClickSFX}
+    >
         Show Round Results
     </button>
 </div>
@@ -67,52 +81,60 @@
     <Modal>
         <div
             id="results-modal"
-            style="--border-color: {guessResult?.isCorrect
-                ? 'var(--spotify-green)'
-                : 'var(--red)'}"
+            style="--border-color: {correctnessColor}"
         >
-            <!-- Round results, including iframe -->
-            <div id="conclusion-results-container">
-                <div
-                    class="conclusion-title"
-                    style={`color: ${
-                        guessResult?.isCorrect
-                            ? "var(--spotify-green)"
-                            : "var(--red)"
-                    }`}
-                >
-                    {guessResult?.isCorrect ? "Nice job!" : "Aww, shucks :("}
-                </div>
-                <div id="guess-display">
-                    <div class="label">Your Guess:</div>
-                    <div>{guessString}</div>
-                </div>
-                <div id="iframe-container">
-                    <div class="label">Correct Track:</div>
-                    <iframe
-                        title="View track on Spotify"
-                        bind:this={correctTrackEmbed}
-                    >
-                        Loading...
-                    </iframe>
-                </div>
-                <div id="results-container">
-                    <div class="conclusion-title" style="font-size: 1.3rem;">
-                        Round {currentRoundIndex + 1} Score:
-                    </div>
-
+            {#if correctTrackId}
+                <!-- Round results, including iframe -->
+                <div id="conclusion-results-container">
                     <div
-                        id="results-display"
-                        style={`color: ${
-                            guessResult?.isCorrect
-                                ? "var(--spotify-green)"
-                                : "var(--red)"
-                        }`}
+                        class="conclusion-title"
+                        style="color: {correctnessColor}"
                     >
-                        +{currentRoundScore ?? 0}
+                        {guessResult?.isCorrect
+                            ? "Nice job!"
+                            : "Aww, shucks :("}
+                    </div>
+                    <div id="guess-display">
+                        <div class="label">Your Guess:</div>
+                        <div>{guessString}</div>
+                    </div>
+                    <div id="iframe-container">
+                        <div class="label">Correct Track:</div>
+                        <iframe
+                            title="View track on Spotify"
+                            bind:this={correctTrackEmbed}
+                        >
+                            Loading...
+                        </iframe>
+                    </div>
+                    <div id="results-container">
+                        <div
+                            class="conclusion-title"
+                            style="font-size: 1.3rem;"
+                        >
+                            Round {currentRoundIndex + 1} Score:
+                        </div>
+
+                        <div
+                            id="results-display"
+                            style={`color: ${
+                                guessResult?.isCorrect
+                                    ? "var(--spotify-green)"
+                                    : "var(--red)"
+                            }`}
+                        >
+                            +{currentRoundScore ?? 0}
+                        </div>
                     </div>
                 </div>
-            </div>
+            {:else}
+                <div id="waiting-container">
+                    <div class="conclusion-title">
+                        Please wait for the results of this round.
+                    </div>
+                    <Stretch color="var(--primary-light)"/>
+                </div>
+            {/if}
             <button
                 class="modal-btn"
                 on:click={() => (isResultsModalShown = false)}
@@ -143,11 +165,11 @@
         gap: 1rem;
         min-width: 17rem;
         max-width: 50rem;
-        width: calc(90vw);
+        width: calc(90dvw);
 
         min-height: 24rem;
         max-height: 30rem;
-        height: calc(80vh);
+        height: calc(80dvh);
 
         background-color: var(--accent-dark);
         border: 2px solid var(--border-color);
@@ -159,6 +181,8 @@
         font-weight: 700;
         font-size: 2rem;
         width: max-content;
+        max-width: 90%;
+        text-align: center;
     }
 
     #conclusion-scoreboard-container {
@@ -232,6 +256,21 @@
             height: 120px;
             flex: 0;
         }
+    }
+
+    #waiting-container {
+        min-width: 17rem;
+        max-width: 50rem;
+        width: calc(90dvw);
+
+        max-height: calc(90dvh);
+        height: max-content;
+
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        align-items: center;
     }
 
     #scoreboard-title {

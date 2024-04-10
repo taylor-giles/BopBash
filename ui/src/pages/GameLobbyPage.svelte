@@ -62,7 +62,6 @@
      * Toggle player's ready state
      */
     function toggleReady() {
-        console.log(myPlayerState);
         if (myPlayerState.isReady) {
             GameAPI.unreadyPlayer();
         } else {
