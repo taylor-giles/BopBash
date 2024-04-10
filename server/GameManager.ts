@@ -76,7 +76,7 @@ export function getPlayerActiveGame(playerId: string): Game {
  * @returns A list containing a GameState for each active pending game
  */
 export function getGameStates(): GameState[] {
-    let games = Array.from(activeGames.values()).filter((game) => (game.visibility == GameVisibility.PUBLIC && game.status == GameStatus.PENDING));
+    let games = Array.from(activeGames.values()).filter((game) => (game.visibility == GameVisibility.PUBLIC));
     return games.map((game) => game.getState());
 }
 

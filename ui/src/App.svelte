@@ -35,7 +35,7 @@
 
             //Start background music
             $BG_AUDIO.loop = true;
-            $BG_AUDIO.volume=0.5;
+            $BG_AUDIO.volume = 0.5;
             $BG_AUDIO.play();
 
             //Attempt to join
@@ -63,7 +63,7 @@
 </script>
 
 <main>
-    <Appbar on:settingsclick={()=>(isSettingsModalOpen=true)}/>
+    <Appbar on:settingsclick={() => (isSettingsModalOpen = true)} />
     <div id="page-content">
         <svelte:component this={PAGES[$CurrentPage]} />
     </div>
@@ -71,7 +71,7 @@
 
 <!-- Settings Modal -->
 {#if isSettingsModalOpen}
-    <SettingsModal on:close={()=>(isSettingsModalOpen=false)}/>
+    <SettingsModal on:close={() => (isSettingsModalOpen = false)} />
 {/if}
 
 <!-- Error Modal (displays error message from store)-->

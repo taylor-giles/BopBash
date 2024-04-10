@@ -167,9 +167,6 @@ export class Game {
      * @param player The player to add to the game
      */
     public addPlayer(player: Player) {
-        if (this.status !== GameStatus.PENDING) {
-            throw new Error("Game not pending");
-        }
         this.players.set(player.id, player);
 
         //Set the player's activeGameInfo
@@ -181,6 +178,11 @@ export class Game {
 
         //Broadcast update to all players
         this.broadcastUpdate();
+
+        //Force this player to skip the current round if game is in progress
+        if(this.status === GameStatus.ACTIVE){
+            this.submitPlayerGuess(player.id, this.currentRound?.index ?? -1, "");
+        }
     }
 
 

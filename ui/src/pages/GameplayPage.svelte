@@ -3,7 +3,7 @@
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
-    import { GameStore } from "../../stores/gameStore";
+    import { GameStore, GameConnection } from "../../stores/gameStore";
     import { MUSIC_AUDIO, BG_AUDIO, VISUALIZER_NODE, playClickSFX } from "../../stores/audio";
     import {
         GameStatus,
@@ -79,11 +79,13 @@
         doCountdownPhase().then(startPlayingPhase);
     }
 
-    //If the correct answer has been delivered to the player, display the conclusion
-    $: if ($GameStore.currentRound?.trackId) {
-        correctTrackId = $GameStore.currentRound?.trackId;
+    //If player is Readied, display round conclusion
+    $: if($GameStore.players[$GameConnection.playerId].isReady) {
         startConclusionPhase();
     }
+
+    //Keep correct answer track ID updated with updates from server
+    $: correctTrackId = $GameStore.currentRound?.trackId ?? correctTrackId;
 
     //If the game has ended, start the rematch countdown timer
     $: if (
@@ -108,7 +110,7 @@
         isVisualizerSmall =
             choicesContainer?.scrollHeight > choicesContainer?.clientHeight ||
             mainContentDiv?.scrollHeight > mainContentDiv?.clientHeight;
-        await visualization.doCountdown();
+        await visualization?.doCountdown();
     }
 
     /**
