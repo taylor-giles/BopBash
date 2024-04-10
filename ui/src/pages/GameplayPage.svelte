@@ -4,7 +4,7 @@
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import GameAPI from "../../api/api";
     import { GameStore } from "../../stores/gameStore";
-    import { MUSIC_AUDIO, BG_AUDIO, VISUALIZER_NODE } from "../../stores/audio";
+    import { MUSIC_AUDIO, BG_AUDIO, VISUALIZER_NODE, playClickSFX } from "../../stores/audio";
     import {
         GameStatus,
         GameType,
@@ -347,7 +347,7 @@
 
     <!-- Footer -->
     <div id="footer">
-        <button id="leave-btn" on:click={() => (isModalOpen = true)}>
+        <button id="leave-btn" on:click={() => (isModalOpen = true)} on:mouseup={playClickSFX}> 
             <BackIcon />
             Leave Game
         </button>

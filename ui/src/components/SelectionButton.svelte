@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { playClickSFX } from "../../stores/audio";
+
     export let title: string;
     export let description: string = "";
     export let instruction: string = "";
 </script>
 
-<button on:click>
+<button on:click on:mouseup={playClickSFX}>
     <div class="title">
         {title}
     </div>

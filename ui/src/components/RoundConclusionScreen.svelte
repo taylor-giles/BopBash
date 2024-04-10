@@ -7,6 +7,7 @@
     import { arraySum } from "../../../shared/utils";
     import Scoreboard from "./Scoreboard.svelte";
     import Modal from "./modals/Modal.svelte";
+    import { playClickSFX } from "../../stores/audio";
 
     export let correctTrackId: string | undefined;
     export let guessResult: GuessResult | undefined;
@@ -57,7 +58,7 @@
             )}
         />
     </div>
-    <button class="modal-btn" on:click={() => (isResultsModalShown = true)}>
+    <button class="modal-btn" on:click={() => (isResultsModalShown = true)} on:mouseup={playClickSFX}>
         Show Round Results
     </button>
 </div>
@@ -115,6 +116,7 @@
             <button
                 class="modal-btn"
                 on:click={() => (isResultsModalShown = false)}
+                on:mouseup={playClickSFX}
             >
                 <PodiumIcon />
                 View Leaderboard

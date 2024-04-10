@@ -22,7 +22,7 @@
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { GAME_TYPES, GAME_VISIBILITIES } from "../game-types";
     import LoadingModal from "../components/modals/LoadingModal.svelte";
-    import { BG_AUDIO } from "../../stores/audio";
+    import { BG_AUDIO, playClickSFX } from "../../stores/audio";
 
     //Play background music
     $BG_AUDIO.play();
@@ -161,7 +161,7 @@
         $IFrameAPI.createController(embed, options, (controller: any) => {
             //Make sure background music does not play while embedded element is playing
             controller.onPlaybackUpdate = (playbackState: any) => {
-                if(playbackState.isPaused){
+                if (playbackState.isPaused) {
                     $BG_AUDIO.play();
                 } else {
                     $BG_AUDIO.pause();
@@ -275,6 +275,7 @@
                                 class="selection-btn"
                                 class:selected={selectedGameType === type}
                                 on:click={() => (selectedGameType = type)}
+                                on:mouseup={playClickSFX}
                             >
                                 {GAME_TYPES[type].name}
                             </button>
@@ -294,6 +295,7 @@
                                     visibilityOption}
                                 on:click={() =>
                                     (selectedVisibility = visibilityOption)}
+                                on:mouseup={playClickSFX}
                             >
                                 {GAME_VISIBILITIES[visibilityOption].name}
                             </button>
@@ -346,6 +348,7 @@
                 id="advanced-options-btn"
                 class="selection-btn"
                 on:click={() => (showAdvancedOptions = !showAdvancedOptions)}
+                on:mouseup={playClickSFX}
             >
                 {showAdvancedOptions ? "Hide" : "Show"} Advanced Options
             </button>
@@ -371,6 +374,7 @@
                 <button
                     class="selection-btn"
                     on:click={() => (selectedPlaylistId = "")}
+                    on:mouseup={playClickSFX}
                 >
                     Select a Different Playlist
                 </button>
@@ -453,6 +457,7 @@
         <button
             class="footer-btn selection-btn"
             on:click={() => (showCancelModal = true)}
+            on:mouseup={playClickSFX}
         >
             Cancel
         </button>
@@ -460,6 +465,7 @@
             class="footer-btn"
             on:click={handleFinish}
             disabled={!isComplete || isLoading || isLoadingSearchResults}
+            on:mouseup={playClickSFX}
         >
             Finish
         </button>

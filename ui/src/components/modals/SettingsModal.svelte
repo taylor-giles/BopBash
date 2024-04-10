@@ -46,6 +46,7 @@
             on:click={() => {
                 dispatch("close");
             }}
+            on:mouseup={playClickSFX}
         >
             <CloseIcon height="1.5rem" width="1.5rem"/>
         </button>

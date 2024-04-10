@@ -5,6 +5,7 @@
     import TrackOptionCard from "../cards/TrackOptionCard.svelte";
     import GameAPI from "../../../api/api";
     import ArtistOptionCard from "../cards/ArtistOptionCard.svelte";
+    import { playClickSFX } from "../../../stores/audio";
     const dispatch = createEventDispatcher();
 
     const SEARCH_DELAY = 400;

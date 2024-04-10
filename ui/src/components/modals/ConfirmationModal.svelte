@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
     import { createEventDispatcher } from "svelte";
+    import { playClickSFX } from "../../../stores/audio";
     const dispatch = createEventDispatcher();
 
     export let headerText = "CONFIRM";
@@ -18,10 +19,10 @@
         </div>
 
         <div id="button-container">
-            <button id="no-btn" on:click={() => dispatch("no")}>
+            <button id="no-btn" on:click={() => dispatch("no")} on:mouseup={playClickSFX}>
                 {noText}
             </button>
-            <button id="yes-btn" on:click={() => dispatch("yes")}>
+            <button id="yes-btn" on:click={() => dispatch("yes")} on:mouseup={playClickSFX}>
                 {yesText}
             </button>
         </div>
