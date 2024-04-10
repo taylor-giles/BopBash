@@ -1,6 +1,10 @@
 <script lang="ts">
     import PeopleIcon from "svelte-material-icons/AccountMultiple.svelte";
-    import { GameType, type GameState } from "../../../../shared/types";
+    import {
+        GameType,
+        type GameState,
+        GameStatus,
+    } from "../../../../shared/types";
     import {
         ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
         GAME_TYPES,
@@ -13,7 +17,7 @@
 <main>
     <!-- Title -->
     <div id="title" class="header-text">
-        {game.playlist.name}
+        {game.status !== GameStatus.PENDING ? "*" : ""}{game.playlist.name}
     </div>
 
     <!-- Game type and player count -->
@@ -56,9 +60,17 @@
 
     <!-- Game ID and Join Game button -->
     <div id="footer">
-        <div id="game-id" class="header-text">
-            {game.id}
+        <div id="footer-game-info-container">
+            {#if game.status !== GameStatus.PENDING}
+                <div id="game-status" class="header-text">
+                    *GAME IN PROGRESS
+                </div>
+            {/if}
+            <div id="game-id" class="header-text">
+                {game.id}
+            </div>
         </div>
+
         <button on:click on:mouseup={playClickSFX}> Join Game </button>
     </div>
 </main>
@@ -140,6 +152,11 @@
         flex-direction: row;
         justify-content: space-between;
         align-items: flex-end;
+    }
+
+    #game-status {
+        font-weight: 800;
+        font-size: 0.85rem;
     }
 
     #game-id {
