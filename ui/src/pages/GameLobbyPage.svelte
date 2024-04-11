@@ -317,6 +317,7 @@
         padding: 1rem;
         padding-inline: 0.5rem;
         margin-bottom: 1.2rem;
+        background-color: var(--accent-dark);
     }
 
     #game-type-display {
