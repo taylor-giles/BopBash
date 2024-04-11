@@ -14,6 +14,7 @@
     import GameCreationPage from "./pages/GameCreationPage.svelte";
     import Appbar from "./components/Appbar.svelte";
     import SettingsModal from "./components/modals/SettingsModal.svelte";
+    import Background from "./Background.svelte";
 
     const PAGES: Record<Page, ComponentType> = {
         [Page.LOGIN]: LoginPage,
@@ -81,6 +82,8 @@
         on:close={() => ErrorMessage.set("")}
     />
 {/if}
+
+<Background />
 
 <style>
     main {
