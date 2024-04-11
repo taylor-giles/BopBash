@@ -28,8 +28,8 @@
         //Choose random duration
         let duration = _.random(30000, 90000);
 
-        //Choose random size
-        let imgSize = _.random(50, 500);
+        //Choose random size (in rem)
+        let imgSize = _.random(3, 20);
 
         //Generate animation keyframes
         let keyframes: Keyframe[] = [
@@ -43,8 +43,8 @@
             },
             {
                 opacity: 1,
-                height: `${imgSize}px`,
-                width: `${imgSize}px`,
+                height: `${imgSize}rem`,
+                width: `${imgSize}rem`,
             },
             {
                 opacity: 0,
@@ -55,6 +55,8 @@
                 transform: `rotate(${endDeg}deg)`,
             },
         ];
+
+        // console.log(shape, startX, startY, endX, endY, startDeg, endDeg, duration, imgSize);
 
         //Generate HTML element for the floater
         let floaterElement = document.createElement("img");
@@ -70,14 +72,19 @@
         await tick();
         floaterElement.animate(keyframes, duration);
 
-        // Remove DOM element after animation time has elapsed
+        //Remove DOM element after animation time has elapsed
         setTimeout(() => {
             floaterElement?.remove();
         }, duration);
     }
 
+    //Make 5 floaters right away
+    // for(let i=0; i<5; i++){
+    //     generateNewFloater();
+    // }
+
     //Regularly generate new floaters
-    setInterval(generateNewFloater, 2000);
+    setInterval(generateNewFloater, 3000);
 </script>
 
 <div id="background-floaters" bind:this={canvas} />

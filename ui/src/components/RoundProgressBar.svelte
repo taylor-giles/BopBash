@@ -20,6 +20,7 @@
     export let baseThickness: number = 4;
     export let gradientColors: string[] = ["white"];
     export let gradientPositions: number[] = [0, 1];
+    export let fillColor: string = "none";
 
     //Dimensions
     let width: number, height: number;
@@ -94,7 +95,7 @@
                     {d}
                     stroke={baseColor}
                     stroke-width={baseThickness}
-                    fill="none"
+                    fill={fillColor}
                 />
             {/await}
         </svg>

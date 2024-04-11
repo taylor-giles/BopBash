@@ -76,7 +76,7 @@
 
 <style>
     main {
-        background-color: rgba(50, 50, 50, 0.5);
+        background-color: var(--accent-overlay);
         display: flex;
         flex-direction: column;
         justify-content: center;
