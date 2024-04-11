@@ -6,7 +6,7 @@
         "circle.svg",
         "circle.svg",
         "music-circle.svg",
-        "music-circle-outline.svg"
+        "music-circle-outline.svg",
     ];
 
     let canvas: HTMLDivElement;
@@ -20,8 +20,6 @@
         let startY = _.random(-10, 110);
         let endX = _.random(-10, 110);
         let endY = _.random(-10, 110);
-        let midX = (startX + endX) / 2;
-        let midY = (startY + endY) / 2;
 
         //Choose random start and end rotations
         let startDeg = _.random(0, 720);
@@ -47,8 +45,6 @@
                 opacity: 1,
                 height: `${imgSize}px`,
                 width: `${imgSize}px`,
-                left: `${midX}%`,
-                top: `${midY}%`,
             },
             {
                 opacity: 0,
