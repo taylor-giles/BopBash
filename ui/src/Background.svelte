@@ -56,7 +56,7 @@
             },
         ];
 
-        // console.log(shape, startX, startY, endX, endY, startDeg, endDeg, duration, imgSize);
+        //console.log(shape, startX, startY, endX, endY, startDeg, endDeg, duration, imgSize);
 
         //Generate HTML element for the floater
         let floaterElement = document.createElement("img");
@@ -65,6 +65,8 @@
         floaterElement.src = `floaters/${shape}`;
         floaterElement.style.zIndex = "-100";
         floaterElement.style.position = "absolute";
+        floaterElement.style.height = "0px";
+        floaterElement.style.width = "0px";
 
         //Add DOM element and animate it
         await tick();
@@ -79,9 +81,9 @@
     }
 
     //Make 5 floaters right away
-    // for(let i=0; i<5; i++){
-    //     generateNewFloater();
-    // }
+    for(let i=0; i<5; i++){
+        generateNewFloater();
+    }
 
     //Regularly generate new floaters
     setInterval(generateNewFloater, 3000);
