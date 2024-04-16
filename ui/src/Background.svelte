@@ -11,7 +11,7 @@
 
     let canvas: HTMLDivElement;
 
-    async function generateNewFloater() {
+    async function generateNewFloater(startingVisibility: number = 0) {
         //Choose a random shape
         let shape = _.sample(FLOATER_SHAPES);
 
@@ -34,9 +34,9 @@
         //Generate animation keyframes
         let keyframes: Keyframe[] = [
             {
-                opacity: 0,
-                height: "0px",
-                width: "0px",
+                opacity: startingVisibility,
+                height: `${startingVisibility * imgSize}px`,
+                width: `${startingVisibility * imgSize}px`,
                 left: `${startX}%`,
                 top: `${startY}%`,
                 transform: `rotate(${startDeg}deg)`,
@@ -65,8 +65,8 @@
         floaterElement.src = `floaters/${shape}`;
         floaterElement.style.zIndex = "-100";
         floaterElement.style.position = "absolute";
-        floaterElement.style.height = "0px";
-        floaterElement.style.width = "0px";
+        floaterElement.style.height = `${startingVisibility * imgSize}px`;
+        floaterElement.style.width = `${startingVisibility * imgSize}px`;
 
         //Add DOM element and animate it
         await tick();
@@ -82,11 +82,11 @@
 
     //Make 5 floaters right away
     for(let i=0; i<5; i++){
-        generateNewFloater();
+        generateNewFloater(0.1 * i);
     }
 
     //Regularly generate new floaters
-    setInterval(generateNewFloater, 3000);
+    setInterval(generateNewFloater, 2800);
 </script>
 
 <div id="background-floaters" bind:this={canvas} />
