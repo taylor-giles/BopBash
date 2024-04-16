@@ -24,7 +24,7 @@
         justify-content: space-between;
         align-items: center;
         padding-inline: 15px;
-        background-color: rgba(0, 0, 0, 0.9);
+        background-color: rgba(30, 30, 30, 0.9);
         height: 3rem;
         font-size: 1.6rem;
     }
