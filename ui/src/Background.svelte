@@ -6,7 +6,7 @@
         "circle.svg",
         "circle.svg",
         "music-circle.svg",
-        "music-circle-outline.svg",
+        "bop-bash-single-color.svg"
     ];
 
     let canvas: HTMLDivElement;

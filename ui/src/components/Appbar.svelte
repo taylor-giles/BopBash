@@ -6,7 +6,7 @@
 </script>
 
 <main>
-    BopBash
+    <img src="bop-bash-logo.svg" height="100%" alt="logo"/>
     <button
         on:click={() => {
             dispatch("settingsclick");
@@ -24,7 +24,7 @@
         justify-content: space-between;
         align-items: center;
         padding-inline: 15px;
-        background-color: var(--primary-dark);
+        background-color: rgba(0, 0, 0, 0.9);
         height: 3rem;
         font-size: 1.6rem;
     }
