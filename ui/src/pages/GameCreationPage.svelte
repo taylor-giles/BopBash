@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
     import SearchIcon from "svelte-material-icons/Magnify.svelte";
+    import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import WebSearchIcon from "svelte-material-icons/SearchWeb.svelte";
     import ExpandIcon from "svelte-material-icons/ChevronDown.svelte";
     import CollapseIcon from "svelte-material-icons/ChevronUp.svelte";
@@ -227,6 +228,16 @@
 </script>
 
 <main>
+    <div id="header">
+        <button
+            class="header-btn text-button"
+            on:click={() => (showCancelModal = true)}
+            on:mouseup={playClickSFX}
+        >
+            <BackIcon /> Back
+        </button>
+    </div>
+
     <div id="game-options-container" class="section">
         <button
             id="game-options-header"
@@ -493,6 +504,20 @@
         min-height: 100%;
         gap: 15px;
     }
+    #header {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .header-btn {
+        color: white;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+        padding: 10px;
+    }
 
     #game-options-header {
         font-weight: inherit;
@@ -511,6 +536,7 @@
 
     #game-options-container {
         gap: 0px;
+        background-color: var(--accent-dark);
     }
 
     .game-option-icons-container {
