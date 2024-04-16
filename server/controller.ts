@@ -82,6 +82,37 @@ export async function getPlaylistData(req: Request, res: Response) {
     });
 }
 
+/**
+ * GET /getTrackData
+ * Returns information about the requested track
+ * 
+ * Request Params:
+ *  - id: string - The ID of the track
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - Track object containing data for requested track
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function getTrackData(req: Request, res: Response) {
+    let id = req.params.id;
+    console.log("Handling request for track data. ID: ", id);
+
+    //Ensure ID is provided
+    if (!id) {
+        return res.status(400).json({ error: "Track ID must be provided" });
+    }
+
+    //Find and return track data to client
+    SpotifyAPI.findTrackData(id).then((result) => {
+        return res.status(200).json(result);
+    }).catch((error) => {
+        console.error(`Unable to get track data for track ${id}`, error.message);
+        return res.status(500).json({ error: error.message });
+    });
+}
+
 
 /**
  * GET /getArtistTopTracks
