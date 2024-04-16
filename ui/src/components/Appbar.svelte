@@ -6,7 +6,7 @@
 </script>
 
 <main>
-    <img src="bop-bash-logo.svg" height="100%" alt="logo"/>
+    <img src="bop-bash-logo-clean.svg" height="100%" alt="logo"/>
     <button
         on:click={() => {
             dispatch("settingsclick");
