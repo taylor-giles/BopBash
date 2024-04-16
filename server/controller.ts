@@ -3,7 +3,6 @@
  * Some requests get forwarded to the GameManager, while others
  * are forwarded to particular game instances, obtained from the GameManager.
  */
-
 import { NextFunction, Request, Response } from "express";
 import * as SpotifyAPI from "./caller";
 import * as GameManager from "./GameManager";
@@ -297,7 +296,7 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
         //Get active game and determine current round
         let game = GameManager.getPlayerActiveGame(playerId);
         let roundIndex = game.currentRound?.index;
-        if(roundIndex === undefined){
+        if (roundIndex === undefined) {
             return res.status(400).json({ error: "Unable to find player's current round." });
         }
 
@@ -318,8 +317,8 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
          * @returns True if the tracks are equal, false otherwise
          */
         const areEqual = (track1: Track, track2: Track) => {
-            let str1 = track1.name + track1.artists.map((a)=>a.name).join(",");
-            let str2 = track2.name + track2.artists.map((a)=>a.name).join(",");
+            let str1 = track1.name + track1.artists.map((a) => a.name).join(",");
+            let str2 = track2.name + track2.artists.map((a) => a.name).join(",");
             return str1 === str2;
         }
 
@@ -343,7 +342,7 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
                 //Proceed if this is the first instance of this track
                 if (!guessOptions.some(s => areEqual(s, track))) {
                     //If this track is the same as the correct track, add the correct track instead
-                    if(areEqual(track, correctTrack)){
+                    if (areEqual(track, correctTrack)) {
                         track = correctTrack;
                     }
 
@@ -359,7 +358,7 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
         guessOptions.splice(limit);
         return res.status(200).json(guessOptions);
     } catch (error: any) {
-        return res.status(500).json({error: error.message});
+        return res.status(500).json({ error: error.message });
     }
 }
 
