@@ -12,7 +12,7 @@ import type { TransformKeys } from "../../shared/utils";
 export type GameTypeMetadata = { name: string, description: string, icon: ComponentType }
 export const GAME_TYPES: Record<GameType, GameTypeMetadata> = {
     [GameType.SEARCH]: { name: "Search", description: "A high-speed guessing game. Find the right song to earn points!", icon: SearchIcon },
-    [GameType.CHOICES]: { name: "Choices", description: "Lightning rounds with choices. Be quick and click the right song choice to earn points!", icon: ChoicesIcon },
+    [GameType.CHOICES]: { name: "Choices", description: "Be quick and click the right song choice to earn points!", icon: ChoicesIcon },
 }
 
 export type GameVisibilityMetadata = { name: string, description: string, icon: ComponentType }
