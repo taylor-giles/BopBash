@@ -176,13 +176,13 @@ export class Game {
             scores: Array.from(this.rounds, () => null)
         }
 
-        //Broadcast update to all players
-        this.broadcastUpdate();
-
         //Force this player to skip the current round if game is in progress
         if (this.status === GameStatus.ACTIVE) {
             this.submitPlayerGuess(player.id, this.currentRound?.index ?? -1, "");
         }
+
+        //Broadcast update to all players
+        this.broadcastUpdate();
     }
 
 

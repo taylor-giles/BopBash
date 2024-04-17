@@ -2,9 +2,15 @@
     import { onDestroy, tick } from "svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
+    import { Stretch } from "svelte-loading-spinners";
     import GameAPI from "../../api/api";
     import { GameStore, GameConnection } from "../../stores/gameStore";
-    import { MUSIC_AUDIO, BG_AUDIO, VISUALIZER_NODE, playClickSFX } from "../../stores/audio";
+    import {
+        MUSIC_AUDIO,
+        BG_AUDIO,
+        VISUALIZER_NODE,
+        playClickSFX,
+    } from "../../stores/audio";
     import {
         GameStatus,
         GameType,
@@ -66,9 +72,13 @@
         COUNTDOWN_INTERVAL * 3;
     $: currentRoundChoices = $GameStore.currentRound?.choices ?? [];
     $: audioURL = $GameStore.currentRound?.audioURL;
+    $: allPlayersReady = Object.values($GameStore.players).every(
+        (player) => player.isReady,
+    );
 
     //Every time the audio URL changes, start loading the next round
-    $: if (audioURL) {
+    // (if player is not readied, which would happen if the player joined late)
+    $: if (audioURL && !$GameStore.players[$GameConnection.playerId].isReady) {
         currentPhase = RoundPhase.COUNTDOWN;
         $MUSIC_AUDIO.src = audioURL;
         loadRound();
@@ -79,8 +89,13 @@
         doCountdownPhase().then(startPlayingPhase);
     }
 
-    //If player is Readied, display round conclusion
-    $: if($GameStore.players[$GameConnection.playerId].isReady) {
+    //If all players are ready, display round conclusion
+    $: if (allPlayersReady) {
+        startConclusionPhase();
+    }
+
+    //If this player joined late, display round conclusion (this should NOT be reactive with $:)
+    if ($GameStore.players[$GameConnection.playerId].isReady) {
         startConclusionPhase();
     }
 
@@ -186,9 +201,6 @@
             //Extract values from result
             guessResult = { ...result };
             correctTrackId = result.correctTrackId;
-
-            //Move to conclusion phase
-            startConclusionPhase();
         }
     }
 
@@ -267,42 +279,40 @@
                     <!-- Guess submission section -->
                     <div id="submission-section">
                         <div id="submission-panel">
-                            {#if $GameStore.type === GameType.CHOICES}
-                                <!-- Choices -->
-                                <div
-                                    id="choices-wrapper"
-                                    bind:this={choicesContainer}
-                                >
-                                    {#each currentRoundChoices as choice (choice.id)}
-                                        <div class="choice-wrapper">
-                                            <TrackChoice
-                                                on:click={() => {
-                                                    guessTrackId = choice.id;
-                                                    guessString = choice.name + " - " + choice.artist;
-                                                    handleSubmit();
-                                                }}
-                                                {choice}
-                                                --title-size={isVisualizerSmall
-                                                    ? "1.1rem"
-                                                    : "1.3rem"}
-                                            />
-                                        </div>
-                                    {/each}
-                                </div>
-
-                                <!-- "Get Ready" overlay display -->
-                                {#if currentPhase !== RoundPhase.PLAYING}
+                            <!-- Section for entering guesses -->
+                            <div
+                                id="guess-section"
+                                class:gone={$GameStore.type ===
+                                    GameType.CHOICES}
+                            >
+                                {#if $GameStore.type === GameType.CHOICES}
+                                    <!-- Choices -->
                                     <div
-                                        id="get-ready-overlay"
-                                        class="header-text"
-                                        transition:fade={{ duration: 150 }}
+                                        id="choices-wrapper"
+                                        bind:this={choicesContainer}
                                     >
-                                        Get ready!
+                                        {#each currentRoundChoices as choice (choice.id)}
+                                            <div class="choice-wrapper">
+                                                <TrackChoice
+                                                    on:click={() => {
+                                                        guessTrackId =
+                                                            choice.id;
+                                                        guessString =
+                                                            choice.name +
+                                                            " - " +
+                                                            choice.artist;
+                                                        handleSubmit();
+                                                    }}
+                                                    {choice}
+                                                    --title-size={isVisualizerSmall
+                                                        ? "1.1rem"
+                                                        : "1.3rem"}
+                                                />
+                                            </div>
+                                        {/each}
                                     </div>
-                                {/if}
-                            {:else}
-                                <!-- Form for entering guesses -->
-                                <div id="form-wrapper">
+                                {:else}
+                                    <!-- Search form -->
                                     <GameplayForm
                                         bind:guessString
                                         bind:trackQuery
@@ -312,19 +322,29 @@
                                         on:submit={handleSubmit}
                                         on:skip={skipRound}
                                     />
+                                {/if}
 
-                                    <!-- "Get Ready" overlay display -->
-                                    {#if currentPhase !== RoundPhase.PLAYING}
-                                        <div
-                                            id="get-ready-overlay"
-                                            class="header-text"
-                                            transition:blur={{ duration: 150 }}
-                                        >
-                                            Get ready!
-                                        </div>
-                                    {/if}
-                                </div>
-                            {/if}
+                                <!-- "Get Ready" overlay display -->
+                                {#if currentPhase === RoundPhase.COUNTDOWN}
+                                    <div
+                                        class="overlay header-text"
+                                        transition:blur={{ duration: 150 }}
+                                    >
+                                        Get ready!
+                                    </div>
+                                {/if}
+
+                                <!-- Post-guess overlay display -->
+                                {#if guessResult}
+                                    <div
+                                        class="overlay small header-text"
+                                        transition:blur={{ duration: 150 }}
+                                    >
+                                        Waiting for other players...
+                                        <Stretch color="white" />
+                                    </div>
+                                {/if}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -349,7 +369,11 @@
 
     <!-- Footer -->
     <div id="footer">
-        <button id="leave-btn" on:click={() => (isModalOpen = true)} on:mouseup={playClickSFX}> 
+        <button
+            id="leave-btn"
+            on:click={() => (isModalOpen = true)}
+            on:mouseup={playClickSFX}
+        >
             <BackIcon />
             Leave Game
         </button>
@@ -375,9 +399,7 @@
             <div id="next-round-timer-container">
                 <div>Next Round:</div>
                 <div id="next-round-container" class="header-text">
-                    {Object.values($GameStore.players).every(
-                        (player) => player.isReady,
-                    )
+                    {allPlayersReady
                         ? "STARTING SOON"
                         : "WAITING FOR OTHER PLAYERS"}
                 </div>
@@ -529,13 +551,16 @@
         flex: 1;
     }
 
-    #form-wrapper {
+    #guess-section {
         position: relative;
         height: max-content;
         width: 100%;
         max-width: 700px;
         min-width: 260px;
         padding: 2rem;
+    }
+    #guess-section.gone {
+        display: contents;
     }
 
     #choices-wrapper {
@@ -557,7 +582,7 @@
         padding: 5px;
     }
 
-    #get-ready-overlay {
+    .overlay {
         position: absolute;
         top: 0;
         left: 0;
@@ -569,8 +594,13 @@
         font-size: 3rem;
         color: white;
         display: flex;
+        flex-direction: column;
+        gap: 10px;
         justify-content: center;
         align-items: center;
+    }
+    .overlay.small {
+        font-size: 2rem;
     }
 
     #show-scoreboard-btn {
