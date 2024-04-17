@@ -102,6 +102,23 @@ export async function submitGuess(roundNum: number, trackId: string): Promise<Gu
 
 
 /**
+ * Submits a new chat message with the specified content
+ * @param content The content for the chat message
+ */
+export async function sendChat(content: string): Promise<void> {
+    return apiCaller.post(`/submitChat`, { content: content }).then((res) => {
+        if (res.data.error) {
+            console.error("Failed to send chat message", res.data?.error);
+        } else {
+            return res.data;
+        }
+    }).catch((error) => {
+        console.error("Failed to send chat message", error);
+    });
+}
+
+
+/**
  * Informs the server that this player is READY
  */
 export async function readyPlayer() {
