@@ -20,6 +20,7 @@ router.post('/newGame', Controller.makeNewGame);
 router.post('/registerNewPlayer', Controller.registerNewPlayer);
 router.post('/joinGame/:id', Controller.authenticate, Controller.ensureId, Controller.joinGame);
 router.post('/submitGuess', Controller.authenticate, Controller.submitGuess);
+router.post('/submitChat', Controller.authenticate, Controller.submitChat);
 
 export { router };
 

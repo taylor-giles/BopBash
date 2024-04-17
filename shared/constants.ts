@@ -18,3 +18,6 @@ export const COUNTDOWN_INTERVAL = 400;
 
 //Time (in millis) before rematch game begins after game end
 export const REMATCH_TIMEOUT = 20000;
+
+//Maximum length of a chat message, in characters
+export const MAX_CHAT_LENGTH = 200;
