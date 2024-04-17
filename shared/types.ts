@@ -57,6 +57,11 @@ export class Round {
     }
 }
 
+export type ChatMessage = {
+    sender: {id: string, name: string},
+    content: string
+}
+
 export type PlayerState = {
     id: string,
     name: string,
@@ -84,7 +89,8 @@ export type GameState = {
         trackId?: string
     }
     status: GameStatus,
-    options: GameOptions
+    options: GameOptions,
+    chatMessages: ChatMessage[]
 }
 
 export type GuessResult = {
