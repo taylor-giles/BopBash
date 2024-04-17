@@ -2,7 +2,7 @@
     import { onDestroy, tick } from "svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import ChatIcon from "svelte-material-icons/Message.svelte";
-    import SendIcon from "svelte-material-icons/Send.svelte";
+    import ChatOffIcon from "svelte-material-icons/MessageOff.svelte";
     import { Stretch } from "svelte-loading-spinners";
     import GameAPI from "../../api/api";
     import { GameStore, GameConnection } from "../../stores/gameStore";
@@ -51,7 +51,7 @@
     let isVisualizerSmall = false;
     let guessString: string;
     let timeToRematch: number = REMATCH_TIMEOUT / 1000;
-    let chatContent: string = "";
+
 
     //HTML element references
     let visualization: GameplayVisualization;
@@ -200,21 +200,6 @@
             guessResult = { ...result };
             correctTrackId = result.correctTrackId;
         }
-    }
-
-    /**
-     * Sends the current chat content as a new chat
-     */
-    async function handleSendChat(e?: Event) {
-        e?.preventDefault();
-
-        //Send the chat
-        if (chatContent) {
-            GameAPI.sendChat(chatContent);
-        }
-
-        //Clear chat content
-        chatContent = "";
     }
 
     /**
@@ -368,19 +353,7 @@
                     <div id="chat-window-title" class="header-text">
                         Game Chat
                     </div>
-                    <div id="chat-container">
-                        <ChatBoard chats={$GameStore.chatMessages} />
-                    </div>
-                    <form id="chat-form" on:submit={handleSendChat}>
-                        <input
-                            id="chat-input"
-                            bind:value={chatContent}
-                            placeholder="Write a message..."
-                        />
-                        <button id="chat-submit-btn" type="submit"
-                            ><SendIcon /></button
-                        >
-                    </form>
+                    <ChatBoard chats={$GameStore.chatMessages} />
                 </div>
             {/if}
         </div>
@@ -410,8 +383,13 @@
                 id="show-chat-btn"
                 on:click={() => (showChatWindow = !showChatWindow)}
             >
-                <ChatIcon />
-                {showChatWindow ? "Hide Chat" : "Show Chat"}
+                {#if showChatWindow}
+                    <ChatOffIcon />
+                    Hide Chat
+                {:else}
+                    <ChatIcon />
+                    Show Chat
+                {/if}
             </button>
         {:else if currentPhase === RoundPhase.CONCLUSION && currentRoundNum < ($GameStore.options.numRounds ?? 0) - 1}
             <!-- Display for when next round will start -->
@@ -513,50 +491,6 @@
         font-weight: 600;
         white-space: nowrap;
     }
-    #chat-container {
-        flex: 1;
-        background-color: rgba(0, 0, 0, 0.8);
-        border: 2px solid var(--primary-light);
-        border-radius: 5px;
-        min-width: 260px;
-        max-height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        overflow-y: hidden;
-        gap: 10px;
-        font-size: 0.5rem;
-    }
-    #chat-form {
-        border-radius: 1px;
-        border: 1px solid var(--primary-dark);
-        margin-bottom: 5px;
-        background-color: var(--primary-light);
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        white-space: nowrap;
-    }
-    #chat-input {
-        flex: 1;
-        border: 0px;
-        border-radius: 1px;
-        padding-inline: 10px;
-        outline: none;
-        height: 2.5rem;
-        overflow-x: auto;
-        background-color: var(--primary-light);
-    }
-    #chat-submit-btn {
-        border-radius: 0px;
-        height: 100%;
-        background-color: var(--primary-light);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding-inline: 15px;
-    }
     @media (max-width: 800px) {
         #chat-section {
             position: absolute;
@@ -648,6 +582,7 @@
         gap: 10px;
         justify-content: center;
         align-items: center;
+        text-align: center;
     }
     .overlay.small {
         font-size: 2rem;
@@ -660,6 +595,10 @@
         border: 1px solid gray;
         font-size: 0.9rem;
         width: max-content;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
     }
 
     #next-round-timer-container {

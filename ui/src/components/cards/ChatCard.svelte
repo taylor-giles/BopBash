@@ -26,7 +26,7 @@
         padding: 0.6rem;
         padding-inline: 0.8rem;
         color: var(--primary-light);
-        border: 1px solid gray;
+        border-top: 1px solid gray;
     }
     #name-display {
         font-size: 1.1rem;
