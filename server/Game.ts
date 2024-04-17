@@ -1,11 +1,11 @@
 import { PlayerConnection } from "./types";
-import { ADVANCED_OPTIONS_DEFINITIONS, GameOptions, GameType, GameVisibility, GuessResult, Playlist, Track, TrackChoice } from "../shared/types";
+import { ADVANCED_OPTIONS_DEFINITIONS, ChatMessage, GameOptions, GameType, GameVisibility, GuessResult, Playlist, Track, TrackChoice } from "../shared/types";
 import lodash from 'lodash';
 import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
-import { REMATCH_TIMEOUT } from "../shared/constants";
+import { MAX_CHAT_LENGTH, REMATCH_TIMEOUT } from "../shared/constants";
 
 const POST_ROUND_WAIT_TIME = 5000;
 
@@ -21,6 +21,7 @@ export class Game {
     players: ObservableMap<string, Player>;
     rounds: Round[];
     status: GameStatus;
+    chatMessages: ChatMessage[];
     currentRound?: {
         index: number,
         audioURL: string,
@@ -42,6 +43,8 @@ export class Game {
         this.players = new ObservableMap<string, Player>();
         this.rounds = [];
         this.status = GameStatus.PENDING;
+
+        this.chatMessages = [];
 
         //Check gameOptions bounds and set defaults if needed - ensure that all game options are defined
         this.gameOptions = gameOptions;
@@ -320,6 +323,23 @@ export class Game {
 
 
     /**
+     * Sends a new chat by the specified player
+     * @param playerId The ID of the player sending the chat message
+     * @param content The content of the new chat message
+     */
+    public async submitPlayerChat(playerId: string, content: string) {
+        //Get the player
+        let player = this.getPlayer(playerId);
+
+        //Add the message to the list of messages for this game
+        this.chatMessages.push({ sender: { id: player.id, name: player.name }, content: content.substring(0, MAX_CHAT_LENGTH) });
+
+        //Update all players
+        this.broadcastUpdate();
+    }
+
+
+    /**
      * Returns the number of active players in this game
      * @returns The number of players in this game
      */
@@ -462,7 +482,8 @@ export class Game {
             },
             players: playerStates,
             currentRound: this.currentRound,
-            options: this.gameOptions
+            options: this.gameOptions,
+            chatMessages: this.chatMessages
         }
     }
 

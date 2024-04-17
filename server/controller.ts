@@ -572,6 +572,52 @@ export async function submitGuess(req: PlayerRequest, res: Response) {
 }
 
 
+
+/**
+ * POST /submitChat
+ * Submits the given string content as a chat message from this player
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - content: string - The content of the new chat message
+ * 
+ * Response Body:
+ *  - On Success:
+ *      - None.
+ *  - On Failure:
+ *      - error: string - Error message
+ */
+export async function submitChat(req: PlayerRequest, res: Response) {
+    let playerId = req.playerId; //Guaranteed by middleware
+    let content = req.body?.content;
+
+    //Ensure playerId is provided
+    if (!playerId) {
+        //Middleware should guarantee that this never happens
+        return res.status(400).json({ error: "playerId must be provided" })
+    }
+
+    //Ensure msg content is provided
+    if (!content) {
+        return res.status(400).json({ error: "content must be specified" });
+    }
+
+    console.log(`Handling request to submit chat message ${content} for player ${playerId}`);
+
+    //Get the active game and submit the guess
+    try {
+        let game = GameManager.getPlayerActiveGame(playerId);
+        let result = await game.submitPlayerChat(playerId, content);
+        return res.status(200).json(result);
+    } catch (error: any) {
+        console.error(`Unable to submit chat message ${content} for player ${playerId}.`, error.message);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+
 /**
  * WS LEAVE_GAME
  * Removes the player that made the request from their active game
