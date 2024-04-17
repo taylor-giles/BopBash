@@ -1,6 +1,6 @@
 <script lang="ts">
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
-    import { Stretch } from 'svelte-loading-spinners';
+    import { Stretch } from "svelte-loading-spinners";
     import { tick } from "svelte";
     import { IFrameAPI } from "../../stores/IFrameAPI";
     import type { GuessResult } from "../../../shared/types";
@@ -32,8 +32,6 @@
     $: if (correctTrackId && isResultsModalShown) {
         displayCorrectTrack();
     }
-
-    $: console.log(correctTrackId);
 
     /**
      * Updates the iFrame to display the embedded preview for this round's correct track
@@ -68,21 +66,20 @@
             )}
         />
     </div>
-    <button
-        class="modal-btn"
-        on:click={() => (isResultsModalShown = true)}
-        on:mouseup={playClickSFX}
-    >
-        Show Round Results
-    </button>
+    {#if guessString || !correctTrackId}
+        <button
+            class="modal-btn"
+            on:click={() => (isResultsModalShown = true)}
+            on:mouseup={playClickSFX}
+        >
+            Show Round Results
+        </button>
+    {/if}
 </div>
 
-{#if isResultsModalShown}
+{#if isResultsModalShown && (guessString || !correctTrackId)}
     <Modal>
-        <div
-            id="results-modal"
-            style="--border-color: {correctnessColor}"
-        >
+        <div id="results-modal" style="--border-color: {correctnessColor}">
             {#if correctTrackId}
                 <!-- Round results, including iframe -->
                 <div id="conclusion-results-container">
@@ -132,7 +129,7 @@
                     <div class="conclusion-title">
                         Please wait for the results of this round.
                     </div>
-                    <Stretch color="var(--primary-light)"/>
+                    <Stretch color="var(--primary-light)" />
                 </div>
             {/if}
             <button
