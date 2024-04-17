@@ -10,7 +10,7 @@
 
     const SEARCH_DELAY = 400;
 
-    export let trackQuery: string;
+    export let trackQuery: string = "";
     export let guessTrackId: string = "";
     export let artistId: string = "";
     export let disabled: boolean;
