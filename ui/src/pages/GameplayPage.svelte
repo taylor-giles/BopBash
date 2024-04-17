@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onDestroy, tick } from "svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
-    import PodiumIcon from "svelte-material-icons/Podium.svelte";
+    import ChatIcon from "svelte-material-icons/Message.svelte";
+    import SendIcon from "svelte-material-icons/Send.svelte";
     import { Stretch } from "svelte-loading-spinners";
     import GameAPI from "../../api/api";
     import { GameStore, GameConnection } from "../../stores/gameStore";
@@ -31,6 +32,7 @@
     } from "../../../shared/constants";
     import RoundConclusionScreen from "../components/RoundConclusionScreen.svelte";
     import GameEndScreen from "../components/GameEndScreen.svelte";
+    import ChatBoard from "../components/ChatBoard.svelte";
 
     //Stop background music
     $BG_AUDIO.pause();
@@ -42,13 +44,14 @@
     let guessTrackId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
-    let showScoreboard: boolean = window.innerWidth > 800;
+    let showChatWindow: boolean = window.innerWidth > 800;
     let isModalOpen: boolean = false;
     let volumeLevel: number = 0.5;
     let currentRoundTime: number = 0;
     let isVisualizerSmall = false;
     let guessString: string;
     let timeToRematch: number = REMATCH_TIMEOUT / 1000;
+    let chatContent: string = "";
 
     //HTML element references
     let visualization: GameplayVisualization;
@@ -200,11 +203,26 @@
     }
 
     /**
+     * Sends the current chat content as a new chat
+     */
+    async function handleSendChat(e?: Event) {
+        e?.preventDefault();
+
+        //Send the chat
+        if (chatContent) {
+            GameAPI.sendChat(chatContent);
+        }
+
+        //Clear chat content
+        chatContent = "";
+    }
+
+    /**
      * Moves to conclusion phase
      */
     async function startConclusionPhase() {
         await tick();
-        
+
         //Move to conclusion phase and wait for render updates
         $MUSIC_AUDIO.pause();
         currentPhase = RoundPhase.CONCLUSION;
@@ -345,19 +363,24 @@
                     </div>
                 </div>
 
-                <!-- Scoreboard -->
-                <div id="scoreboard-section" class:shown={showScoreboard}>
-                    <div id="scoreboard-title" class="header-text">
-                        Game Leaderboard
+                <!-- Chat window -->
+                <div id="chat-section" class:shown={showChatWindow}>
+                    <div id="chat-window-title" class="header-text">
+                        Game Chat
                     </div>
-                    <div id="scoreboard-container">
-                        <Scoreboard
-                            players={Object.values($GameStore.players).toSorted(
-                                (a, b) =>
-                                    arraySum(b.scores) - arraySum(a.scores),
-                            )}
+                    <div id="chat-container">
+                        <ChatBoard chats={$GameStore.chatMessages} />
+                    </div>
+                    <form id="chat-form" on:submit={handleSendChat}>
+                        <input
+                            id="chat-input"
+                            bind:value={chatContent}
+                            placeholder="Write a message..."
                         />
-                    </div>
+                        <button id="chat-submit-btn" type="submit"
+                            ><SendIcon /></button
+                        >
+                    </form>
                 </div>
             {/if}
         </div>
@@ -382,13 +405,13 @@
                 </div>
             </div>
         {:else if currentPhase === RoundPhase.COUNTDOWN || currentPhase === RoundPhase.PLAYING}
-            <!-- Button to show scoreboard -->
+            <!-- Button to show chat window -->
             <button
-                id="show-scoreboard-btn"
-                on:click={() => (showScoreboard = !showScoreboard)}
+                id="show-chat-btn"
+                on:click={() => (showChatWindow = !showChatWindow)}
             >
-                <PodiumIcon />
-                {showScoreboard ? "Hide" : "Show"}
+                <ChatIcon />
+                {showChatWindow ? "Hide Chat" : "Show Chat"}
             </button>
         {:else if currentPhase === RoundPhase.CONCLUSION && currentRoundNum < ($GameStore.options.numRounds ?? 0) - 1}
             <!-- Display for when next round will start -->
@@ -467,44 +490,75 @@
         padding-top: 0px;
     }
 
-    #scoreboard-section {
+    #chat-section {
         display: flex;
         flex-direction: column;
         width: 0px;
         height: 100%;
         gap: 5px;
         max-width: 100%;
+        max-height: 100%;
         margin-left: 0px;
         transition-property: width, margin-left;
         transition-duration: 300ms;
         transition-timing-function: ease-out;
     }
-    #scoreboard-section.shown {
+    #chat-section.shown {
         width: 380px;
         margin-left: 2rem;
     }
-    #scoreboard-title {
+    #chat-window-title {
         text-align: center;
         font-size: 1.3rem;
         font-weight: 600;
         white-space: nowrap;
     }
-    #scoreboard-container {
+    #chat-container {
         flex: 1;
-        height: 100%;
         background-color: rgba(0, 0, 0, 0.8);
         border: 2px solid var(--primary-light);
         border-radius: 5px;
         min-width: 260px;
+        max-height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         align-items: center;
+        overflow-y: hidden;
         gap: 10px;
         font-size: 0.5rem;
     }
+    #chat-form {
+        border-radius: 1px;
+        border: 1px solid var(--primary-dark);
+        margin-bottom: 5px;
+        background-color: var(--primary-light);
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        white-space: nowrap;
+    }
+    #chat-input {
+        flex: 1;
+        border: 0px;
+        border-radius: 1px;
+        padding-inline: 10px;
+        outline: none;
+        height: 2.5rem;
+        overflow-x: auto;
+        background-color: var(--primary-light);
+    }
+    #chat-submit-btn {
+        border-radius: 0px;
+        height: 100%;
+        background-color: var(--primary-light);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-inline: 15px;
+    }
     @media (max-width: 800px) {
-        #scoreboard-section {
+        #chat-section {
             position: absolute;
             left: 0;
             top: 0;
@@ -518,13 +572,13 @@
             opacity: 0;
             transition: opacity 150ms ease;
         }
-        #scoreboard-section.shown {
+        #chat-section.shown {
             margin: 0px;
             opacity: 100;
             pointer-events: inherit;
             width: 100%;
         }
-        #scoreboard-container {
+        #chat-container {
             background-color: transparent;
         }
     }
@@ -599,7 +653,7 @@
         font-size: 2rem;
     }
 
-    #show-scoreboard-btn {
+    #show-chat-btn {
         height: max-content;
         color: var(--primary-light);
         background-color: transparent;
