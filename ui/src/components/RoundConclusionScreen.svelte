@@ -66,18 +66,17 @@
             )}
         />
     </div>
-    {#if guessString || !correctTrackId}
-        <button
-            class="modal-btn"
-            on:click={() => (isResultsModalShown = true)}
-            on:mouseup={playClickSFX}
-        >
-            Show Round Results
-        </button>
-    {/if}
+
+    <button
+        class="modal-btn"
+        on:click={() => (isResultsModalShown = true)}
+        on:mouseup={playClickSFX}
+    >
+        Show Round Results
+    </button>
 </div>
 
-{#if isResultsModalShown && (guessString || !correctTrackId)}
+{#if isResultsModalShown}
     <Modal>
         <div id="results-modal" style="--border-color: {correctnessColor}">
             {#if correctTrackId}
