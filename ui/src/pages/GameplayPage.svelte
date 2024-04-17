@@ -41,7 +41,6 @@
     let audioLoaded: boolean = false;
     let guessTrackId: string = "";
     let trackQuery: string = "";
-    let guessArtistId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
     let showScoreboard: boolean = window.innerWidth > 800;
@@ -77,11 +76,8 @@
     );
 
     //Every time the audio URL changes, start loading the next round
-    // (if player is not readied, which would happen if the player joined late)
-    $: if (audioURL && !$GameStore.players[$GameConnection.playerId].isReady) {
-        currentPhase = RoundPhase.COUNTDOWN;
-        $MUSIC_AUDIO.src = audioURL;
-        loadRound();
+    $: if (audioURL) {
+        loadRound(audioURL);
     }
 
     //When audio is ready, start the round
@@ -131,28 +127,34 @@
     /**
      * Prepares the next round by loading the audio
      */
-    async function loadRound() {
-        //Destroy audio analyzer
-        visualization?.destroyAnalyzer?.();
+    async function loadRound(url: string) {
+        //Only continue if this player is not ready (which would happen if the player joined late)
+        if (!$GameStore.players[$GameConnection.playerId].isReady) {
+            //Put round into countdown phase
+            currentPhase = RoundPhase.COUNTDOWN;
 
-        //Reset round variables
-        guessResult = undefined;
-        correctTrackId = undefined;
-        guessTrackId = "";
-        trackQuery = "";
-        guessArtistId = "";
-        guessString = "(No Answer)";
-        currentRoundTime = 0;
+            //Destroy audio analyzer
+            visualization?.destroyAnalyzer?.();
 
-        //Set audio callbacks & properties
-        $MUSIC_AUDIO.crossOrigin = "anonymous";
-        $MUSIC_AUDIO.oncanplay = () => {
-            audioLoaded = true;
-        };
+            //Reset round variables
+            guessResult = undefined;
+            correctTrackId = undefined;
+            guessTrackId = "";
+            trackQuery = "";
+            guessString = "(No Answer)";
+            currentRoundTime = 0;
 
-        //Start re-loading of audio element
-        audioLoaded = false;
-        $MUSIC_AUDIO.load();
+            //Set audio callbacks & properties
+            $MUSIC_AUDIO.crossOrigin = "anonymous";
+            $MUSIC_AUDIO.oncanplay = () => {
+                audioLoaded = true;
+            };
+
+            //Start re-loading of audio element
+            audioLoaded = false;
+            $MUSIC_AUDIO.src = url;
+            $MUSIC_AUDIO.load();
+        }
     }
 
     /**
