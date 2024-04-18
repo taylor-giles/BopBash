@@ -34,6 +34,19 @@ export function initAudio() {
             get(audio).pause();
         });
     }
+
+    //Mute all audio elements if the tab loses focus
+    //Note this this unmutes all audio elements when the tab gets focus again - 
+    //  This means that the `muted` property probably should not be used anywhere else.
+    document.addEventListener("visibilitychange", () => {
+        for (let audio of AUDIO_ELEMENTS) {
+            if(document.hidden){
+                get(audio).muted = true;
+            } else {
+                get(audio).muted = false;
+            }
+        }
+    });
 }
 
 export function playClickSFX() {
