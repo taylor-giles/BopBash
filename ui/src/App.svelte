@@ -62,13 +62,16 @@
     //Flag for toggling state of settings modal
     let isSettingsModalOpen = false;
 
+    /**
+     * Checks if the clicked element or its (grand)parent is a button. If so, plays click sound.
+     * @param e Click event
+     */
     function checkClick(e: MouseEvent) {
         let clickedElement = e.target as HTMLElement;
-        //Check if the clicked element or its direct parent is a button. If so, play click sound.
         if (
             clickedElement.tagName === "BUTTON" || //Buttons
             clickedElement.parentElement?.tagName === "BUTTON" || //Buttons with content (button > div)
-            clickedElement.parentElement?.parentElement?.tagName === "BUTTON" //Icons buttons (button > svg > path)
+            clickedElement.parentElement?.parentElement?.tagName === "BUTTON" //Icon buttons (button > svg > path)
         ) {
             playClickSFX();
         }
@@ -109,7 +112,6 @@
     #page-content {
         position: relative;
         padding: 1rem;
-        padding-inline: 1rem;
         flex: 1;
         width: 100%;
         height: 100%;
