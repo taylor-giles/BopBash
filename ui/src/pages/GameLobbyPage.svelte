@@ -54,8 +54,8 @@
     const shareLink = `${window.location.origin}?game=${$GameStore.id}`;
     const shareData = {
         url: shareLink,
-        title: "BopBash",
-        text: "Join me for a thrilling song-based smackdown on BopBash!",
+        title: "Bop Bash",
+        text: "Join me for a thrilling song-based smackdown on Bop Bash!",
     };
 
     /**
