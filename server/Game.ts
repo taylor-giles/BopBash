@@ -5,9 +5,7 @@ import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
-import { MAX_CHAT_LENGTH, REMATCH_TIMEOUT } from "../shared/constants";
-
-const POST_ROUND_WAIT_TIME = 5000;
+import { MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, REMATCH_TIMEOUT } from "../shared/constants";
 
 /**
  * Class to represent the server-side view of a game
