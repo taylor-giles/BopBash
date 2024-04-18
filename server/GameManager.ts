@@ -167,7 +167,9 @@ export async function generateNewGame(playlist: Playlist, type: GameType, visibi
 
     //Set up timeout to end this game if it is empty 1 minute after creation
     setTimeout(() => {
-        stopGame(newGame.id).then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to it being empty after creation`); });
+        if(newGame.players.size <= 0){
+            stopGame(newGame.id).then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to it being empty after creation`); });
+        }
     }, 60000);
 
     //Return game object
