@@ -17,9 +17,7 @@
         GameType,
         type GuessResult,
     } from "../../../shared/types";
-    import Scoreboard from "../components/Scoreboard.svelte";
-    import { arraySum } from "../../../shared/utils";
-    import { fade, blur } from "svelte/transition";
+    import { blur } from "svelte/transition";
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { CurrentPage, Page, RoundPhase } from "../../stores/pageStore";
     import AudioControls from "../components/AudioControls.svelte";
@@ -51,7 +49,6 @@
     let isVisualizerSmall = false;
     let guessString: string;
     let timeToRematch: number = REMATCH_TIMEOUT / 1000;
-
 
     //HTML element references
     let visualization: GameplayVisualization;
@@ -353,7 +350,9 @@
                     <div id="chat-window-title" class="header-text">
                         Game Chat
                     </div>
-                    <ChatBoard chats={$GameStore.chatMessages} />
+                    <div id="chat-board-container">
+                        <ChatBoard chats={$GameStore.chatMessages} />
+                    </div>
                 </div>
             {/if}
         </div>
@@ -480,16 +479,28 @@
         transition-property: width, margin-left;
         transition-duration: 300ms;
         transition-timing-function: ease-out;
+        overflow-y: hidden;
     }
     #chat-section.shown {
         width: 380px;
         margin-left: 2rem;
+    }
+    #chat-board-container {
+        flex: 1;
+        height: 0px;
+        width: 100%;
+        min-width: 260px;
+        background-color: rgba(20, 20, 20, 0.8);
+        border: 2px solid var(--primary-light);
+        border-radius: 5px;
+        overflow-x: hidden;
     }
     #chat-window-title {
         text-align: center;
         font-size: 1.3rem;
         font-weight: 600;
         white-space: nowrap;
+        min-width: 260px;
     }
     @media (max-width: 800px) {
         #chat-section {
@@ -511,9 +522,6 @@
             opacity: 100;
             pointer-events: inherit;
             width: 100%;
-        }
-        #chat-container {
-            background-color: transparent;
         }
     }
 

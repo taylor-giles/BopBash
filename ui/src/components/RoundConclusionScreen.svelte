@@ -9,6 +9,9 @@
     import Scoreboard from "./Scoreboard.svelte";
     import Modal from "./modals/Modal.svelte";
     import { playClickSFX } from "../../stores/audio";
+    import ChatBoard from "./ChatBoard.svelte";
+
+    const CONTENT_TYPES = ["Leaderboard", "Chat"] as const;
 
     export let correctTrackId: string | undefined;
     export let guessResult: GuessResult | undefined;
@@ -16,6 +19,7 @@
     let correctTrackEmbed: HTMLIFrameElement;
     let isResultsModalShown = true;
     let currentRoundScore: number | null | undefined;
+    let currentContentType: (typeof CONTENT_TYPES)[number] = "Leaderboard";
 
     //This should NOT be reactive (with $:) to avoid flashes of incorrect data when the round changes.
     //  (The round shown on the conclusion screen should never change)
@@ -55,16 +59,30 @@
     <div class="conclusion-title">
         Round {currentRoundIndex + 1}
     </div>
-    <div id="scoreboard-title" class="header-text">Game Leaderboard</div>
+    <div id="content-selectors-container">
+        {#each CONTENT_TYPES as contentType}
+            <button
+                class="content-selector-btn"
+                on:click={() => (currentContentType = contentType)}
+                class:selected={currentContentType === contentType}
+            >
+                {contentType}
+            </button>
+        {/each}
+    </div>
 
-    <!-- Scoreboard in conclusion screen -->
-    <div id="conclusion-scoreboard-container">
-        <Scoreboard
-            bind:currentRoundScore
-            players={Object.values($GameStore.players).toSorted(
-                (a, b) => arraySum(b.scores) - arraySum(a.scores),
-            )}
-        />
+    <!-- Scoreboard and chat in conclusion screen -->
+    <div id="conclusion-content-container">
+        {#if currentContentType === "Leaderboard"}
+            <Scoreboard
+                bind:currentRoundScore
+                players={Object.values($GameStore.players).toSorted(
+                    (a, b) => arraySum(b.scores) - arraySum(a.scores),
+                )}
+            />
+        {:else if currentContentType === "Chat"}
+            <ChatBoard chats={$GameStore.chatMessages} />
+        {/if}
     </div>
 
     <button
@@ -144,6 +162,7 @@
 {/if}
 
 <style>
+
     #conclusion-content {
         flex: 1;
         display: flex;
@@ -181,14 +200,47 @@
         text-align: center;
     }
 
-    #conclusion-scoreboard-container {
+    #content-selectors-container {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        min-width: 260px;
+        max-width: 900px;
+        justify-content: space-around;
+        margin-bottom: -10px;
+        background-color: var(--primary-dark);
+        border-radius: 5px 5px 0px 0px;
+        overflow: hidden;
+    }
+
+    .content-selector-btn {
+        flex: 1;
+        border-radius: 0px;
+        background-color: var(--primary-dark);
+        color: var(--primary-light);
+    }
+    .content-selector-btn.selected {
+        background-color: var(--primary-light);
+        color: var(--accent-dark);
+    }
+    .content-selector-btn:hover {
+        background-color: var(--primary-dark);
+        color: var(--primary-light);
+    }
+    .content-selector-btn.selected:hover {
+        background-color: var(--primary-light);
+        color: var(--accent-dark);
+    }
+
+    #conclusion-content-container {
         flex: 1;
         background-color: rgba(0, 0, 0, 0.8);
         border: 2px solid var(--primary-light);
-        border-radius: 5px;
+        border-radius: 0px 0px 5px 5px;
         min-width: 260px;
         max-width: 900px;
         width: 100%;
+        height: 0px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;

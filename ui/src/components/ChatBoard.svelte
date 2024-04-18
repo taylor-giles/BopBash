@@ -44,7 +44,7 @@
     {#each chats as chat, index (index)}
       <div
         class="chat-card-container"
-        transition:fly={{ x: "100%", easing: quintOut }}
+        transition:fly={{ y: "0%", easing: quintOut }}
       >
         <ChatCard {chat} />
       </div>
@@ -58,6 +58,7 @@
         bind:value={chatContent}
         placeholder="Write a message..."
         class="body-text"
+        autocomplete="off"
       />
       <button id="chat-submit-btn" type="submit" disabled={!chatContent}
         ><SendIcon height="100%" width="100%" /></button
@@ -80,16 +81,14 @@
   }
 
   #main {
+    width: 100%;
+    height: 100%;
     flex: 1;
-    background-color: rgba(20, 20, 20, 0.8);
-    border: 2px solid var(--primary-light);
-    border-radius: 5px;
-    min-width: 260px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    overflow-y: hidden;
+    overflow: hidden;
     gap: 5px;
   }
   #chat-form {
