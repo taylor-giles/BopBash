@@ -10,7 +10,6 @@
         MUSIC_AUDIO,
         BG_AUDIO,
         VISUALIZER_NODE,
-        playClickSFX,
     } from "../../stores/audio";
     import {
         GameStatus,
@@ -363,7 +362,6 @@
         <button
             id="leave-btn"
             on:click={() => (isModalOpen = true)}
-            on:mouseup={playClickSFX}
         >
             <BackIcon />
             Leave Game

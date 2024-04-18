@@ -18,6 +18,9 @@
         //This MUST be done in DIRECT response to a button press to enable autoplay on all platforms
         initAudio();
 
+        //Play click sound directly (it will be interrupted by audio init process)
+        playClickSFX();
+
         if (!failed) {
             //Establish the GameConnection
             connectAs(username);
@@ -67,7 +70,6 @@
             type="button"
             id="submit-btn"
             disabled={!ready}
-            on:mouseup={playClickSFX}
         >
             Start
         </button>

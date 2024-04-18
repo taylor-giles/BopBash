@@ -8,7 +8,6 @@
     import { arraySum } from "../../../shared/utils";
     import Scoreboard from "./Scoreboard.svelte";
     import Modal from "./modals/Modal.svelte";
-    import { playClickSFX } from "../../stores/audio";
     import ChatBoard from "./ChatBoard.svelte";
 
     const CONTENT_TYPES = ["Leaderboard", "Chat"] as const;
@@ -88,7 +87,6 @@
     <button
         class="modal-btn"
         on:click={() => (isResultsModalShown = true)}
-        on:mouseup={playClickSFX}
     >
         Show Round Results
     </button>
@@ -152,7 +150,6 @@
             <button
                 class="modal-btn"
                 on:click={() => (isResultsModalShown = false)}
-                on:mouseup={playClickSFX}
             >
                 <PodiumIcon />
                 View Leaderboard

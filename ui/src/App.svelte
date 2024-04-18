@@ -2,7 +2,7 @@
     import type { ComponentType } from "svelte";
     import { GameConnection, GameStore } from "../stores/gameStore";
     import { Page, CurrentPage, ErrorMessage } from "../stores/pageStore";
-    import { BG_AUDIO } from "../stores/audio";
+    import { BG_AUDIO, playClickSFX } from "../stores/audio";
     import GameLobbyPage from "./pages/GameLobbyPage.svelte";
     import HomePage from "./pages/HomePage.svelte";
     import LoginPage from "./pages/LoginPage.svelte";
@@ -61,27 +61,41 @@
 
     //Flag for toggling state of settings modal
     let isSettingsModalOpen = false;
+
+    function checkClick(e: MouseEvent) {
+        let clickedElement = e.target as HTMLElement;
+        //Check if the clicked element or its direct parent is a button. If so, play click sound.
+        if (
+            clickedElement.tagName === "BUTTON" || //Buttons
+            clickedElement.parentElement?.tagName === "BUTTON" || //Buttons with content (button > div)
+            clickedElement.parentElement?.parentElement?.tagName === "BUTTON" //Icons buttons (button > svg > path)
+        ) {
+            playClickSFX();
+        }
+    }
 </script>
 
-<main>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+<main on:click|capture={checkClick}>
     <Appbar on:settingsclick={() => (isSettingsModalOpen = true)} />
     <div id="page-content">
         <svelte:component this={PAGES[$CurrentPage]} />
     </div>
+
+    <!-- Settings Modal -->
+    {#if isSettingsModalOpen}
+        <SettingsModal on:close={() => (isSettingsModalOpen = false)} />
+    {/if}
+
+    <!-- Error Modal (displays error message from store)-->
+    {#if $ErrorMessage}
+        <ErrorModal
+            errorMsg={$ErrorMessage}
+            on:close={() => ErrorMessage.set("")}
+        />
+    {/if}
 </main>
-
-<!-- Settings Modal -->
-{#if isSettingsModalOpen}
-    <SettingsModal on:close={() => (isSettingsModalOpen = false)} />
-{/if}
-
-<!-- Error Modal (displays error message from store)-->
-{#if $ErrorMessage}
-    <ErrorModal
-        errorMsg={$ErrorMessage}
-        on:close={() => ErrorMessage.set("")}
-    />
-{/if}
 
 <Background />
 

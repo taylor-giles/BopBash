@@ -1,7 +1,6 @@
 <script lang="ts">
     import { GAME_ID_REGEX } from "../../../../shared/constants";
     import GameAPI from "../../../api/api";
-    import { playClickSFX } from "../../../stores/audio";
 
     let gameId = "";
     let failed = false;
@@ -58,7 +57,7 @@
             bind:value={gameId}
         />
 
-        <button type="submit" id="submit-btn" on:mouseup={playClickSFX}> Join Game </button>
+        <button type="submit" id="submit-btn"> Join Game </button>
     </form>
 </main>
 

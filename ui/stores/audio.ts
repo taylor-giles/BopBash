@@ -29,7 +29,7 @@ export function initAudio() {
     sourceNode.connect(get(AUDIO_CONTEXT).destination);
 
     //Initialize (play then pause) each audio instance
-    for(let audio of AUDIO_ELEMENTS){
+    for (let audio of AUDIO_ELEMENTS) {
         get(audio).play().then(() => {
             get(audio).pause();
         });
