@@ -69,7 +69,7 @@
     #separator {
         text-align: center;
     }
-    @media(max-width: 860px) {
+    @media (max-width: 860px) {
         #separator {
             width: 100%;
         }

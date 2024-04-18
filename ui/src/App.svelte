@@ -38,10 +38,11 @@
             $BG_AUDIO.loop = true;
             $BG_AUDIO.volume = 0.5;
             $BG_AUDIO.play();
-
-            //Attempt to join
             if (gameToJoin) {
-                GameAPI.joinGame(gameToJoin);
+                value.onopen = () => {
+                    //Attempt to join game from URL
+                    GameAPI.joinGame(gameToJoin);
+                };
             }
         }
     });
