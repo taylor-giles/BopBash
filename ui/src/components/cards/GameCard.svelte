@@ -1,7 +1,6 @@
 <script lang="ts">
     import PeopleIcon from "svelte-material-icons/AccountMultiple.svelte";
     import {
-        GameType,
         type GameState,
         GameStatus,
     } from "../../../../shared/types";
@@ -9,7 +8,6 @@
         ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
         GAME_TYPES,
     } from "../../game-types";
-    import { playClickSFX } from "../../../stores/audio";
 
     export let game: GameState;
 </script>
@@ -71,7 +69,7 @@
             </div>
         </div>
 
-        <button on:click on:mouseup={playClickSFX}> Join Game </button>
+        <button on:click> Join Game </button>
     </div>
 </main>
 

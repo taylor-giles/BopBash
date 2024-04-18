@@ -4,7 +4,6 @@
     import CollapseIcon from "svelte-material-icons/ChevronUp.svelte";
     import collapse from "svelte-collapse";
     import { createEventDispatcher } from "svelte";
-    import { playClickSFX } from "../../../stores/audio";
     const dispatch = createEventDispatcher();
 
     export let playlist: PlaylistMetadata;
@@ -53,7 +52,6 @@
                 on:click={handleSelect}
                 id="select-btn-side"
                 class="text-button select-btn"
-                on:mouseup={playClickSFX}
             >
                 Select
             </button>
@@ -105,7 +103,6 @@
             on:click={handleSelect}
             id="select-btn-bottom"
             class="text-button select-btn"
-            on:mouseup={playClickSFX}
         >
             Select
         </button>

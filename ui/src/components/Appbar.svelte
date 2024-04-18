@@ -1,7 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import SettingsIcon from "svelte-material-icons/Cog.svelte";
-    import { playClickSFX } from "../../stores/audio";
     const dispatch = createEventDispatcher();
 </script>
 
@@ -11,7 +10,6 @@
         on:click={() => {
             dispatch("settingsclick");
         }}
-        on:mouseup={playClickSFX}
     >
         <SettingsIcon />
     </button>
