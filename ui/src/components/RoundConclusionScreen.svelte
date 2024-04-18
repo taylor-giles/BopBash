@@ -320,10 +320,4 @@
         padding: 20px;
         align-items: center;
     }
-
-    #scoreboard-title {
-        font-size: 1.7rem;
-        font-weight: 700;
-        margin-top: -10px;
-    }
 </style>
