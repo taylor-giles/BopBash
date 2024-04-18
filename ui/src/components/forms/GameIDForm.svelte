@@ -54,6 +54,7 @@
             class="header-text"
             type="text"
             placeholder="---  Game ID  ---"
+            autocomplete="off"
             bind:value={gameId}
         />
 
