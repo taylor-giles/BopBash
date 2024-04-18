@@ -8,12 +8,12 @@
 import ObservableMap from '../utils/ObservableMap';
 import { Game, Player } from './Game';
 import { PlayerConnection } from './types';
-import { GameOptions, GameState, GameStatus, GameType, GameVisibility, Playlist } from "../shared/types";
+import { GameOptions, GameState, GameType, GameVisibility, Playlist } from "../shared/types";
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 //Maximum amount of time a game is allowed to exist as an "active game"
-const MAX_GAME_LIFETIME = 60 * 60 * 1000; //One hour
+const MAX_GAME_LIFETIME = 24 * 60 * 60 * 1000; //24 hours
 
 //Maps for storing currently active games/players by ID
 let activeGames = new ObservableMap<string, Game>();
@@ -164,6 +164,11 @@ export async function generateNewGame(playlist: Playlist, type: GameType, visibi
     gameTimeouts.set(newGame.id, setTimeout(() => {
         stopGame(newGame.id).then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to being active for too long`); });
     }, MAX_GAME_LIFETIME));
+
+    //Set up timeout to end this game if it is empty 1 minute after creation
+    setTimeout(() => {
+        stopGame(newGame.id).then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to it being empty after creation`); });
+    }, 60000);
 
     //Return game object
     console.log(`Created game ${newGame.id} for playlist ${playlist.id} (${playlist.name})`);

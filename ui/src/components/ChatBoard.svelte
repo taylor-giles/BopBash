@@ -19,7 +19,7 @@
   async function scrollToBottom() {
     await tick();
     if (main) {
-      main.scroll({top: main.scrollHeight})
+      main.scroll({ top: main.scrollHeight });
     }
   }
 
@@ -60,9 +60,9 @@
         class="body-text"
         autocomplete="off"
       />
-      <button id="chat-submit-btn" type="submit" disabled={!chatContent}
-        ><SendIcon height="100%" width="100%" /></button
-      >
+      <button id="chat-submit-btn" type="submit" disabled={!chatContent}>
+        <SendIcon height="100%" width="100%" />
+      </button>
     </div>
   </form>
 </div>
