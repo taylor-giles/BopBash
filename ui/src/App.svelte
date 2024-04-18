@@ -25,6 +25,10 @@
         [Page.CREATE]: GameCreationPage,
     };
 
+    //Obtain and remove game ID from URL if it exists
+    const gameToJoin = new URLSearchParams(window.location.search).get("game");
+    window.history.replaceState({}, "", "/");
+
     //When the player connects, go to home page and try to join game from URL, if it exists
     GameConnection.subscribe((value) => {
         if (value) {
@@ -34,6 +38,12 @@
             $BG_AUDIO.loop = true;
             $BG_AUDIO.volume = 0.5;
             $BG_AUDIO.play();
+            if (gameToJoin) {
+                value.onopen = () => {
+                    //Attempt to join game from URL
+                    GameAPI.joinGame(gameToJoin);
+                };
+            }
         }
     });
 
