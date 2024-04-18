@@ -23,4 +23,4 @@ export const REMATCH_TIMEOUT = 20000;
 export const MAX_CHAT_LENGTH = 200;
 
 //Time (in millis) to remain in conclusion phase after all players ready
-export const POST_ROUND_WAIT_TIME = 50000;
+export const POST_ROUND_WAIT_TIME = 8000;
