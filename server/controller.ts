@@ -604,7 +604,7 @@ export async function submitChat(req: PlayerRequest, res: Response) {
         return res.status(400).json({ error: "content must be specified" });
     }
 
-    console.log(`Handling request to submit chat message ${content} for player ${playerId}`);
+    // console.log(`Handling request to submit chat message ${content} for player ${playerId}`);
 
     //Get the active game and submit the guess
     try {
