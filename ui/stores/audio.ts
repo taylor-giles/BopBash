@@ -5,7 +5,7 @@ import { writable, get } from 'svelte/store';
  * Svelte writable stores for each of the possible audio elements.
  * These need to be writable so properties like src and volume can be set
  */
-export const SFX_AUDIO: Writable<HTMLAudioElement> = writable<HTMLAudioElement>(new Audio("data:audio/mp3;base64, SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzYwLjMxAAAAAAAAAAAAAAAAJAUHAAAAAAAAAYZiVsXQAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMQpg8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"));
+export const SFX_AUDIO: Writable<HTMLAudioElement> = writable<HTMLAudioElement>(new Audio("click.mp3"));
 export const MUSIC_AUDIO: Writable<HTMLAudioElement> = writable<HTMLAudioElement>(new Audio("data:audio/mp3;base64, SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzYwLjMxAAAAAAAAAAAAAAAAJAUHAAAAAAAAAYZiVsXQAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMQpg8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"));
 export const BG_AUDIO: Writable<HTMLAudioElement> = writable<HTMLAudioElement>(new Audio("lobby_theme.mp3"));
 export const AUDIO_ELEMENTS = [MUSIC_AUDIO, SFX_AUDIO, BG_AUDIO];
@@ -36,15 +36,11 @@ export function initAudio() {
     }
 
     //Mute all audio elements if the tab loses focus
-    //Note this this unmutes all audio elements when the tab gets focus again - 
+    //Note that this unmutes all audio elements when the tab gets focus again - 
     //  This means that the `muted` property probably should not be used anywhere else.
     document.addEventListener("visibilitychange", () => {
         for (let audio of AUDIO_ELEMENTS) {
-            if(document.hidden){
-                get(audio).muted = true;
-            } else {
-                get(audio).muted = false;
-            }
+            get(audio).muted = document.hidden;
         }
     });
 }
