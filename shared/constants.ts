@@ -1,8 +1,11 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 //Address of the WebSocket server
-export const WS_ADDRESS = "ws://localhost:4001";
+export const WS_ADDRESS = process.env.WS_ADDRESS;
 
 //Address of the REST server
-export const API_ADDRESS = "http://localhost:4000/api";
+export const API_ADDRESS = process.env.API_ADDRESS;
 
 //Maximum number of allowed characters in a username
 export const MAX_USERNAME_LENGTH = 20;
