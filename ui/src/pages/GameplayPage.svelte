@@ -48,6 +48,7 @@
     let isVisualizerSmall = false;
     let guessString: string;
     let timeToRematch: number = REMATCH_TIMEOUT / 1000;
+    let joinedLate: boolean = false;
 
     //HTML element references
     let visualization: GameplayVisualization;
@@ -90,6 +91,7 @@
 
     //If this player joined late, display round conclusion (this should NOT be reactive with $:)
     if ($GameStore.players[$GameConnection.playerId].isReady) {
+        joinedLate = true;
         startConclusionPhase();
     }
 
@@ -128,6 +130,8 @@
     async function loadRound(url: string) {
         //Only continue if this player is not ready (which would happen if the player joined late)
         if (!$GameStore.players[$GameConnection.playerId].isReady) {
+            joinedLate = false;
+
             //Put round into countdown phase
             currentPhase = RoundPhase.COUNTDOWN;
 
@@ -236,6 +240,7 @@
                     {correctTrackId}
                     {guessResult}
                     {guessString}
+                    {joinedLate}
                 />
             {:else}
                 <div id="gameplay-content">

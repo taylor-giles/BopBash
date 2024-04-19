@@ -183,7 +183,7 @@
 <form on:submit>
     <!-- Track search -->
     <div class="input-container">
-        <label for="track-input" class="body-text"> Search by Title </label>
+        <label for="track-input" class="body-text"> Search Song </label>
         <input
             class:italics={showingArtistSongs}
             bind:this={trackGuessInput}
@@ -236,7 +236,7 @@
 
     <!-- Artist search -->
     <div class="input-container">
-        <label for="track-input" class="body-text"> Search by Artist </label>
+        <label for="track-input" class="body-text"> Search by Artist's Top Tracks </label>
         <input
             bind:this={artistInput}
             id="artist-input"
