@@ -9,12 +9,18 @@
     import Scoreboard from "./Scoreboard.svelte";
     import Modal from "./modals/Modal.svelte";
     import ChatBoard from "./ChatBoard.svelte";
+    import _ from "lodash";
+    import {
+        CONCLUSION_PHRASES_CORRECT,
+        CONCLUSION_PHRASES_INCORRECT,
+    } from "../game-types";
 
     const CONTENT_TYPES = ["Leaderboard", "Chat"] as const;
 
     export let correctTrackId: string | undefined;
     export let guessResult: GuessResult | undefined;
     export let guessString: string;
+    export let joinedLate: boolean = false;
     let correctTrackEmbed: HTMLIFrameElement;
     let isResultsModalShown = true;
     let currentRoundScore: number | null | undefined;
@@ -30,6 +36,11 @@
         : guessResult?.isCorrect
           ? "var(--spotify-green)"
           : "var(--red)";
+
+    //Pick a random correctness phrase
+    $: correctnessPhrase = guessResult?.isCorrect
+        ? _.sample(CONCLUSION_PHRASES_CORRECT)
+        : _.sample(CONCLUSION_PHRASES_INCORRECT);
 
     //Make sure correct track display stays updated
     $: if (correctTrackId && isResultsModalShown) {
@@ -84,27 +95,23 @@
         {/if}
     </div>
 
-    <button
-        class="modal-btn"
-        on:click={() => (isResultsModalShown = true)}
-    >
+    <button class="modal-btn" on:click={() => (isResultsModalShown = true)}>
         Show Round Results
     </button>
+
 </div>
 
 {#if isResultsModalShown}
     <Modal>
         <div id="results-modal" style="--border-color: {correctnessColor}">
-            {#if correctTrackId}
+            {#if !joinedLate}
                 <!-- Round results, including iframe -->
                 <div id="conclusion-results-container">
                     <div
                         class="conclusion-title"
                         style="color: {correctnessColor}"
                     >
-                        {guessResult?.isCorrect
-                            ? "Nice job!"
-                            : "Aww, shucks :("}
+                        {@html correctnessPhrase}
                     </div>
                     <div id="guess-display">
                         <div class="label">Your Guess:</div>
@@ -142,7 +149,7 @@
             {:else}
                 <div id="waiting-container">
                     <div class="conclusion-title">
-                        Please wait for the results of this round.
+                        Please wait for the active round to end.
                     </div>
                     <Stretch color="var(--primary-light)" />
                 </div>
@@ -159,7 +166,6 @@
 {/if}
 
 <style>
-
     #conclusion-content {
         flex: 1;
         display: flex;
@@ -191,7 +197,7 @@
 
     .conclusion-title {
         font-weight: 700;
-        font-size: 2rem;
+        font-size: 1.5rem;
         width: max-content;
         max-width: 90%;
         text-align: center;
@@ -277,7 +283,7 @@
     }
 
     .label {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 500;
     }
 
