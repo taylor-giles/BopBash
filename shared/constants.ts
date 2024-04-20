@@ -5,10 +5,10 @@ export const MAX_USERNAME_LENGTH = 20;
 export const GAME_ID_REGEX = /^[0-9A-Fa-f]{6}$/;
 
 //Time (in millis) to wait after requesting to join a game
-export const JOIN_GAME_TIMEOUT = 5000;
+export const JOIN_GAME_TIMEOUT = 50000;
 
 //Time (in millis) between each number in the countdown
-export const COUNTDOWN_INTERVAL = 400;
+export const COUNTDOWN_INTERVAL = 500;
 
 //Time (in millis) before rematch game begins after game end
 export const REMATCH_TIMEOUT = 20000;
