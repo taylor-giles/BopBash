@@ -19,11 +19,11 @@
     import GameAPI from "../../api/api";
     import PlaylistCard from "../components/cards/PlaylistCard.svelte";
     import { CurrentPage, ErrorMessage, Page } from "../../stores/pageStore";
-    import { IFrameAPI } from "../../stores/IFrameAPI";
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { GAME_TYPES, GAME_VISIBILITIES } from "../game-types";
     import LoadingModal from "../components/modals/LoadingModal.svelte";
     import { BG_AUDIO } from "../../stores/audio";
+    import SpotifyEmbed from "../SpotifyEmbed.svelte";
 
     //Play background music
     $BG_AUDIO.play();
@@ -52,8 +52,6 @@
     let selectedGameType: GameType = GameType.SEARCH;
     let selectedVisibility: GameVisibility = GameVisibility.PUBLIC;
     let selectedPlaylistId: string;
-
-    let embed: HTMLIFrameElement;
 
     //Get color from CSS
     const spotifyGreen = getComputedStyle(
@@ -151,24 +149,6 @@
      */
     async function handleSelect(playlistId: string) {
         selectedPlaylistId = playlistId;
-        await tick();
-
-        //Render new embed with IFrameAPI
-        let options = {
-            uri: `spotify:playlist:${selectedPlaylistId}`,
-            height: "100%",
-            width: "100%",
-        };
-        $IFrameAPI.createController(embed, options, (controller: any) => {
-            //Make sure background music does not play while embedded element is playing
-            controller.onPlaybackUpdate = (playbackState: any) => {
-                if (playbackState.isPaused) {
-                    $BG_AUDIO.play();
-                } else {
-                    $BG_AUDIO.pause();
-                }
-            };
-        });
     }
 
     /**
@@ -370,8 +350,8 @@
                 Each round, a random song will be selected from this playlist.
             </div>
             <div id="embed-container">
-                <iframe
-                    bind:this={embed}
+                <SpotifyEmbed
+                    uri={`spotify:playlist:${selectedPlaylistId}`}
                     title="Spotify-provided embedded playlist"
                 />
             </div>
@@ -602,6 +582,7 @@
 
     #embed-container {
         flex: 1;
+        display: grid; /* ??? (embed doesnt size right without it) ??? */
     }
 
     .options-container {

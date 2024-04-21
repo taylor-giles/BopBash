@@ -1,8 +1,6 @@
 <script lang="ts">
     import PodiumIcon from "svelte-material-icons/Podium.svelte";
     import { Stretch } from "svelte-loading-spinners";
-    import { tick } from "svelte";
-    import { IFrameAPI } from "../../stores/IFrameAPI";
     import type { GuessResult } from "../../../shared/types";
     import { GameStore } from "../../stores/gameStore";
     import { arraySum } from "../../../shared/utils";
@@ -14,6 +12,7 @@
         CONCLUSION_PHRASES_CORRECT,
         CONCLUSION_PHRASES_INCORRECT,
     } from "../game-types";
+    import SpotifyEmbed from "../SpotifyEmbed.svelte";
 
     const CONTENT_TYPES = ["Leaderboard", "Chat"] as const;
 
@@ -21,7 +20,6 @@
     export let guessResult: GuessResult | undefined;
     export let guessString: string;
     export let joinedLate: boolean = false;
-    let correctTrackEmbed: HTMLIFrameElement;
     let isResultsModalShown = true;
     let currentRoundScore: number | null | undefined;
     let currentContentType: (typeof CONTENT_TYPES)[number] = "Leaderboard";
@@ -41,28 +39,6 @@
     $: correctnessPhrase = guessResult?.isCorrect
         ? _.sample(CONCLUSION_PHRASES_CORRECT)
         : _.sample(CONCLUSION_PHRASES_INCORRECT);
-
-    //Make sure correct track display stays updated
-    $: if (correctTrackId && isResultsModalShown) {
-        displayCorrectTrack();
-    }
-
-    /**
-     * Updates the iFrame to display the embedded preview for this round's correct track
-     */
-    async function displayCorrectTrack() {
-        await tick();
-
-        //Construct IFrameAPI request
-        let iframeOptions = {
-            uri: `spotify:track:${correctTrackId}`,
-            height: "100%",
-            width: "100%",
-        };
-
-        //Make the embed
-        $IFrameAPI.createController(correctTrackEmbed, iframeOptions, () => {});
-    }
 </script>
 
 <div id="conclusion-content">
@@ -98,14 +74,13 @@
     <button class="modal-btn" on:click={() => (isResultsModalShown = true)}>
         Show Round Results
     </button>
-
 </div>
 
 {#if isResultsModalShown}
     <Modal>
         <div id="results-modal" style="--border-color: {correctnessColor}">
             {#if !joinedLate}
-                <!-- Round results, including iframe -->
+                <!-- Round results, including embed -->
                 <div id="conclusion-results-container">
                     <div
                         class="conclusion-title"
@@ -117,14 +92,14 @@
                         <div class="label">Your Guess:</div>
                         <div>{guessString}</div>
                     </div>
-                    <div id="iframe-container">
+                    <div id="embed-container">
                         <div class="label">Correct Track:</div>
-                        <iframe
-                            title="View track on Spotify"
-                            bind:this={correctTrackEmbed}
-                        >
-                            Loading...
-                        </iframe>
+                        {#if correctTrackId}
+                            <SpotifyEmbed
+                                uri={`spotify:track:${correctTrackId}`}
+                                title="View track on Spotify"
+                            />
+                        {/if}
                     </div>
                     <div id="results-container">
                         <div
@@ -291,7 +266,7 @@
         width: 100%;
     }
 
-    #iframe-container {
+    #embed-container {
         width: 100%;
         height: 275px;
         display: flex;
@@ -303,7 +278,7 @@
             padding: 1rem;
             height: 300px;
         }
-        #iframe-container {
+        #embed-container {
             height: 120px;
             flex: 0;
         }
