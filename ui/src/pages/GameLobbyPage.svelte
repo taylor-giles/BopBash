@@ -6,13 +6,11 @@
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import AddFriendsIcon from "svelte-material-icons/AccountMultiplePlus.svelte";
     import type { GameState, PlayerState } from "../../../shared/types";
-    import { IFrameAPI } from "../../stores/IFrameAPI";
     import { GameStore, GameConnection } from "../../stores/gameStore";
     import GameAPI from "../../api/api";
     import PlayerCard from "../components/cards/PlayerCard.svelte";
     import { CurrentPage, Page } from "../../stores/pageStore";
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
-    import { onMount, tick } from "svelte";
     import { scale } from "svelte/transition";
     import Modal from "../components/modals/Modal.svelte";
     import {
@@ -20,6 +18,7 @@
         GAME_TYPES,
     } from "../game-types";
     import { BG_AUDIO } from "../../stores/audio";
+    import SpotifyEmbed from "../SpotifyEmbed.svelte";
 
     //Play background music
     $BG_AUDIO.play();
@@ -32,9 +31,6 @@
 
     //Maintain a reference to the current state of this player
     $: myPlayerState = gameState.players[$GameConnection.playerId];
-
-    //Show the playlist in an embedded iframe once everything is loaded
-    let embed: HTMLIFrameElement;
 
     //Maintain a list of players and count of ready players
     let playerList: PlayerState[];
@@ -85,31 +81,6 @@
             navigator.share(shareData);
         }
     }
-
-    /**
-     * Render the embedded playlist using the Spotify IFrameAPI
-     */
-    async function renderEmbed() {
-        await tick();
-
-        //Render new embed with IFrameAPI
-        let options = {
-            uri: `spotify:playlist:${gameState.playlist.id}`,
-            height: `100%`,
-        };
-        let callback = (controller: any) => {
-            //Make sure background music does not play while embedded element is playing
-            controller.onPlaybackUpdate = (playbackState: any) => {
-                if (playbackState.isPaused) {
-                    $BG_AUDIO.play();
-                } else {
-                    $BG_AUDIO.pause();
-                }
-            };
-        };
-        $IFrameAPI.createController(embed, options, callback);
-    }
-    onMount(renderEmbed);
 </script>
 
 <main>
@@ -174,10 +145,7 @@
                 </div>
             </div>
             <div id="embed-container">
-                <iframe
-                    bind:this={embed}
-                    title="Spotify-provided embedded playlist"
-                />
+                <SpotifyEmbed uri={`spotify:playlist:${gameState.playlist.id}`} title="Spotify-provided embedded playlist" />
             </div>
         </div>
 
