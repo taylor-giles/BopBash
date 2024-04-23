@@ -36,7 +36,6 @@
 
             //Start background music
             $BG_AUDIO.loop = true;
-            $BG_AUDIO.volume = 0.5;
             $BG_AUDIO.play();
             if (gameToJoin) {
                 value.onopen = () => {
