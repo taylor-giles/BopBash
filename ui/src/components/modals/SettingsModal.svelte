@@ -110,7 +110,7 @@
                 </a>
             </div>
             <div class="credit">
-                <b class="header-text">
+                <b class="header-text" style="width: 100%">
                     Special Thanks:
                 </b>
                 Morgan&nbsp;&&nbsp;Nicole&nbsp;Giles, Niaz&nbsp;An-Noor, Aiden&nbsp;Gauer
