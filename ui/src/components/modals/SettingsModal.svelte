@@ -1,10 +1,18 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import { SFX_AUDIO, BG_AUDIO, playClickSFX } from "../../../stores/audio";
+    import {
+        SFX_AUDIO,
+        BG_AUDIO,
+        MUSIC_AUDIO,
+        playClickSFX,
+    } from "../../../stores/audio";
     import VolumeIcon from "svelte-material-icons/VolumeHigh.svelte";
     import MusicIcon from "svelte-material-icons/Music.svelte";
+    import NoteIcon from "svelte-material-icons/MusicCircle.svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import Modal from "./Modal.svelte";
+    import { GameStore } from "../../../stores/gameStore";
+    import { GameStatus } from "../../../../shared/types";
     const dispatch = createEventDispatcher();
 </script>
 
@@ -12,6 +20,7 @@
     <main>
         <div id="title">SETTINGS</div>
         <div id="settings-container">
+            <!-- Background music volume -->
             <div class="slider-container">
                 <div class="slider-label header-text">
                     <MusicIcon height="100%" />
@@ -25,6 +34,8 @@
                     bind:value={$BG_AUDIO.volume}
                 />
             </div>
+
+            <!-- SFX Volume -->
             <div class="slider-container">
                 <div class="slider-label header-text">
                     <VolumeIcon height="100%" />
@@ -39,6 +50,23 @@
                     bind:value={$SFX_AUDIO.volume}
                 />
             </div>
+
+            <!-- In-Game Music Volume -->
+            {#if $GameStore?.status === GameStatus.ACTIVE}
+                <div class="slider-container">
+                    <div class="slider-label header-text">
+                        <NoteIcon height="100%" />
+                        <b>IN-GAME MUSIC</b>
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.025"
+                        bind:value={$MUSIC_AUDIO.volume}
+                    />
+                </div>
+            {/if}
         </div>
         <button
             id="close-btn"
@@ -87,7 +115,7 @@
         outline: none;
     }
 
-    input[type="range"]::-moz-range-thumb{
+    input[type="range"]::-moz-range-thumb {
         height: 30px;
         width: 15px;
         border: 4px solid var(--accent-light);
