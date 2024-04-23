@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
+    import Modal from "./Modal.svelte";
     const dispatch = createEventDispatcher();
 
     export let headerText = "CONFIRM";
@@ -8,7 +9,7 @@
     export let noText = "No";
 </script>
 
-<main class="modal">
+<Modal on:close={() => dispatch("no")}>
     <div id="content">
         <div id="header" class="header-text">
             {headerText}
@@ -26,7 +27,7 @@
             </button>
         </div>
     </div>
-</main>
+</Modal>
 
 <style>
     #content {

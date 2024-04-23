@@ -77,7 +77,7 @@
 </div>
 
 {#if isResultsModalShown}
-    <Modal>
+    <Modal on:close={() => (isResultsModalShown = false)}>
         <div id="results-modal" style="--border-color: {correctnessColor}">
             {#if !joinedLate}
                 <!-- Round results, including embed -->
