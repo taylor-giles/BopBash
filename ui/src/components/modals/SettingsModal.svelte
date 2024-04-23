@@ -30,7 +30,7 @@
     }
 </script>
 
-<Modal>
+<Modal on:close>
     <main>
         <div id="title">SETTINGS</div>
         <div id="settings-container">
