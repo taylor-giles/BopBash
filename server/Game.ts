@@ -5,7 +5,7 @@ import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
-import { MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, REMATCH_TIMEOUT } from "../shared/constants";
+import { COUNTDOWN_INTERVAL, MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, REMATCH_TIMEOUT } from "../shared/constants";
 
 /**
  * Class to represent the server-side view of a game
@@ -297,10 +297,10 @@ export class Game {
             throw new Error(`Player ${player.id} (${player.name}) has already submitted a guess for round ${roundNum}.`)
         }
 
-        //Determine the number of points for this guess
+        //If correct, grant between 0-1000 points depending on time taken, 0 otherwise
         let isCorrect = trackId === round.trackId;
-        let timeElapsed = new Date().getTime() - this.rounds?.[roundNum]?.startTime;
-        let numPoints = isCorrect ? round.maxDuration - timeElapsed : 0;
+        let timeRemaining = round.maxDuration - (new Date().getTime() - this.rounds?.[roundNum]?.startTime) + 3*COUNTDOWN_INTERVAL;
+        let numPoints = isCorrect ? Math.round((timeRemaining / round.maxDuration) * 1000) : 0;
 
         //Update this player's point count for this round
         player.activeGameInfo!.scores[roundNum] = numPoints
