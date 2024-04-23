@@ -70,22 +70,21 @@
             </div>
 
             <!-- In-Game Music Volume -->
-            {#if $CurrentPage === Page.GAME}
-                <div class="slider-container">
-                    <div class="slider-label header-text">
-                        <NoteIcon height="100%" />
-                        <b>IN-GAME MUSIC</b>
-                    </div>
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.025"
-                        bind:value={$MUSIC_AUDIO.volume}
-                        on:change={storeSettings}
-                    />
+            <div class="slider-container">
+                <div class="slider-label header-text">
+                    <NoteIcon height="100%" />
+                    <b>IN-GAME MUSIC</b>
                 </div>
-            {/if}
+                <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.025"
+                    bind:value={$MUSIC_AUDIO.volume}
+                    on:change={storeSettings}
+                />
+            </div>
+
         </div>
         <div id="credits">
             <div id="credits-title">Credits</div>
