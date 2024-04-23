@@ -458,7 +458,7 @@
 
 {#if showCancelModal}
     <ConfirmationModal
-        headerText="Cancel"
+        headerText="CANCEL"
         bodyText="Are you sure you want to abandon this new game?"
         on:yes={() => CurrentPage.set(Page.HOME)}
         on:no={() => (showCancelModal = false)}
