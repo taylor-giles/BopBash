@@ -22,7 +22,8 @@
 
         //Compute height of containing div
         let parentHeight = mainElement.parentElement?.offsetHeight ?? 400;
-        mainHeight = parentHeight < 152 ? "80px" : (parentHeight < 352 ? "152px" : "100%");
+        mainHeight =
+            parentHeight < 152 ? "80px" : parentHeight < 352 ? "152px" : "100%";
 
         //Construct IFrameAPI request
         let options = {
@@ -35,14 +36,15 @@
         $IFrameAPI.createController(iframe, options, (controller: any) => {
             //Make sure background music does not play while embedded element is playing
             controller.onPlaybackUpdate = (playbackState: any) => {
-                if (!$BG_AUDIO.paused) {
-                    if (playbackState.isPaused) {
-                        $BG_AUDIO.play();
-                    } else {
-                        $BG_AUDIO.pause();
-                    }
-                }
+                $BG_AUDIO.muted = !playbackState.isPaused || document.hidden;
             };
+
+            //Stop playback when browser tabbed out
+            document.addEventListener("visibilitychange", () => {
+                if(document.hidden){
+                    controller.pause();
+                }
+            });
 
             //When ready, get rid of loading background
             controller.addListener("ready", () => {
