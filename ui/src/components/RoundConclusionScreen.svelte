@@ -12,7 +12,7 @@
         CONCLUSION_PHRASES_CORRECT,
         CONCLUSION_PHRASES_INCORRECT,
     } from "../game-types";
-    import SpotifyEmbed from "../SpotifyEmbed.svelte";
+    import SpotifyEmbed from "./SpotifyEmbed.svelte";
 
     const CONTENT_TYPES = ["Leaderboard", "Chat"] as const;
 

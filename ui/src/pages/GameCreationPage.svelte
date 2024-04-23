@@ -23,7 +23,7 @@
     import { GAME_TYPES, GAME_VISIBILITIES } from "../game-types";
     import LoadingModal from "../components/modals/LoadingModal.svelte";
     import { BG_AUDIO } from "../../stores/audio";
-    import SpotifyEmbed from "../SpotifyEmbed.svelte";
+    import SpotifyEmbed from "../components/SpotifyEmbed.svelte";
 
     //Play background music
     $BG_AUDIO.play();

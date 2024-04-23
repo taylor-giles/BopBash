@@ -18,7 +18,7 @@
         GAME_TYPES,
     } from "../game-types";
     import { BG_AUDIO } from "../../stores/audio";
-    import SpotifyEmbed from "../SpotifyEmbed.svelte";
+    import SpotifyEmbed from "../components/SpotifyEmbed.svelte";
 
     //Play background music
     $BG_AUDIO.play();
