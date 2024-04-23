@@ -88,57 +88,34 @@
             {/if}
         </div>
         <div id="credits">
-            <div id="credits-title">
-                CREDITS
+            <div id="credits-title">Credits</div>
+            <div class="credit">
+                <b class="header-text"> Game Development: </b>
+                <a href="https://taylorgiles.me" target="_blank">
+                    ©&nbsp;Taylor&nbsp;Giles
+                </a>
             </div>
-            <table>
-                <tr>
-                    <th align="right" class="header-text">
-                        Game Development:
-                    </th>
-                    <td>
-                        <a href="https://taylorgiles.me" target="_blank">
-                            © Taylor Giles
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <th align="right" class="header-text">
-                        Branding Consultant:
-                    </th>
-                    <td>
-                        <a
-                            href="https://josephromanodesign.com"
-                            target="_blank"
-                        >
-                            Joseph Romano
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <th align="right" class="header-text">
-                        Background Music:
-                    </th>
-                    <td>
-                        <a
-                            href="https://open.spotify.com/artist/2140rXZh18HpvmCh9xDKil"
-                            target="_blank"
-                        >
-                            Logan White
-                        </a>
-                    </td>
-                </tr>
-            </table>
-            <table id="special-thanks">
-                <tr>
-                    <th class="header-text">
-                        Special Thanks:
-                    </th>
-                    <td>
-                        Morgan Giles, Niaz An-Noor, Aiden Gauer
-                    </td>
-                </tr>
-            </table>
+            <div class="credit">
+                <b class="header-text"> Branding Consultant: </b>
+                <a href="https://josephromanodesign.com" target="_blank">
+                    Joseph&nbsp;Romano
+                </a>
+            </div>
+            <div class="credit">
+                <b class="header-text"> Background Music: </b>
+                <a
+                    href="https://open.spotify.com/artist/2140rXZh18HpvmCh9xDKil"
+                    target="_blank"
+                >
+                    Logan&nbsp;White
+                </a>
+            </div>
+            <div class="credit">
+                <b class="header-text">
+                    Special Thanks:
+                </b>
+                Morgan&nbsp;&&nbsp;Nicole&nbsp;Giles, Niaz&nbsp;An-Noor, Aiden&nbsp;Gauer
+            </div>
         </div>
 
         <button
@@ -182,6 +159,7 @@
         height: 8px;
         border-radius: 7px;
         border: 3px solid var(--accent-light);
+        margin-top: 5px;
     }
 
     input[type="range"]:focus {
@@ -189,9 +167,9 @@
     }
 
     input[type="range"]::-moz-range-thumb {
-        height: 30px;
-        width: 15px;
-        border: 4px solid var(--accent-light);
+        height: 1.6rem;
+        width: 0.83rem;
+        border: 0.25rem solid var(--accent-light);
         background-color: var(--accent);
         box-shadow:
             0px 0px 5px var(--accent-dark),
@@ -201,9 +179,9 @@
     }
     input[type="range"]::-webkit-slider-thumb {
         appearance: none;
-        height: 35px;
-        width: 22px;
-        border: 4px solid var(--accent-light);
+        height: 1.94rem;
+        width: 1.2rem;
+        border: 0.25rem solid var(--accent-light);
         background-color: var(--accent);
         box-shadow:
             0px 0px 5px var(--accent-dark),
@@ -243,15 +221,27 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: calc(max(14px, 0.85rem));
+        font-size: calc(max(12px, 0.8rem));
     }
 
-    #credits * > th {
+    .credit {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 2px;
+        font-weight: 300;
+        text-align: center;
+    }
+
+    .credit > b {
         font-weight: 800;
+        padding-inline: 5px;
     }
 
-    #credits * > td > *,
-    #credits * > td {
+    .credit > * {
         font-weight: 300;
     }
 
