@@ -1,18 +1,22 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import SettingsIcon from "svelte-material-icons/Cog.svelte";
+    import { CurrentPage, Page } from "../../stores/pageStore";
     const dispatch = createEventDispatcher();
 </script>
 
 <main>
-    <img src="bop-bash-logo-clean.svg" height="100%" alt="logo"/>
-    <button
-        on:click={() => {
-            dispatch("settingsclick");
-        }}
-    >
-        <SettingsIcon />
-    </button>
+    <img src="bop-bash-logo-clean.svg" height="100%" alt="logo" />
+
+    {#if $CurrentPage !== Page.LOGIN}
+        <button
+            on:click={() => {
+                dispatch("settingsclick");
+            }}
+        >
+            <SettingsIcon />
+        </button>
+    {/if}
 </main>
 
 <style>
