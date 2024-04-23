@@ -10,13 +10,19 @@
     export let title: string = "Spotify embedded element";
 
     let iframe: HTMLIFrameElement;
+    let mainElement: HTMLDivElement;
     let isLoading: boolean = true;
+    let mainHeight: string = "100%";
 
     /**
      * Load the embedded content into the iframe
      */
     async function load() {
         isLoading = true;
+
+        //Compute height of containing div
+        let parentHeight = mainElement.parentElement?.offsetHeight ?? 400;
+        mainHeight = parentHeight < 152 ? "80px" : (parentHeight < 352 ? "152px" : "100%");
 
         //Construct IFrameAPI request
         let options = {
@@ -48,7 +54,7 @@
     onMount(load);
 </script>
 
-<div id="main">
+<div id="main" bind:this={mainElement} style="height: {mainHeight};">
     <iframe bind:this={iframe} {title} />
 
     <!-- Spinner -->

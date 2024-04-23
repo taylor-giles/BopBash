@@ -583,6 +583,8 @@
     #embed-container {
         flex: 1;
         display: grid; /* ??? (embed doesnt size right without it) ??? */
+        place-items: center;
+
     }
 
     .options-container {
