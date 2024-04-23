@@ -35,8 +35,11 @@
         audio.play();
     }
 
-    // Adjust audio volume when volume level changes
+    // Keep audio volume and volume slider level consistent with each other
     $: audio.volume = volumeLevel;
+    audio.addEventListener("volumechange", () => {
+        volumeLevel = audio.volume;
+    });
 
     //Ensure isPaused stays updated
     audio.onpause = audio.onplay = () => {
@@ -81,7 +84,7 @@
             type="range"
             min="0"
             max="1"
-            step="0.1"
+            step="0.025"
             bind:value={volumeLevel}
             on:blur={() => (volumeOpen = false)}
         />
