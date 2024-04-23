@@ -5,14 +5,24 @@
         BG_AUDIO,
         MUSIC_AUDIO,
         playClickSFX,
+        AUDIO_ELEMENTS,
     } from "../../../stores/audio";
     import VolumeIcon from "svelte-material-icons/VolumeHigh.svelte";
     import MusicIcon from "svelte-material-icons/Music.svelte";
     import NoteIcon from "svelte-material-icons/MusicCircle.svelte";
+
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import Modal from "./Modal.svelte";
     import { CurrentPage, Page } from "../../../stores/pageStore";
+    import { get } from "svelte/store";
     const dispatch = createEventDispatcher();
+
+    function storeSettings() {
+        //Store all audio volumes in local storage
+        for(let audio of AUDIO_ELEMENTS){
+            window.localStorage.setItem(get(audio).getAttribute("data-name") ?? "", get(audio).volume.toString());
+        }
+    }
 </script>
 
 <Modal on:close>
@@ -30,6 +40,7 @@
                     min="0"
                     max="1"
                     step="0.025"
+                    on:change={storeSettings}
                     bind:value={$BG_AUDIO.volume}
                 />
             </div>
@@ -45,7 +56,10 @@
                     min="0"
                     max="1"
                     step="0.025"
-                    on:change={playClickSFX}
+                    on:change={() => {
+                        playClickSFX();
+                        storeSettings();
+                    }}
                     bind:value={$SFX_AUDIO.volume}
                 />
             </div>
@@ -63,6 +77,7 @@
                         max="1"
                         step="0.025"
                         bind:value={$MUSIC_AUDIO.volume}
+                        on:change={storeSettings}
                     />
                 </div>
             {/if}
