@@ -44,7 +44,7 @@
     {#each chats as chat, index (index)}
       <div
         class="chat-card-container"
-        transition:fly={{ y: "0%", easing: quintOut }}
+        transition:fly={{ x: "100%", easing: quintOut }}
       >
         <ChatCard {chat} />
       </div>
