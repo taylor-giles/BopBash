@@ -11,12 +11,11 @@
     import NoteIcon from "svelte-material-icons/MusicCircle.svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import Modal from "./Modal.svelte";
-    import { GameStore } from "../../../stores/gameStore";
-    import { GameStatus } from "../../../../shared/types";
+    import { CurrentPage, Page } from "../../../stores/pageStore";
     const dispatch = createEventDispatcher();
 </script>
 
-<Modal>
+<Modal on:close>
     <main>
         <div id="title">SETTINGS</div>
         <div id="settings-container">
@@ -52,7 +51,7 @@
             </div>
 
             <!-- In-Game Music Volume -->
-            {#if $GameStore?.status === GameStatus.ACTIVE}
+            {#if $CurrentPage === Page.GAME}
                 <div class="slider-container">
                     <div class="slider-label header-text">
                         <NoteIcon height="100%" />
