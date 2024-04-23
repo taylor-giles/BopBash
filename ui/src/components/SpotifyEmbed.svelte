@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Stretch } from "svelte-loading-spinners";
     import { onMount, tick } from "svelte";
-    import { IFrameAPI } from "../stores/IFrameAPI";
-    import { BG_AUDIO } from "../stores/audio";
+    import { IFrameAPI } from "../../stores/IFrameAPI";
+    import { BG_AUDIO } from "../../stores/audio";
 
     export let uri: string;
     export let height: string = "100%";
