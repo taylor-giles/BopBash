@@ -10,22 +10,27 @@
     import VolumeIcon from "svelte-material-icons/VolumeHigh.svelte";
     import MusicIcon from "svelte-material-icons/Music.svelte";
     import NoteIcon from "svelte-material-icons/MusicCircle.svelte";
-
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import Modal from "./Modal.svelte";
     import { CurrentPage, Page } from "../../../stores/pageStore";
     import { get } from "svelte/store";
     const dispatch = createEventDispatcher();
 
+    /**
+     * Save all settings in local storage for persistence across reloads
+     */
     function storeSettings() {
         //Store all audio volumes in local storage
-        for(let audio of AUDIO_ELEMENTS){
-            window.localStorage.setItem(get(audio).getAttribute("data-name") ?? "", get(audio).volume.toString());
+        for (let audio of AUDIO_ELEMENTS) {
+            window.localStorage.setItem(
+                get(audio).getAttribute("data-name") ?? "",
+                get(audio).volume.toString(),
+            );
         }
     }
 </script>
 
-<Modal on:close>
+<Modal>
     <main>
         <div id="title">SETTINGS</div>
         <div id="settings-container">
@@ -82,6 +87,60 @@
                 </div>
             {/if}
         </div>
+        <div id="credits">
+            <div id="credits-title">
+                CREDITS
+            </div>
+            <table>
+                <tr>
+                    <th align="right" class="header-text">
+                        Game Development:
+                    </th>
+                    <td>
+                        <a href="https://taylorgiles.me" target="_blank">
+                            © Taylor Giles
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <th align="right" class="header-text">
+                        Branding Consultant:
+                    </th>
+                    <td>
+                        <a
+                            href="https://josephromanodesign.com"
+                            target="_blank"
+                        >
+                            Joseph Romano
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <th align="right" class="header-text">
+                        Background Music:
+                    </th>
+                    <td>
+                        <a
+                            href="https://open.spotify.com/artist/2140rXZh18HpvmCh9xDKil"
+                            target="_blank"
+                        >
+                            Logan White
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            <table id="special-thanks">
+                <tr>
+                    <th class="header-text">
+                        Special Thanks:
+                    </th>
+                    <td>
+                        Morgan Giles, Niaz An-Noor, Aiden Gauer
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <button
             id="close-btn"
             class="text-button"
@@ -177,6 +236,28 @@
     }
     .slider-label > b {
         margin-top: -2px;
+    }
+
+    #credits {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: calc(max(14px, 0.85rem));
+    }
+
+    #credits * > th {
+        font-weight: 800;
+    }
+
+    #credits * > td > *,
+    #credits * > td {
+        font-weight: 300;
+    }
+
+    #credits-title {
+        font-size: 0.9rem;
+        font-weight: 700;
     }
 
     #close-btn {
