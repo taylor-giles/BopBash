@@ -475,7 +475,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100%;
-        gap: 15px;
+        gap: 1rem;
     }
     #header {
         display: flex;
@@ -584,7 +584,8 @@
         flex: 1;
         display: grid; /* ??? (embed doesnt size right without it) ??? */
         place-items: center;
-
+        padding: 1rem;
+        padding-inline: 0px;
     }
 
     .options-container {
