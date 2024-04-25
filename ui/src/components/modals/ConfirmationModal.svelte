@@ -33,6 +33,7 @@
     #content {
         width: max-content;
         height: max-content;
+        max-width: 100%;
         padding: 2.8rem;
         background-color: var(--accent-dark);
         border-radius: 12px;
