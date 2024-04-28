@@ -18,3 +18,6 @@ export const MAX_CHAT_LENGTH = 200;
 
 //Time (in millis) to remain in conclusion phase after all players ready
 export const POST_ROUND_WAIT_TIME = 8000;
+
+//Time (in millis) before game start after 50% of players ready
+export const READY_TIMEOUT = 30000;

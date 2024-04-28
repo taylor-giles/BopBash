@@ -5,7 +5,7 @@ import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
-import { COUNTDOWN_INTERVAL, MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, REMATCH_TIMEOUT } from "../shared/constants";
+import { COUNTDOWN_INTERVAL, MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, READY_TIMEOUT, REMATCH_TIMEOUT } from "../shared/constants";
 
 /**
  * Class to represent the server-side view of a game
@@ -27,6 +27,9 @@ export class Game {
         choices?: { id: string, name: string, artist: string }[]
         trackId?: string
     }
+
+    //Timeout for starting the game when >50% of players are ready
+    private gameStartTimeout?: NodeJS.Timeout;
 
     //Function to end the current round - resolves the promise returned by startRound
     private endCurrentRound: (value: void | PromiseLike<void>) => void = () => { };
@@ -244,22 +247,53 @@ export class Game {
         //Update all players
         this.broadcastUpdate();
 
+        //Check if all players are ready
+        this.checkReadiness();
+
         // console.log(`Unreadied player ${player.id} (${player.name}) in game ${this.id} (${this.playlist.name})`);
     }
 
 
     /**
-     * Checks if all players are ready, and if so, takes appropriate action based on current game status
+     * Checks how many players are ready, and if so, takes appropriate action based on current game status
      */
     public checkReadiness() {
-        if (Array.from(this.players.values()).every((player) => player.activeGameInfo?.isReady)) {
-            if (this.status === GameStatus.PENDING) {
-                //If all players are ready during pending stage, the game is ready to start
-                this.start();
-            } else if (this.status === GameStatus.ACTIVE) {
-                //If all players are "ready" during the game, they are all ready for next round
-                this.endCurrentRound();
-            }
+        let readyPlayers = Array.from(this.players.values()).filter((player) => player.activeGameInfo?.isReady);
+        let allPlayersReady = readyPlayers.length === this.players.size;
+        let halfPlayersReady = readyPlayers.length > this.players.size * 0.5;
+        switch (this.status) {
+            // Game is pending
+            case GameStatus.PENDING:
+                if (allPlayersReady) {
+                    //If all players are ready during pending stage, the game is ready to start
+                    clearTimeout(this.gameStartTimeout);
+                    this.gameStartTimeout = undefined;
+                    this.start();
+                } else if (halfPlayersReady) {
+                    //If over half the players are ready during pending stage, all players will be readied after timeout
+                    if (!this.gameStartTimeout) {
+                        this.gameStartTimeout = setTimeout(() => {
+                            //Ready all players
+                            this.players.forEach((player) => player.activeGameInfo!.isReady = true);
+
+                            //Re-check readiness (start game)
+                            this.checkReadiness();
+                        }, READY_TIMEOUT);
+                    }
+                } else {
+                    //If not enough players are ready, cancel the autostart timer
+                    clearTimeout(this.gameStartTimeout);
+                    this.gameStartTimeout = undefined;
+                }
+                break;
+
+            // Game is active
+            case GameStatus.ACTIVE:
+                if (allPlayersReady) {
+                    //If all players are "ready" during the game, they are all ready for next round
+                    this.endCurrentRound();
+                }
+                break;
         }
     }
 
@@ -299,7 +333,7 @@ export class Game {
 
         //If correct, grant between 0-1000 points depending on time taken, 0 otherwise
         let isCorrect = trackId === round.trackId;
-        let timeRemaining = round.maxDuration - (new Date().getTime() - this.rounds?.[roundNum]?.startTime) + 3*COUNTDOWN_INTERVAL;
+        let timeRemaining = round.maxDuration - (new Date().getTime() - this.rounds?.[roundNum]?.startTime) + 3 * COUNTDOWN_INTERVAL;
         let numPoints = isCorrect ? Math.round((timeRemaining / round.maxDuration) * 1000) : 0;
 
         //Update this player's point count for this round

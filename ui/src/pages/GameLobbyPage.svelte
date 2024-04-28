@@ -5,13 +5,18 @@
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import BackIcon from "svelte-material-icons/ArrowLeft.svelte";
     import AddFriendsIcon from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import type { GameState, PlayerState } from "../../../shared/types";
+    import {
+        GameStatus,
+        type GameState,
+        type PlayerState,
+    } from "../../../shared/types";
     import { GameStore, GameConnection } from "../../stores/gameStore";
     import GameAPI from "../../api/api";
     import PlayerCard from "../components/cards/PlayerCard.svelte";
     import { CurrentPage, Page } from "../../stores/pageStore";
     import ConfirmationModal from "../components/modals/ConfirmationModal.svelte";
     import { scale } from "svelte/transition";
+    import { tweened } from "svelte/motion";
     import Modal from "../components/modals/Modal.svelte";
     import {
         ADVANCED_OPTIONS_DEFINITIONS_WITH_ICONS,
@@ -19,6 +24,8 @@
     } from "../game-types";
     import { BG_AUDIO } from "../../stores/audio";
     import SpotifyEmbed from "../components/SpotifyEmbed.svelte";
+    import { READY_TIMEOUT } from "../../../shared/constants";
+    import collapse from "svelte-collapse";
 
     //Play background music
     $BG_AUDIO.play();
@@ -40,6 +47,28 @@
         numReadyPlayers = playerList.reduce((prevCount, player) => {
             return prevCount + (player.isReady ? 1 : 0);
         }, 0);
+    }
+
+    //If enough players are ready, start game start countdown
+    let timeToStart = READY_TIMEOUT / 1000;
+    let timeToStartInterval: NodeJS.Timeout | undefined;
+    $: if (numReadyPlayers > 0.5 * playerList.length) {
+        if (!timeToStartInterval) {
+            timeToStartInterval = setInterval(() => {
+                timeToStart -= 1;
+                if (
+                    timeToStart <= 0 ||
+                    gameState.status !== GameStatus.PENDING
+                ) {
+                    clearInterval(timeToStartInterval);
+                    timeToStartInterval = undefined;
+                }
+            }, 1000);
+        }
+    } else {
+        clearInterval(timeToStartInterval);
+        timeToStartInterval = undefined;
+        timeToStart = READY_TIMEOUT / 1000;
     }
 
     //Modals open iff this is true
@@ -145,7 +174,10 @@
                 </div>
             </div>
             <div id="embed-container">
-                <SpotifyEmbed uri={`spotify:playlist:${gameState.playlist.id}`} title="Spotify-provided embedded playlist" />
+                <SpotifyEmbed
+                    uri={`spotify:playlist:${gameState.playlist.id}`}
+                    title="Spotify-provided embedded playlist"
+                />
             </div>
         </div>
 
@@ -171,6 +203,16 @@
 
     <!-- Ready button -->
     <div id="ready-btn-wrapper">
+        <div
+        use:collapse={{
+            open: numReadyPlayers > 0.5 * playerList.length,
+            duration: 0.5,
+            easing: "ease",
+        }}
+        class="header-text"
+    >
+        GAME AUTO-STARTS IN {timeToStart}s
+    </div>
         <button
             id="ready-btn"
             class:activated={myPlayerState?.isReady}
@@ -183,7 +225,7 @@
                 <div style="font-size: 0.8rem;">Waiting for other players</div>
             {:else}
                 <div class="ready-btn-display">
-                    <CheckOutlineIcon /> READY UP
+                    <CheckOutlineIcon /> READY&nbsp;UP
                 </div>
             {/if}
         </button>
@@ -420,7 +462,7 @@
         align-items: center;
         gap: 5px;
         outline: none;
-        font-size: 1.9rem;
+        font-size: 1.8rem;
         max-width: 100%;
     }
     #ready-btn:hover {
@@ -435,6 +477,9 @@
         width: 100%;
         height: max-content;
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
         justify-content: center;
     }
 
