@@ -201,7 +201,7 @@
 
 <!-- Share modal -->
 {#if isSharingModalOpen}
-    <Modal>
+    <Modal on:close={() => (isSharingModalOpen = false)}>
         <div id="share-modal-content">
             <div style="width: 100%; margin-bottom: -20px;">
                 <button
