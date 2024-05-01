@@ -8,7 +8,7 @@ import * as SpotifyAPI from "./caller";
 import * as GameManager from "./GameManager";
 import { PlayerConnection } from "./types";
 import { getToken, verifyToken } from "./auth";
-import { MAX_USERNAME_LENGTH } from "../shared/constants";
+import { EQUIVALENCE_WORDS, MAX_USERNAME_LENGTH } from "../shared/constants";
 import { Track } from "../shared/types";
 
 type PlayerRequest = Request & { playerId?: string }
@@ -310,21 +310,41 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
         let limit: number | undefined = parseInt(req?.query?.limit as string);
         limit = isNaN(limit) ? 5 : limit;
 
+        //Determine the options for the guess
+        let guessOptions: Track[] = [];
+        let resultsLength = limit;
+        let offset = limit;
+
+        //Get correct track
+        let correctTrack = await SpotifyAPI.findTrackData(correctId);
+
         /**
-         * Two tracks are equal if they have the same name and have all the same artists, in the same order
+         * Two tracks are equal if:
+         * - They have all the same artists, in the same order
+         * AND
+         * - (They have the same name) OR (one's name starts with the other's name and contains at least one of the "equivalence words")
          * @param track1 The 1st track to compare
          * @param track2 The 2nd track to compare
          * @returns True if the tracks are equal, false otherwise
          */
         const areEqual = (track1: Track, track2: Track) => {
-            let str1 = track1.name + track1.artists.map((a) => a.name).join(",");
-            let str2 = track2.name + track2.artists.map((a) => a.name).join(",");
+            let str1 = track1.name;
+            let str2 = track2.name;
+
+            //Check if names are "equivalent" (as per equivalence words)
+            if(track1.name.startsWith(track2.name) && EQUIVALENCE_WORDS.some((word) => track1.name.toLowerCase().includes(word))){
+                str1 = str2;
+            } else if(track2.name.startsWith(track1.name) && EQUIVALENCE_WORDS.some((word) => track2.name.toLowerCase().includes(word))){
+                str2 = str1;
+            }
+
+            //Add artists to string
+            str1 += track1.artists.map((a) => a.name).join(",");
+            str2 += track2.artists.map((a) => a.name).join(",");
+
+            //Compare (name + artists) strings
             return str1 === str2;
         }
-
-        let guessOptions: Track[] = [];
-        let resultsLength = limit;
-        let offset = limit;
 
         //Keep searching until the desired number (limit) of results is found without duplicates
         while (guessOptions.length < limit && resultsLength == limit) {
@@ -333,9 +353,6 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
 
             //Determine length of results list
             resultsLength = result.results.length;
-
-            //Get correct track
-            let correctTrack = await SpotifyAPI.findTrackData(correctId);
 
             //Add only non-duplicates to the options list
             result.results.forEach((track: Track) => {

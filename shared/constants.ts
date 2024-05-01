@@ -21,3 +21,6 @@ export const POST_ROUND_WAIT_TIME = 8000;
 
 //Time (in millis) before game start after 50% of players ready
 export const READY_TIMEOUT = 30000;
+
+// Titles that contain any of these words are equivalent to titles they contain
+export const EQUIVALENCE_WORDS = ["remaster", "edit"]
