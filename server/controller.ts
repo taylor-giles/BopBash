@@ -309,7 +309,7 @@ export async function findGuessOptions(req: PlayerRequest, res: Response) {
         //Determine the desired limit
         let limit: number | undefined = parseInt(req?.query?.limit as string);
         limit = isNaN(limit) ? 5 : limit;
-
+      
         //Determine the options for the guess
         let guessOptions: Track[] = [];
         let resultsLength = limit;
