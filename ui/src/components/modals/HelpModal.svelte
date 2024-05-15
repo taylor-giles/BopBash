@@ -4,7 +4,10 @@
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { GAME_TYPES } from "../../game-types";
     import { GAME_TYPE_OPTIONS } from "../../../../shared/types";
+    import { READY_TIMEOUT } from "../../../../shared/constants";
     const dispatch = createEventDispatcher();
+
+    window.localStorage.setItem("seen-help", "true");
 </script>
 
 <Modal on:close>
@@ -16,17 +19,15 @@
                 <div class="step-title">Join a Game</div>
                 <div class="step-content">
                     Join an existing game or create a new one from the home
-                    page.
-                    <br />
-                    When creating a game, choose any public Spotify playlist to draw
-                    music from, and choose a game type.
+                    page. When creating a game, you can choose any public
+                    Spotify playlist to draw music from, and customize game
+                    options.
                 </div>
             </li>
             <li class="step">
                 <div class="step-title">Ready Up!</div>
                 <div class="step-content">
-                    When everyone has joined the lobby, press the "Ready Up"
-                    button. The game will begin once all players are ready.
+                    The game will begin once enough players in lobby are ready.
                 </div>
             </li>
             <li class="step">
@@ -51,9 +52,11 @@
             </li>
         </ol>
 
-        <div id="closer" class="header-text">Have fun!</div>
+        <div id="closer" class="header-text">
+            Have fun!
+        </div>
 
-        <div style="flex: 1;">
+        <div style="flex: 1; width: 100%;">
             <div id="tips-title">Tips:</div>
             <ul>
                 <li>
@@ -61,9 +64,7 @@
                     quick!
                 </li>
                 <li>
-                    When playing with friends in-person, create a private game,
-                    and only play music from one device. This can help avoid
-                    interruptions and confusion.
+                    When playing with friends in-person, try playing audio from just one player's device, to avoid confusion.
                 </li>
             </ul>
         </div>
@@ -114,11 +115,6 @@
         flex: 1;
     }
 
-    br {
-        display: block;
-        margin: 2px;
-    }
-
     .step {
         width: 100%;
         padding: 0.5rem;
@@ -145,9 +141,10 @@
     }
 
     #closer {
-        font-size: 1.9rem;
+        font-size: 1.5rem;
         font-weight: 600;
         flex: 1;
+        height: 50px;
         display: flex;
         align-items: center;
     }
