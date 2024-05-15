@@ -72,12 +72,10 @@
         await tick();
         canvas?.appendChild(floaterElement);
         await tick();
-        floaterElement.animate(keyframes, duration);
-
-        //Remove DOM element after animation time has elapsed
-        setTimeout(() => {
-            floaterElement?.remove();
-        }, duration);
+        let animation = floaterElement.animate(keyframes, duration)
+        
+        //Remove DOM element after animation is finished
+        animation.onfinish = () => floaterElement?.remove();
     }
 
     //Make 5 floaters right away
