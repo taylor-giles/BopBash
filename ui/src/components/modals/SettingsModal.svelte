@@ -12,7 +12,6 @@
     import NoteIcon from "svelte-material-icons/MusicCircle.svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import Modal from "./Modal.svelte";
-    import { CurrentPage, Page } from "../../../stores/pageStore";
     import { get } from "svelte/store";
     const dispatch = createEventDispatcher();
 
@@ -143,6 +142,7 @@
         width: 90dvw;
         height: 90dvh;
         max-width: 1000px;
+        overflow-y: auto;
     }
 
     #title {
@@ -194,8 +194,10 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 40px;
+        gap: 2.1rem;
         justify-content: center;
+        padding: 1rem;
+        padding-inline: 0px;
     }
 
     .slider-container {

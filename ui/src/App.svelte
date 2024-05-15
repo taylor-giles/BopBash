@@ -15,6 +15,7 @@
     import Appbar from "./components/Appbar.svelte";
     import SettingsModal from "./components/modals/SettingsModal.svelte";
     import Background from "./Background.svelte";
+    import HelpModal from "./components/modals/HelpModal.svelte";
 
     const PAGES: Record<Page, ComponentType> = {
         [Page.LOGIN]: LoginPage,
@@ -59,8 +60,9 @@
         CurrentPage.set(Page.GAME);
     }
 
-    //Flag for toggling state of settings modal
+    //Flags for toggling state of modals
     let isSettingsModalOpen = false;
+    let isHelpModalOpen = false;
 
     /**
      * Checks if the clicked element or its (grand)parent is a button. If so, plays click sound.
@@ -81,7 +83,10 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <main on:click|capture={checkClick}>
-    <Appbar on:settingsclick={() => (isSettingsModalOpen = true)} />
+    <Appbar
+        on:settingsclick={() => (isSettingsModalOpen = true)}
+        on:helpclick={() => (isHelpModalOpen = true)}
+    />
     <div id="page-content">
         <svelte:component this={PAGES[$CurrentPage]} />
     </div>
@@ -89,6 +94,11 @@
     <!-- Settings Modal -->
     {#if isSettingsModalOpen}
         <SettingsModal on:close={() => (isSettingsModalOpen = false)} />
+    {/if}
+
+    <!-- Help Modal -->
+    {#if isHelpModalOpen}
+        <HelpModal on:close={() => (isHelpModalOpen = false)} />
     {/if}
 
     <!-- Error Modal (displays error message from store)-->

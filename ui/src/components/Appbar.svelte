@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import SettingsIcon from "svelte-material-icons/Cog.svelte";
+    import HelpIcon from "svelte-material-icons/HelpCircle.svelte";
     import { CurrentPage, Page } from "../../stores/pageStore";
     const dispatch = createEventDispatcher();
 </script>
@@ -8,15 +9,24 @@
 <main>
     <img src="bop-bash-logo-clean.svg" height="100%" alt="logo" />
 
-    {#if $CurrentPage !== Page.LOGIN}
-        <button
-            on:click={() => {
-                dispatch("settingsclick");
-            }}
-        >
-            <SettingsIcon />
-        </button>
-    {/if}
+    <div id="buttons-container">
+        {#if $CurrentPage !== Page.LOGIN}
+            <button
+                on:click={() => {
+                    dispatch("helpclick");
+                }}
+            >
+                <HelpIcon />
+            </button>
+            <button
+                on:click={() => {
+                    dispatch("settingsclick");
+                }}
+            >
+                <SettingsIcon />
+            </button>
+        {/if}
+    </div>
 </main>
 
 <style>
@@ -29,6 +39,13 @@
         background-color: rgba(30, 30, 30, 0.9);
         height: 3rem;
         font-size: 1.6rem;
+    }
+
+    #buttons-container {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
     }
 
     button {

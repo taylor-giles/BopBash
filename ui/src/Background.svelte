@@ -56,8 +56,6 @@
             },
         ];
 
-        //console.log(shape, startX, startY, endX, endY, startDeg, endDeg, duration, imgSize);
-
         //Generate HTML element for the floater
         let floaterElement = document.createElement("img");
 
