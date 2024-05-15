@@ -62,7 +62,7 @@
 
     //Flags for toggling state of modals
     let isSettingsModalOpen = false;
-    let isHelpModalOpen = window.localStorage.getItem("seen-help") === null; //Open help modal by default if it has never been seen before
+    let isHelpModalOpen = false;
 
     /**
      * Checks if the clicked element or its (grand)parent is a button. If so, plays click sound.

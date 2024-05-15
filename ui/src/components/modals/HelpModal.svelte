@@ -4,10 +4,7 @@
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { GAME_TYPES } from "../../game-types";
     import { GAME_TYPE_OPTIONS } from "../../../../shared/types";
-    import { READY_TIMEOUT } from "../../../../shared/constants";
     const dispatch = createEventDispatcher();
-
-    window.localStorage.setItem("seen-help", "true");
 </script>
 
 <Modal on:close>
@@ -52,9 +49,7 @@
             </li>
         </ol>
 
-        <div id="closer" class="header-text">
-            Have fun!
-        </div>
+        <div id="closer" class="header-text">Have fun!</div>
 
         <div style="flex: 1; width: 100%;">
             <div id="tips-title">Tips:</div>
@@ -64,7 +59,8 @@
                     quick!
                 </li>
                 <li>
-                    When playing with friends in-person, try playing audio from just one player's device, to avoid confusion.
+                    When playing with friends in-person, try playing audio from
+                    just one player's device, to avoid confusion.
                 </li>
             </ul>
         </div>
