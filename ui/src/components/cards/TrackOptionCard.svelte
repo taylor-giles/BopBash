@@ -42,11 +42,11 @@
         word-break: break-word;
     }
     #title {
-        font-size: 1.05rem;
+        font-size: 1rem;
         font-weight: 700;
     }
     #artist{
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         font-weight: 300;
     }
     #artist > b {

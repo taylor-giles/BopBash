@@ -203,11 +203,11 @@
             {#if trackOptions !== null && trackOptions.length > 0}
                 <div
                     class="suggestions-container"
-                    style="--height: {trackOptions.length * 4}rem"
+                    style="--height: {trackOptions.length * 3.5}rem"
                 >
                     {#each trackOptions as track, index (track.id)}
                         <TrackOptionCard
-                            --height="4rem"
+                            --height="3.5rem"
                             {track}
                             highlighted={selectedOptionIndex == index}
                             on:click={() => {
