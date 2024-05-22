@@ -3,19 +3,24 @@
   import type { ChatMessage } from "../../../shared/types";
   import { quintOut } from "svelte/easing";
   import ChatCard from "./cards/ChatCard.svelte";
-  import { tick } from "svelte";
+  import { createEventDispatcher, tick } from "svelte";
   import GameAPI from "../../api/api";
   import SendIcon from "svelte-material-icons/Send.svelte";
+  const dispatch = createEventDispatcher();
 
   export let chats: ChatMessage[];
   let main: HTMLDivElement;
   let chatContent: string = "";
+  let prevLength = 0;
 
-  //Whenever a new chat comes in, scroll to bottom
-  $: if (chats) {
+  //Whenever a new chat comes in, scroll to bottom and dispatch event
+  $: if (chats.length > prevLength) {
     scrollToBottom();
+    dispatch("newChat");
+    prevLength = chats.length;
   }
 
+  //Scroll to the bottom of the main window
   async function scrollToBottom() {
     await tick();
     if (main) {

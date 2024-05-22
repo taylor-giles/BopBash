@@ -42,6 +42,7 @@
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
     let showChatWindow: boolean = window.innerWidth > 800;
+    let showChatNotification: boolean = false;
     let isModalOpen: boolean = false;
     let volumeLevel: number = 0.5;
     let currentRoundTime: number = 0;
@@ -73,6 +74,9 @@
     $: allPlayersReady = Object.values($GameStore.players).every(
         (player) => player.isReady,
     );
+
+    // Show chat notification when a new chat has been received and the window is closed
+    $: showChatNotification = showChatNotification && !showChatWindow;
 
     //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
@@ -355,7 +359,7 @@
                         Game Chat
                     </div>
                     <div id="chat-board-container">
-                        <ChatBoard chats={$GameStore.chatMessages} />
+                        <ChatBoard chats={$GameStore.chatMessages} on:newChat={() => (showChatNotification=true)}/>
                     </div>
                 </div>
             {/if}
@@ -382,6 +386,7 @@
         {:else if currentPhase === RoundPhase.COUNTDOWN || currentPhase === RoundPhase.PLAYING}
             <!-- Button to show chat window -->
             <button
+                class:notification={showChatNotification}
                 id="show-chat-btn"
                 on:click={() => (showChatWindow = !showChatWindow)}
             >
@@ -600,6 +605,7 @@
     }
 
     #show-chat-btn {
+        position: relative;
         height: max-content;
         color: var(--primary-light);
         background-color: transparent;
@@ -610,6 +616,16 @@
         flex-direction: row;
         align-items: center;
         gap: 5px;
+    }
+    #show-chat-btn.notification::before{
+        position: absolute;
+        top: -0.3rem;
+        right: -0.3rem;
+        background-color: var(--spotify-green);
+        border-radius: 100%;
+        width: 1rem;
+        height: 1rem;
+        content: "";
     }
 
     #next-round-timer-container {
