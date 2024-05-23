@@ -1,13 +1,14 @@
 <script lang="ts">
+    import { SERVER_CHAT_NAME } from "../../../../shared/constants";
     import type { ChatMessage } from "../../../../shared/types";
 
     export let chat: ChatMessage;
 </script>
 
-<main>
+<main class:server-msg={chat.sender === SERVER_CHAT_NAME}>
     <div id="name-container">
         <div id="name-display">
-            {chat.sender.name}
+            {chat.sender}
         </div>
     </div>
 
@@ -27,6 +28,13 @@
         padding-inline: 0.8rem;
         color: var(--primary-light);
         border-top: 1px solid gray;
+    }
+    main.server-msg {
+        font-style: italic;
+        color: var(--accent-light);
+    }
+    main.server-msg > #name-container {
+        display: none;
     }
     #name-display {
         font-size: 1.1rem;

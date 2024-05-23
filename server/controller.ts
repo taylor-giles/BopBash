@@ -8,7 +8,7 @@ import * as SpotifyAPI from "./caller";
 import * as GameManager from "./GameManager";
 import { PlayerConnection } from "./types";
 import { getToken, verifyToken } from "./auth";
-import { EQUIVALENCE_WORDS, MAX_USERNAME_LENGTH } from "../shared/constants";
+import { EQUIVALENCE_WORDS, FORBIDDEN_NAMES, MAX_USERNAME_LENGTH } from "../shared/constants";
 import { Track } from "../shared/types";
 
 type PlayerRequest = Request & { playerId?: string }
@@ -456,6 +456,11 @@ export async function registerNewPlayer(req: Request, res: Response) {
     //Ensure name is provided
     if (!name) {
         return res.status(400).json({ error: "Name must be specified in request body." });
+    }
+
+    //Prevent forbidden words from appearing in name
+    if(FORBIDDEN_NAMES.some((forbiddenName => name.includes(forbiddenName)))){
+        return res.status(400).json({ error: "Name includes a forbidden word or phrase." });
     }
 
     console.log(`Handling request to create new player named ${name}`);

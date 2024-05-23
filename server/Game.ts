@@ -5,7 +5,7 @@ import * as SpotifyAPI from './caller';
 import ObservableMap from "../utils/ObservableMap";
 import { Round, GameStatus, GameState, PlayerState } from "../shared/types";
 import { WebSocket } from "ws";
-import { COUNTDOWN_INTERVAL, MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, READY_TIMEOUT, REMATCH_TIMEOUT } from "../shared/constants";
+import { COUNTDOWN_INTERVAL, MAX_CHAT_LENGTH, POST_ROUND_WAIT_TIME, READY_TIMEOUT, REMATCH_TIMEOUT, SERVER_CHAT_NAME } from "../shared/constants";
 
 /**
  * Class to represent the server-side view of a game
@@ -185,6 +185,9 @@ export class Game {
             this.submitPlayerGuess(player.id, this.currentRound?.index ?? -1, "");
         }
 
+        //Add a message to chat history
+        this.chatMessages.push({ sender: SERVER_CHAT_NAME, content: `${player.name} has joined the game.` });
+
         //Broadcast update to all players
         this.broadcastUpdate();
     }
@@ -203,6 +206,9 @@ export class Game {
 
         //Remove this player from the players map
         this.players.delete(playerId);
+
+        //Add a message to chat history
+        this.chatMessages.push({ sender: SERVER_CHAT_NAME, content: `${player.name} has left the game.` });
 
         //Update remaining players
         this.broadcastUpdate();
@@ -364,7 +370,7 @@ export class Game {
         let player = this.getPlayer(playerId);
 
         //Add the message to the list of messages for this game
-        this.chatMessages.push({ sender: { id: player.id, name: player.name }, content: content.substring(0, MAX_CHAT_LENGTH) });
+        this.chatMessages.push({ sender: player.name, content: content.substring(0, MAX_CHAT_LENGTH) });
 
         //Update all players
         this.broadcastUpdate();

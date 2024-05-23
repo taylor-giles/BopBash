@@ -58,7 +58,7 @@ export class Round {
 }
 
 export type ChatMessage = {
-    sender: {id: string, name: string},
+    sender: string,
     content: string
 }
 
