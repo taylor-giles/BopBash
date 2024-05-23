@@ -37,7 +37,6 @@
 
     //Round & game variables
     let currentPhase: RoundPhase = RoundPhase.COUNTDOWN;
-    let audioLoaded: boolean = false;
     let guessTrackId: string = "";
     let guessResult: GuessResult | undefined;
     let correctTrackId: string | undefined;
@@ -81,11 +80,6 @@
     //Every time the audio URL changes, start loading the next round
     $: if (audioURL) {
         loadRound(audioURL);
-    }
-
-    //When audio is ready, start the round
-    $: if (audioLoaded) {
-        doCountdownPhase().then(startPlayingPhase);
     }
 
     //If all players are ready, display round conclusion
@@ -149,14 +143,15 @@
             guessString = "(No Answer)";
             currentRoundTime = 0;
 
-            //Set audio callbacks & properties
+            //Start re-loading of audio element
             $MUSIC_AUDIO.crossOrigin = "anonymous";
             $MUSIC_AUDIO.oncanplay = () => {
-                audioLoaded = true;
-            };
+                //When audio is ready, start the round
+                doCountdownPhase().then(startPlayingPhase);
 
-            //Start re-loading of audio element
-            audioLoaded = false;
+                //Reset handler
+                $MUSIC_AUDIO.oncanplay = () => {}
+            };
             $MUSIC_AUDIO.src = url;
             $MUSIC_AUDIO.load();
         }

@@ -91,30 +91,20 @@
         //Wait for all stage changes to complete
         await tick();
 
-        //Return a promise that will resolve when the countdown is done
-        return new Promise(async (resolve) => {
-            //Set up timeouts to perform the countdown
-            for (let i = 3; i >= 0; i--) {
-                setTimeout(
-                    () => {
-                        if (currentPhase === RoundPhase.COUNTDOWN) {
-                            //Set the display
-                            countdownView.innerHTML = `${i}`;
+        //Set up timeouts to perform the countdown
+        for (let i = 3; i >= 1; i--) {
+            if (currentPhase === RoundPhase.COUNTDOWN) {
+                //Set the display
+                countdownView.innerHTML = `${i}`;
 
-                            //Play beep sound effect
-                            $SFX_AUDIO.src = "beep.mp3";
-                            $SFX_AUDIO.play();
+                //Play beep sound effect
+                $SFX_AUDIO.src = "beep.mp3";
+                $SFX_AUDIO.play();
 
-                            //Resolve promise when countdown is complete
-                            if (i == 0) {
-                                resolve();
-                            }
-                        }
-                    },
-                    (3 - i) * countdownInterval,
-                );
+                //Wait
+                await new Promise(res => setTimeout(res, countdownInterval));
             }
-        });
+        }
     }
 
     export async function start() {
