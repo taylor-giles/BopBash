@@ -35,7 +35,11 @@
         <div id="description-label">Playlist Description:</div>
         {#if game.playlist.description.length > 0}
             <div id="description-content">
-                {game.playlist.description}
+                <!-- Some descriptions have anchor tags - this extracts the content from them -->
+                {game.playlist.description.replace(
+                    /<a\s*[^>]*>(.*?)<\/a>/g,
+                    "$1",
+                )}
             </div>
         {:else}
             <em id="description-content">No description available.</em>
