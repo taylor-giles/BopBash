@@ -144,16 +144,14 @@
             currentRoundTime = 0;
 
             //Start re-loading of audio element
+            $MUSIC_AUDIO.preload = "auto";
             $MUSIC_AUDIO.crossOrigin = "anonymous";
-            $MUSIC_AUDIO.oncanplay = () => {
+            $MUSIC_AUDIO.onloadstart = () => {
                 //When audio is ready, start the round
                 doCountdownPhase().then(startPlayingPhase);
-
-                //Reset handler
-                $MUSIC_AUDIO.oncanplay = () => {}
             };
             $MUSIC_AUDIO.src = url;
-            $MUSIC_AUDIO.load();
+            // $MUSIC_AUDIO.load();
         }
     }
 
