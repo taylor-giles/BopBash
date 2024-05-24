@@ -26,7 +26,7 @@ export const READY_TIMEOUT = 30000;
 export const EQUIVALENCE_WORDS = ["remaster", "edit"]
 
 //The name used for server-sent chat messages. Players cannot take this name.
-export const SERVER_CHAT_NAME = "[SERVER]"
+export const SERVER_CHAT_NAME = "[ServerNotificationService]"
 
 //List of substrings that are forbidden from appearing in a player's name
 export const FORBIDDEN_NAMES = [SERVER_CHAT_NAME];
