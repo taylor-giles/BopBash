@@ -26,11 +26,11 @@ const app = express();
 
 // Enable CORS
 //TODO: REMOVE THIS!! It is only here to allow for dev over SSH.
-// app.use(cors({
-//     origin: '*',
-//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//     allowedHeaders: ['Content-Type', 'Authorization'],
-// }));
+app.use(cors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 app.use(express.json());
 app.listen(EXPRESS_PORT, () => {

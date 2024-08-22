@@ -11,6 +11,7 @@ import { PlayerConnection } from './types';
 import { GameOptions, GameState, GameType, GameVisibility, Playlist } from "../shared/types";
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import * as storage from 'node-persist';
 
 //Maximum amount of time a game is allowed to exist as an "active game"
 const MAX_GAME_LIFETIME = 24 * 60 * 60 * 1000; //24 hours
@@ -24,6 +25,33 @@ let playerGames = new ObservableMap<string, string>();
 
 //Maps game ID to the timeout set to destroy it if active for too long
 let gameTimeouts = new ObservableMap<string, NodeJS.Timeout>();
+
+//Load the total number of games played (ever) from storage
+export let totalGamesPlayed = 0;
+storage.init().then(async () => {
+    totalGamesPlayed = await (storage as any).default.getItem('totalGamesPlayed') ?? 0;
+    console.log(`Loaded variable totalGamesPlayed: ${totalGamesPlayed}`);
+}).catch((error) => {
+    console.error(`Failed to load variable totalGamesPlayed`, error);
+});
+
+
+/**
+ * Returns the number of currently active players
+ * @returns The number of currently active players
+ */
+export function getNumPlayers(): number {
+    return activePlayers.size;
+}
+
+
+/**
+ * Returns the number of currently active games
+ * @returns The number of currently active games
+ */
+export function getNumGames(): number {
+    return activeGames.size;
+}
 
 
 /**
@@ -167,12 +195,19 @@ export async function generateNewGame(playlist: Playlist, type: GameType, visibi
 
     //Set up timeout to end this game if it is empty 1 minute after creation
     setTimeout(() => {
-        if(newGame.players.size <= 0){
+        if (newGame.players.size <= 0) {
             stopGame(newGame.id)
-            .then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to it being empty after creation`); })
-            .catch((e) => { console.log(`Unable to stop game ${newGame.id} (${playlist.name}) due to it being empty after creation.`, e.message)});
+                .then(() => { console.log(`Stopping game ${newGame.id} (${playlist.name}) due to it being empty after creation`); })
+                .catch((e) => { console.log(`Unable to stop game ${newGame.id} (${playlist.name}) due to it being empty after creation.`, e.message) });
         }
     }, 60000);
+
+    //Update total game count, and persist to storage
+    try {
+        (storage as any).default.setItem('totalGamesPlayed', ++totalGamesPlayed);
+    } catch (e) {
+        console.error("Unable to set persistent variable totalGamesPlayed", e);
+    }
 
     //Return game object
     console.log(`Created game ${newGame.id} for playlist ${playlist.id} (${playlist.name})`);

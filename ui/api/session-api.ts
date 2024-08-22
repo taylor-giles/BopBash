@@ -121,6 +121,14 @@ export async function getGames(): Promise<GameState[]> {
 }
 
 
+/**
+ * Creates a new game
+ * @param playlistId The ID of the playlist for this game
+ * @param type The GameType for this game
+ * @param visibility The GameVisibility for this game
+ * @param gameOptions Additional GameOptions for this game
+ * @returns The ID of the created game, or null on error
+ */
 export async function createGame(playlistId: string, type: GameType, visibility: GameVisibility, gameOptions: GameOptions): Promise<string | null> {
     return apiCaller.post('/newGame', {
         playlistId: playlistId,
@@ -137,4 +145,22 @@ export async function createGame(playlistId: string, type: GameType, visibility:
         setError("Failed to create new game", error);
         return null;
     })
+}
+
+export async function getNumPlayers(): Promise<number> {
+    return apiCaller.get('/getNumPlayers').then((res) => {
+        return res?.data ?? 0;
+    });
+}
+
+export async function getNumGames(): Promise<number>{
+    return apiCaller.get('/getNumGames').then((res) => {
+        return res?.data ?? 0;
+    });
+}
+
+export async function getTotalGamesPlayed(): Promise<number>{
+    return apiCaller.get('/getTotalGamesPlayed').then((res) => {
+        return res?.data ?? 0;
+    });
 }

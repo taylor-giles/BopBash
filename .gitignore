@@ -5,3 +5,4 @@
 server/test.*
 names.md
 notes.md
+server/.node-persist

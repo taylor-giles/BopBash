@@ -258,6 +258,58 @@ export async function findTracks(req: Request, res: Response) {
     });
 }
 
+/**
+ * GET /getNumPlayers
+ * Returns the number of currently active players
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - None.
+ * 
+ * Response Body:
+ *  - Integer number of players currently online
+ */
+export async function getNumPlayers(req: Request, res: Response) {
+    return res.status(200).json(GameManager.getNumPlayers());
+}
+
+
+/**
+ * GET /getNumGames
+ * Returns the number of currently active players
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - None.
+ * 
+ * Response Body:
+ *  - Integer number of currently active games
+ */
+export async function getNumGames(req: Request, res: Response) {
+    return res.status(200).json(GameManager.getNumGames());
+}
+
+/**
+ * GET /getTotalGamesPlayed
+ * Returns the total number of games ever played
+ * 
+ * Request Params:
+ *  - None.
+ * 
+ * Request Body:
+ *  - None.
+ * 
+ * Response Body:
+ *  - Integer number of total games ever played
+ */
+export async function getTotalGamesPlayed(req: Request, res: Response){
+    return res.status(200).json(GameManager.totalGamesPlayed);
+}
+
 
 /**
  * GET /findGuessOptions
