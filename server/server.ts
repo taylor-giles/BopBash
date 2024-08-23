@@ -105,8 +105,8 @@ wsServer.on("close", () => {
 
 
 //Make sure access token is maintained (initialize API caller)
-console.log("Initializing Spotify API.");
-SpotifyAPI.maintainAccessToken();
+console.log("Initializing Spotify API...");
+SpotifyAPI.refreshAccessToken();
 
 
 // getTrackPreviewURL("02MiyVckOBtygUOEDnV7Pd")
