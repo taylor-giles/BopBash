@@ -16,6 +16,9 @@ import * as storage from 'node-persist';
 //Maximum amount of time a game is allowed to exist as an "active game"
 const MAX_GAME_LIFETIME = 24 * 60 * 60 * 1000; //24 hours
 
+//Maximum number of player names to save in persistent storage
+const MAX_PLAYER_HISTORY_LENGTH = 300000 //6MB of 20-byte strings
+
 //Maps for storing currently active games/players by ID
 let activeGames = new ObservableMap<string, Game>();
 let activePlayers = new ObservableMap<string, Player>();
@@ -26,11 +29,19 @@ let playerGames = new ObservableMap<string, string>();
 //Maps game ID to the timeout set to destroy it if active for too long
 let gameTimeouts = new ObservableMap<string, NodeJS.Timeout>();
 
-//Load the total number of games played (ever) from storage
+//Number of games ever played (persistent)
 export let totalGamesPlayed = 0;
+
+//Persistent list of all names ever used. This is maintained just for history - it is not used in the app
+let namesHistory: string[] = [];
+
+//Load persistent variables from storage
 storage.init().then(async () => {
     totalGamesPlayed = await (storage as any).default.getItem('totalGamesPlayed') ?? 0;
-    console.log(`Loaded variable totalGamesPlayed: ${totalGamesPlayed}`);
+    namesHistory = await (storage as any).default.getItem('namesHistory') ?? [];
+    console.log(`Loaded persistent variables.`);
+    console.log(`Total number of games played: ${totalGamesPlayed}`);
+    console.log(`Total number of player logins: ${namesHistory.length}`);
 }).catch((error) => {
     console.error(`Failed to load variable totalGamesPlayed`, error);
 });
@@ -147,6 +158,18 @@ export async function registerNewPlayer(name: string) {
 
     //Register the player
     activePlayers.set(newPlayer.id, newPlayer);
+
+    //Add this player's name to the history
+    if (namesHistory.length < MAX_PLAYER_HISTORY_LENGTH) {
+        try {
+            namesHistory.push(name);
+            (storage as any).default.setItem('namesHistory', namesHistory);
+        } catch (e) {
+            console.error("Unable to set persistent variable namesHistory", e);
+        }
+    } else {
+        console.warn("Maximum number of names in history reached")
+    }
 
     //Return new player object
     console.log(`Created new player ${newPlayer.id} (${newPlayer.name})`);
