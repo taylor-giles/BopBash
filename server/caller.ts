@@ -33,6 +33,12 @@ function whenAPIReady(cb: () => void, skipAccessToken = false) {
     if ((isTokenValid || skipAccessToken) && !backoff) {
         cb();
     } else {
+        //Update token if it is not valid
+        if (!isTokenValid && !skipAccessToken) {
+            refreshAccessToken();
+        }
+
+        //Repeat check in 100ms
         setTimeout(() => { whenAPIReady(cb) }, 100);
     }
 }
@@ -132,7 +138,7 @@ async function callAPI(requestOptions: RequestOptions, formData?: ParsedUrlQuery
 function updateAccessToken(token: string, expirationTime: number) {
     accessToken = token;
     isTokenValid = true;
-    console.log("Access token updated.");
+    console.log(`Spotify API access token updated. Expires in ${expirationTime / 60} minutes.`);
 
     //Set new invalidation timer - If expiration time elapses, mark token as invalid
     clearTimeout(invalidationTimeout);
@@ -141,10 +147,10 @@ function updateAccessToken(token: string, expirationTime: number) {
 
 
 /**
- * Ensures that the access token is always updated.
- * Call this once to set up a recurring timer that updates the token whenever it is about to expire.
+ * Obtains a new access token from Spotify and updates it locally
+ * @returns The expiration time, in seconds, of the new token
  */
-export async function maintainAccessToken() {
+export async function refreshAccessToken(): Promise<number> {
     //Build request options object
     let requestOptions: RequestOptions = {
         hostname: "accounts.spotify.com",
@@ -165,6 +171,7 @@ export async function maintainAccessToken() {
     }
 
     //Configure success callback
+    let expirationTime = -1;
     let onSuccess: APICallback = (result: APIResponse) => {
         let body = JSON.parse(result.responseData);
 
@@ -172,14 +179,10 @@ export async function maintainAccessToken() {
         let accessToken = body["access_token"]
         if (accessToken) {
             //Get expiration time for this token, in SECONDS
-            let expirationTime = body["expires_in"];
+            expirationTime = body["expires_in"];
 
+            //Update the local access token
             updateAccessToken(accessToken, expirationTime);
-
-            //Set timer to update token 1 minute before it expires
-            setTimeout(() => {
-                maintainAccessToken();
-            }, (expirationTime - 60) * 1000);
         } else {
             //Error if access token not found
             onFailure({ ...result, error: Error(`Access token not present in response data.`) })
@@ -188,6 +191,26 @@ export async function maintainAccessToken() {
 
     //Make API call
     callAPI(requestOptions, formData).then(onSuccess).catch(onFailure);
+
+    //Return expiration time
+    return expirationTime;
+}
+
+
+/**
+ * Ensures that the access token is always updated.
+ * Call this once to set up a recurring timer that updates the token whenever it is about to expire.
+ * NO LONGER USED - Abandoned in favor of refreshAccessToken call in whenAPIReady. This way, token is only updated when needed.
+ */
+export async function maintainAccessToken() {
+    refreshAccessToken().then((expirationTime) => {
+        if (expirationTime > 60) {
+            //Set timer to update token 1 minute before it expires
+            setTimeout(() => {
+                maintainAccessToken();
+            }, (expirationTime - 60) * 1000);
+        }
+    })
 }
 
 
@@ -343,7 +366,7 @@ export async function getArtistTopTracks(artistId: string): Promise<Track[]> {
  * @param limit Max number of tracks to get in query. Max is 50.
  * @returns The search result as returned by the Spotify search API
  */
-export async function search(type: "playlist"|"track"|"artist"|"album", query: string, offset: number = 0, limit: number = 5): Promise<SpotifySearchResult> {
+export async function search(type: "playlist" | "track" | "artist" | "album", query: string, offset: number = 0, limit: number = 5): Promise<SpotifySearchResult> {
     let requestOptions: RequestOptions = {
         hostname: "api.spotify.com",
         path: `/v1/search?q=${encodeURIComponent(query)}&type=${type}&offset=${offset}&limit=${Math.min(limit, 50)}`,
