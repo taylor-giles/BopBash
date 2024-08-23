@@ -150,17 +150,26 @@ export async function createGame(playlistId: string, type: GameType, visibility:
 export async function getNumPlayers(): Promise<number> {
     return apiCaller.get('/getNumPlayers').then((res) => {
         return res?.data ?? 0;
+    }).catch((error) => {
+        console.error("Failed to obtain number of players", error);
+        return -1;
     });
 }
 
 export async function getNumGames(): Promise<number>{
     return apiCaller.get('/getNumGames').then((res) => {
         return res?.data ?? 0;
+    }).catch((error) => {
+        console.error("Failed to obtain number of games", error);
+        return -1;
     });
 }
 
 export async function getTotalGamesPlayed(): Promise<number>{
     return apiCaller.get('/getTotalGamesPlayed').then((res) => {
         return res?.data ?? 0;
+    }).catch((error) => {
+        console.error("Failed to obtain number of total games played", error);
+        return -1;
     });
 }

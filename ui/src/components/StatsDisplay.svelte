@@ -47,18 +47,18 @@
         flex-direction: row;
         justify-content: space-evenly;
         width: 100%;
-        max-width: 900px;
         min-width: 300px;
         flex-wrap: wrap;
     }
 
     .stat-container {
         display: flex;
-        flex-direction: row;
-        gap: 0.5rem;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         padding-inline: 1rem;
+        margin-bottom: 1rem;
+        flex: 1;
     }
     .stat-number {
         font-size: 2rem;
@@ -68,5 +68,20 @@
     .stat-label {
         font-size: 1.2rem;
         font-weight: 600;
+        white-space: normal;
+        min-width: 3rem;
+        text-align: center;
+        line-height: 1.25rem;
+    }
+    @media(max-width: 600px){
+        .stat-label {
+            font-size: 1rem;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+        }
+        .stat-container {
+            line-height: 1.6rem;
+        }
     }
 </style>

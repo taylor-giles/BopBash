@@ -7,6 +7,7 @@
     import { CurrentPage, Page } from "../../stores/pageStore";
     import GameCard from "../components/cards/GameCard.svelte";
     import { BG_AUDIO } from "../../stores/audio";
+    import StatsDisplay from "../components/StatsDisplay.svelte";
 
     //Play background music
     $BG_AUDIO.play();
@@ -69,6 +70,7 @@
             </button>
         {/if}
     </div>
+    <StatsDisplay/>
 </main>
 
 <style>

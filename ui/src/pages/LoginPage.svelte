@@ -8,12 +8,14 @@ import GameAPI from "../../api/api";
 
 <main>
     <div id="logo-container">
-        <img class="logo-accent" src="floaters/music-circle-outline.svg" alt="Music note"/>
+        <img class="logo-accent" src="music-circle-outline.svg" alt="Music note"/>
         <img id="logo" src="bop-bash-logo-clean.svg" alt="Bop Bash full logo"/>
-        <img class="logo-accent" src="floaters/music-circle-outline.svg" alt="Music note"/>
+        <img class="logo-accent" src="music-circle-outline.svg" alt="Music note"/>
     </div>
     <UsernameForm />
-    <StatsDisplay />
+    <div id="stats-display-container">
+        <StatsDisplay />
+    </div>
 </main>
 
 <style>
@@ -36,13 +38,9 @@ import GameAPI from "../../api/api";
     }
     #logo {
         height: 150px;
+        max-width: 100%;
+        max-height: 7rem;
     }
-    @media(max-width: 600px) {
-        .logo-accent {
-            display: none;
-        }
-    }
-
     .logo-accent {
         height: 50px;
         width: 50px;
@@ -51,10 +49,19 @@ import GameAPI from "../../api/api";
         animation-delay: 1s;
         opacity: 30%;
     }
-
+    @media(max-width: 600px) {
+        .logo-accent {
+            display: none;
+        }
+    }
     @keyframes spin {
         0% { transform: rotate(0deg);}
         100% { transform: rotate(360deg); }
+    }
+
+    #stats-display-container {
+        max-width: 900px;
+        width: 100%;
     }
 
 </style>

@@ -42,14 +42,14 @@
 </script>
 
 <main>
-    <div id="username-label" class="header-text">Enter a Username</div>
+    <div id="username-label" class="header-text">Enter a Name</div>
 
     <form on:submit={handleSubmit}>
         <input
             id="username-input"
             class="header-text"
             type="text"
-            placeholder="Username"
+            placeholder="Your Name"
             bind:value={username}
         />
         <div
@@ -62,7 +62,7 @@
 
         <div id="info-text" class="body-text">
             No login required!<br />
-            Rude or offensive names will not be tolerated.
+            Please stay respectful of others.
         </div>
 
         <button
@@ -85,8 +85,7 @@
         align-items: flex-start;
         gap: 10px;
         flex-shrink: 0;
-        padding: 40px;
-        padding-inline: 40px;
+        padding: 2rem;
         border-radius: 10px;
         border: 1px solid gray;
         width: 100%;
