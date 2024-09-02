@@ -2,6 +2,7 @@
     import { createEventDispatcher } from "svelte";
     import Modal from "./Modal.svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
+    import MessageIcon from "svelte-material-icons/Message.svelte";
     import { GAME_TYPES } from "../../game-types";
     import { GAME_TYPE_OPTIONS } from "../../../../shared/types";
     const dispatch = createEventDispatcher();
@@ -73,6 +74,12 @@
             Got it!
         </button>
 
+        <p id="footer">
+            <a href="https://taylorgiles.me#contact">
+                Contact me
+            </a> with any questions, suggestions, bug reports, or just to say hi!
+        </p>
+
         <button
             id="close-btn"
             class="text-button"
@@ -118,7 +125,7 @@
 
     .step-title,
     #tips-title {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 700;
     }
 
@@ -132,17 +139,24 @@
     }
 
     #title {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         font-weight: 800;
+        flex: 0.4;
     }
 
     #closer {
         font-size: 1.5rem;
         font-weight: 600;
-        flex: 1;
+        flex: 0.4;
         height: 50px;
         display: flex;
         align-items: center;
+    }
+
+    #footer {
+        display: inline;
+        text-align: center;
+        font-size: 0.9rem;
     }
 
     #close-btn {
