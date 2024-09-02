@@ -36,8 +36,8 @@
             let keyframes: Keyframe[] = [
                 {
                     opacity: startingVisibility,
-                    height: `${startingVisibility * imgSize}px`,
-                    width: `${startingVisibility * imgSize}px`,
+                    height: `${startingVisibility * imgSize}rem`,
+                    width: `${startingVisibility * imgSize}rem`,
                     left: `${startX}%`,
                     top: `${startY}%`,
                     transform: `rotate(${startDeg}deg)`,
@@ -78,13 +78,32 @@
         }
     }
 
-    //Make 5 floaters right away
-    for (let i = 0; i < 5; i++) {
-        generateNewFloater(0.1 * i);
+    /**
+     * Makes a number of floaters immediately, with starting visibility ranging from 0-maxVisibility
+     * @param n The number of floaters to make
+     * @param visibilityFactor The starting visibility of the most visible floater
+     */
+    async function makeInitialFloaters(n: number, maxVisibility: number = 0.5) {
+        //Make 5 floaters right away
+        for (let i = 0; i < n; i++) {
+            generateNewFloater((maxVisibility/n) * i);
+        }
     }
 
+    //Make some floaters immediately after loading
+    makeInitialFloaters(5, 0.5);
+
+    //Pause floater animations when application is hidden
+    document.addEventListener("visibilitychange", () => {
+        for(let child of canvas?.children){
+            child.getAnimations().forEach((animation) => {
+                document.hidden ? animation.pause() : animation.play();
+            });
+        }
+    });
+
     //Regularly generate new floaters
-    setInterval(generateNewFloater, 2800);
+    setInterval(generateNewFloater, 2300);
 </script>
 
 <div id="background-floaters" bind:this={canvas} />
