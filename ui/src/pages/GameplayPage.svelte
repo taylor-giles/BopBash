@@ -462,7 +462,7 @@
         align-items: center;
         height: max-content;
         padding-top: 1rem;
-        flex: 1;
+        flex: 3;
     }
     #center-display.condensed {
         padding-top: 0px;
@@ -528,7 +528,7 @@
     }
 
     #submission-section {
-        flex: 2;
+        flex: 4;
         height: 0px;
         display: flex;
         align-items: center;
