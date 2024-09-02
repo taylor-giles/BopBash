@@ -42,8 +42,8 @@ import GameAPI from "../../api/api";
         max-height: 7rem;
     }
     .logo-accent {
-        height: 50px;
-        width: 50px;
+        height: 30px;
+        width: 30px;
         border-radius: 100%;
         animation: spin 60s infinite ease-in-out;
         animation-delay: 1s;

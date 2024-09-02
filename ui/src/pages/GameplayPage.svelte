@@ -449,7 +449,6 @@
     #gameplay-content {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         width: 100%;
         height: 100%;
         flex: 4;
@@ -463,9 +462,11 @@
         align-items: center;
         height: max-content;
         padding-top: 1rem;
+        flex: 1;
     }
     #center-display.condensed {
         padding-top: 0px;
+        flex: 0;
     }
 
     #chat-section {
@@ -527,10 +528,11 @@
     }
 
     #submission-section {
-        flex: 5;
+        flex: 2;
         height: 0px;
         display: flex;
         align-items: center;
+        justify-content: center;
     }
 
     #submission-panel {
@@ -541,6 +543,7 @@
         gap: 20px;
         height: max-content;
         max-height: 100%;
+        max-width: 2000px;
         flex: 1;
     }
 

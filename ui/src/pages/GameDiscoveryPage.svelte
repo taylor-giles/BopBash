@@ -70,7 +70,9 @@
             </button>
         {/if}
     </div>
-    <StatsDisplay/>
+    <div id="stats-container">
+        <StatsDisplay/>
+    </div>
 </main>
 
 <style>
@@ -78,7 +80,7 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        align-items: flex-start;
+        align-items: center;
         height: 100%;
         width: 100%;
         gap: 20px;
@@ -142,5 +144,10 @@
     }
     .header-btn:hover {
         color: var(--spotify-green);
+    }
+
+    #stats-container {
+        width: 100%;
+        max-width: 1600px;
     }
 </style>

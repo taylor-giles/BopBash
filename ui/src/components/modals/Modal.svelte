@@ -23,7 +23,7 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
     class="modal"
-    transition:blur={{ duration: 100 }}
+    transition:blur={{ duration: 150 }}
     on:click={handleCloseClick}
     bind:this={outerDiv}
 >

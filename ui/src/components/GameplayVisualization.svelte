@@ -186,8 +186,8 @@
         width: 9rem;
     }
     #visualizer-view.small {
-        height: 6rem;
-        width: 6rem;
+        height: 5rem;
+        width: 5rem;
     }
     #song-timer-view {
         position: absolute;
