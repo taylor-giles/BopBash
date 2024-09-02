@@ -78,6 +78,15 @@
             playClickSFX();
         }
     }
+
+    //Page leave confirmation dialog
+    window.addEventListener('beforeunload', function (event) {
+        if($CurrentPage == Page.CREATE || $CurrentPage == Page.GAME || $CurrentPage == Page.LOBBY){
+            const message = "Are you sure you want to leave the game?";
+            event.returnValue = message;
+            return message;
+        }
+    })
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
