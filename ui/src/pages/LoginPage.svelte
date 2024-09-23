@@ -2,8 +2,6 @@
 import GameAPI from "../../api/api";
     import UsernameForm from "../components/forms/UsernameForm.svelte";
     import StatsDisplay from "../components/StatsDisplay.svelte";
-
-    GameAPI.getNumPlayers().then(console.log)
 </script>
 
 <main>
